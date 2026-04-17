@@ -105,7 +105,7 @@ export function PatientStatusButton({ patientId, currentStatus }: { patientId: s
         <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>Selecciona el nuevo estado clínico:</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {statuses.map(s => (
-            <form key={s} action={updatePatientStatus}>
+            <form key={s} action={async (formData) => { await updatePatientStatus(formData); }}>
               <input type="hidden" name="id" value={patientId} />
               <input type="hidden" name="status" value={s} />
               <button type="submit" style={{
@@ -135,7 +135,7 @@ export function DeletePatientButton({ patientId }: { patientId: string }) {
         <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>¿Estás seguro? Esta acción eliminará el paciente y todos sus registros médicos.</p>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={() => setConfirm(false)} className="btn" style={{ flex: 1, border: '1px solid #e2e8f0' }}>Cancelar</button>
-          <form action={deletePatient} style={{ flex: 1 }}>
+          <form action={async (formData) => { await deletePatient(formData); }} style={{ flex: 1 }}>
             <input type="hidden" name="id" value={patientId} />
             <button type="submit" className="btn" style={{ width: '100%', background: '#ef4444', color: 'white' }}>
               Eliminar

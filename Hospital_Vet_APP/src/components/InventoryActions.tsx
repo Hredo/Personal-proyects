@@ -82,7 +82,7 @@ export function InventoryQuantityEditor({ itemId, currentQty, unit }: { itemId: 
       </button>
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Actualizar Stock" width="380px">
         <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Stock actual: <strong>{currentQty} {unit}</strong></p>
-        <form action={updateInventory}>
+        <form action={async (formData) => { await updateInventory(formData); }}>
           <input type="hidden" name="id" value={itemId} />
           <div style={fieldStyle}>
             <label style={labelStyle}>Nueva cantidad ({unit})</label>
@@ -104,7 +104,7 @@ export function InventoryQuantityEditor({ itemId, currentQty, unit }: { itemId: 
           </button>
         </form>
         <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
-          <form action={deleteInventoryItem}>
+          <form action={async (formData) => { await deleteInventoryItem(formData); }}>
             <input type="hidden" name="id" value={itemId} />
             <button type="submit" style={{ width: '100%', background: 'none', border: '1px solid #fee2e2', color: '#ef4444', borderRadius: '0.5rem', padding: '0.5rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}>
               <Trash2 size={14} style={{ marginRight: '0.25rem' }} />

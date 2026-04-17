@@ -1,6 +1,18 @@
+import Link from 'next/link';
 import db from '@/lib/db';
 import { DollarSign, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { NewInvoiceButton, InvoiceStatusButton } from '@/components/BillingActions';
+
+type InvoiceItem = {
+  id: string;
+  invoiceId: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  notes?: string | null;
+  createdAt: string;
+};
 
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { status } = await searchParams;
@@ -17,18 +29,18 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     ORDER BY i.createdAt DESC
   `).all();
 
-  const invoiceItems: any[] = db.prepare(`
+  const invoiceItems = db.prepare(`
     SELECT ii.*, i.consultationNumber
     FROM invoice_items ii
     JOIN invoices i ON i.id = ii.invoiceId
     ORDER BY ii.createdAt DESC
-  `).all();
+  `).all() as InvoiceItem[];
 
   const itemsByInvoice = invoiceItems.reduce((acc, item) => {
     if (!acc[item.invoiceId]) acc[item.invoiceId] = [];
     acc[item.invoiceId].push(item);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, InvoiceItem[]>);
 
   const allInvoices = invoices;
 
@@ -109,7 +121,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>
-                {['Nº FACTURA', 'CONSULTA', 'CLIENTE', 'DESGLOSE', 'IMPORTE', 'VENCIMIENTO', 'FECHA', 'ESTADO'].map(h => (
+                {['Nº FACTURA', 'CONSULTA', 'CLIENTE', 'DESGLOSE', 'IMPORTE', 'VENCIMIENTO', 'FECHA', 'ESTADO', 'GESTIÓN'].map(h => (
                   <th key={h} style={{ padding: '0.75rem 0.5rem', color: '#64748b', fontWeight: '500', fontSize: '0.8rem' }}>{h}</th>
                 ))}
               </tr>
@@ -135,7 +147,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                         <details>
                           <summary style={{ cursor: 'pointer', fontWeight: '700', color: '#334155' }}>Ver {detailedItems.length} línea(s)</summary>
                           <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            {detailedItems.map((line) => (
+                            {detailedItems.map((line: InvoiceItem) => (
                               <div key={line.id} style={{ background: '#f8fafc', borderRadius: '0.4rem', padding: '0.35rem 0.45rem' }}>
                                 <p style={{ fontSize: '0.74rem', color: '#0f172a', fontWeight: '700' }}>{line.description}</p>
                                 <p style={{ fontSize: '0.7rem', color: '#64748b' }}>{Number(line.quantity)} {line.unit} x {Number(line.unitPrice).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</p>
@@ -164,6 +176,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                     </td>
                     <td style={{ padding: '1rem 0.5rem' }}>
                       <InvoiceStatusButton invoiceId={inv.id} currentStatus={inv.status} />
+                    </td>
+                    <td style={{ padding: '1rem 0.5rem' }}>
+                      <Link href={`/dashboard/billing/${inv.id}`} style={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', fontSize: '0.85rem' }}>
+                        Ver factura
+                      </Link>
                     </td>
                   </tr>
                 );

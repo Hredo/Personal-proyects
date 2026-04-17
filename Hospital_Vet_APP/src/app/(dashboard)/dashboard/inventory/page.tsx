@@ -16,7 +16,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
 
   const allItems: any[] = db.prepare(`SELECT * FROM inventory_items`).all();
-  const categories = [...new Set(allItems.map(i => i.category))].sort();
+  const categories = Array.from(new Set(allItems.map(i => i.category))).sort(); 
   const lowStockCount  = allItems.filter(i => i.quantity <= i.minStock && i.quantity > 0).length;
   const criticalCount  = allItems.filter(i => i.quantity === 0).length;
   const okCount        = allItems.filter(i => i.quantity > i.minStock).length;

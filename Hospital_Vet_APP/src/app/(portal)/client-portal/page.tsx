@@ -1,4 +1,5 @@
 import { auth } from '@/auth';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import db from '@/lib/db';
 import { PawPrint, Heart, Calendar, FileText, Phone, Mail, AlertCircle, CheckCircle, Bell } from 'lucide-react';
@@ -6,6 +7,18 @@ import { RequestAppointmentButton, PetHistoryPanel } from '@/components/PortalAc
 import { PaymentModal } from '@/components/PaymentModal';
 import { AddPetButton } from '@/components/AddPetPortal';
 import { EditProfileButton, EditPetButton } from '@/components/ProfileActions';
+
+type PortalInvoiceLine = {
+  id: string;
+  invoiceId: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  amount: number;
+  notes?: string | null;
+  createdAt: string;
+};
 
 export default async function ClientPortalPage() {
   const session = await auth();
@@ -66,19 +79,19 @@ export default async function ClientPortalPage() {
     SELECT * FROM invoices WHERE clientId = ? ORDER BY createdAt DESC LIMIT 5
   `).all(client.id);
 
-  const invoiceItems: any[] = db.prepare(`
+  const invoiceItems = db.prepare(`
     SELECT ii.*
     FROM invoice_items ii
     JOIN invoices i ON ii.invoiceId = i.id
     WHERE i.clientId = ?
     ORDER BY ii.createdAt DESC
-  `).all(client.id);
+  `).all(client.id) as PortalInvoiceLine[];
 
   const itemsByInvoice = invoiceItems.reduce((acc, item) => {
     if (!acc[item.invoiceId]) acc[item.invoiceId] = [];
     acc[item.invoiceId].push(item);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {} as Record<string, PortalInvoiceLine[]>);
 
   const notifications: any[] = db.prepare(`
     SELECT * FROM notifications WHERE userId = ? ORDER BY createdAt DESC LIMIT 6
@@ -272,9 +285,14 @@ export default async function ClientPortalPage() {
 
           {/* Invoices */}
           <div className="glass-card" style={{ background: 'white', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FileText size={16} color="var(--primary)" /> Mis Facturas
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText size={16} color="var(--primary)" /> Mis Facturas
+              </h3>
+              <Link href="/client-portal/invoices" style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none' }}>
+                Ver todas
+              </Link>
+            </div>
             {invoices.length === 0 ? (
               <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>Sin facturas.</p>
             ) : (
@@ -302,7 +320,7 @@ export default async function ClientPortalPage() {
                             <p style={{ marginTop: '0.45rem', fontSize: '0.72rem', color: '#94a3b8' }}>Sin líneas detalladas disponibles.</p>
                           ) : (
                             <div style={{ marginTop: '0.45rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                              {detail.map((line) => (
+                              {detail.map((line: PortalInvoiceLine) => (
                                 <div key={line.id} style={{ background: 'white', borderRadius: '0.4rem', padding: '0.35rem 0.45rem' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
                                     <p style={{ fontSize: '0.72rem', fontWeight: '700', color: '#0f172a' }}>{line.description}</p>
@@ -318,6 +336,10 @@ export default async function ClientPortalPage() {
                             </div>
                           )}
                         </details>
+
+                        <Link href={`/client-portal/invoices/${inv.id}`} style={{ display: 'inline-block', marginTop: '0.45rem', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none' }}>
+                          Abrir factura completa
+                        </Link>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {!isPaid && <PaymentModal invoiceId={inv.id} amount={Number(inv.amount)} />}

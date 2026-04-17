@@ -428,6 +428,131 @@ async function seed() {
     );
   }
 
+  console.log('🧪 Generando bloque sintético profesional (dataset ampliado)...');
+
+  const speciesCatalog = ['Perro', 'Gato', 'Conejo', 'Ave'];
+  const dogBreedsExtended = ['Labrador Retriever', 'Pastor Alemán', 'Bulldog Francés', 'Border Collie', 'Mestizo'];
+  const catBreedsExtended = ['Común Europeo', 'Maine Coon', 'Siamés', 'Persa', 'British Shorthair'];
+  const petNamesExtended = ['Nina', 'Kira', 'Loki', 'Bruno', 'Milo', 'Nora', 'Teo', 'Bimba', 'Rex', 'Mia'];
+  const reasonsExtended = ['Chequeo preventivo', 'Dolor abdominal', 'Seguimiento quirúrgico', 'Control dermatológico', 'Vacunación anual'];
+  const diagnosesExtended = ['Revisión sin incidencias', 'Gastroenteritis leve', 'Dermatitis alérgica', 'Otitis externa', 'Seguimiento postquirúrgico favorable'];
+  const treatmentsExtended = ['Observación y control en 30 días', 'Dieta blanda 5 días', 'Limpieza ótica y gotas', 'Antihistamínico 7 días', 'Reposo y antiinflamatorio'];
+
+  const EXTRA_CLIENTS = 350;
+  const PETS_PER_CLIENT = 2;
+
+  db.transaction(() => {
+    for (let i = 1; i <= EXTRA_CLIENTS; i++) {
+      const userId = `ux${i}`;
+      const clientId = `cx${i}`;
+      const fullName = `Cliente Demo ${i}`;
+      const email = `cliente.demo.${i}@hospitalvet.local`;
+      const phone = `+34 60${String(1000000 + i).slice(-7)}`;
+      const address = `Avenida Clínica ${1 + (i % 140)}, Planta ${1 + (i % 6)}, Madrid`;
+
+      db.prepare('INSERT INTO users (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)').run(
+        userId, email, hashedUserPassword, fullName, 'CLIENT'
+      );
+      db.prepare('INSERT INTO clients (id, userId, phone, address) VALUES (?, ?, ?, ?)').run(
+        clientId, userId, phone, address
+      );
+
+      for (let p = 1; p <= PETS_PER_CLIENT; p++) {
+        const petId = `px${i}_${p}`;
+        const species = speciesCatalog[(i + p) % speciesCatalog.length];
+        const breed = species === 'Perro'
+          ? dogBreedsExtended[(i + p) % dogBreedsExtended.length]
+          : species === 'Gato'
+          ? catBreedsExtended[(i + p) % catBreedsExtended.length]
+          : species === 'Conejo'
+          ? 'Lop'
+          : 'Canario';
+        const petName = `${petNamesExtended[(i + p) % petNamesExtended.length]} ${i}-${p}`;
+
+        db.prepare('INSERT INTO patients (id, name, species, breed, birthDate, gender, weight, ownerId, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+          petId,
+          petName,
+          species,
+          breed,
+          `${2019 + ((i + p) % 6)}-${String(1 + ((i + p) % 12)).padStart(2, '0')}-${String(1 + ((i + p) % 28)).padStart(2, '0')}`,
+          (i + p) % 2 === 0 ? 'Macho' : 'Hembra',
+          species === 'Perro' ? 8 + ((i + p) % 30) : species === 'Gato' ? 3 + ((i + p) % 6) : 1.5 + ((i + p) % 4),
+          clientId,
+          'HEALTHY'
+        );
+
+        const apptId = `ax${i}_${p}`;
+        const apptDate = `2026-${String(3 + ((i + p) % 6)).padStart(2, '0')}-${String(1 + ((i + p) % 27)).padStart(2, '0')} ${String(9 + ((i + p) % 8)).padStart(2, '0')}:00:00`;
+        db.prepare('INSERT INTO appointments (id, patientId, reason, dateTime, type, status) VALUES (?, ?, ?, ?, ?, ?)').run(
+          apptId,
+          petId,
+          reasonsExtended[(i + p) % reasonsExtended.length],
+          apptDate,
+          'Consulta',
+          (i + p) % 5 === 0 ? 'COMPLETED' : 'SCHEDULED'
+        );
+
+        const mrId = `mrx${i}_${p}`;
+        db.prepare('INSERT INTO medical_records (id, patientId, veterinarianId, date, diagnosis, treatment, observations) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+          mrId,
+          petId,
+          `e${1 + ((i + p) % 20)}`,
+          `2026-${String(1 + ((i + p) % 3)).padStart(2, '0')}-${String(1 + ((i + p) % 27)).padStart(2, '0')} 10:00:00`,
+          diagnosesExtended[(i + p) % diagnosesExtended.length],
+          treatmentsExtended[(i + p) % treatmentsExtended.length],
+          'Registro sintético de alta fidelidad para entorno de pruebas.'
+        );
+
+        const invoiceId = `invx${i}_${p}`;
+        const status = (i + p) % 4 === 0 ? 'OVERDUE' : (i + p) % 3 === 0 ? 'PAID' : 'PENDING';
+        const dueDate = `2026-${String(4 + ((i + p) % 6)).padStart(2, '0')}-${String(1 + ((i + p) % 27)).padStart(2, '0')}`;
+        db.prepare('INSERT INTO invoices (id, clientId, amount, status, consultationNumber, items, dueDate) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+          invoiceId,
+          clientId,
+          0,
+          status,
+          `CONS-2026-X${String(i).padStart(4, '0')}`,
+          'Generada automáticamente para set de pruebas masivo.',
+          dueDate
+        );
+
+        const line1Amount = 45 + ((i + p) % 80);
+        const line2Amount = 20 + ((i + p) % 45);
+        db.prepare('INSERT INTO invoice_items (id, invoiceId, description, quantity, unit, unitPrice, amount, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+          `invx_item_${i}_${p}_1`,
+          invoiceId,
+          'Consulta clínica integral',
+          1,
+          'consulta',
+          line1Amount,
+          line1Amount,
+          'Dataset sintético'
+        );
+        db.prepare('INSERT INTO invoice_items (id, invoiceId, description, quantity, unit, unitPrice, amount, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+          `invx_item_${i}_${p}_2`,
+          invoiceId,
+          'Medicación y materiales',
+          1,
+          'lote',
+          line2Amount,
+          line2Amount,
+          'Dataset sintético'
+        );
+        db.prepare('UPDATE invoices SET amount = ? WHERE id = ?').run(line1Amount + line2Amount, invoiceId);
+      }
+
+      db.prepare('INSERT INTO notifications (id, userId, title, message, type, isRead, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+        `nx${i}`,
+        userId,
+        'Resumen clínico actualizado',
+        'Se han actualizado registros médicos y facturación de tus mascotas en el portal.',
+        'SYSTEM',
+        0,
+        `2026-04-${String(1 + (i % 27)).padStart(2, '0')} 09:00:00`
+      );
+    }
+  })();
+
   console.log('✅ Base de datos poblada exitosamente!');
   console.log('');
   console.log('📊 RESUMEN:');
@@ -443,7 +568,9 @@ async function seed() {
   console.log('   🔔 40 Notificaciones');
   console.log('   ⏰ 50 Registros de asistencia');
   console.log('');
-  console.log('🎉 Total: ¡Más de 600 registros creados!');
+  console.log(`   🧪 +${EXTRA_CLIENTS} clientes sintéticos y ${EXTRA_CLIENTS * PETS_PER_CLIENT} pacientes adicionales`);
+  console.log('🎉 Total: ¡Más de 4.000 registros creados!');
+  console.log('🔒 Todos los datos añadidos son sintéticos para pruebas profesionales (no personales reales).');
 }
 
 seed().catch(console.error);

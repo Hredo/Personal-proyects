@@ -1,11 +1,66 @@
 'use server'
 
+import { auth } from "@/auth";
 import db from "@/lib/db";
+import { UserRole } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { hash } from "bcryptjs";
 import { Resend } from "resend";
+import { z } from "zod";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+const STAFF_ROLES = [UserRole.ADMIN, UserRole.STAFF, UserRole.VETERINARIAN] as const;
+
+type Actor = {
+  id: string;
+  role: UserRole;
+};
+
+async function getActor(): Promise<Actor | null> {
+  const session = await auth();
+  const id = session?.user?.id;
+  const role = session?.user?.role as UserRole | undefined;
+
+  if (!id || !role) return null;
+  return { id, role };
+}
+
+function isStaffRole(role: UserRole) {
+  return STAFF_ROLES.includes(role as (typeof STAFF_ROLES)[number]);
+}
+
+async function requireStaffActor() {
+  const actor = await getActor();
+  if (!actor || !isStaffRole(actor.role)) return null;
+  return actor;
+}
+
+async function requireAuthenticatedActor() {
+  return getActor();
+}
+
+function sanitizeText(value: FormDataEntryValue | null) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function parsePositiveNumber(value: FormDataEntryValue | null) {
+  if (typeof value !== 'string') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+}
+
+function parseNonNegativeInteger(value: FormDataEntryValue | null) {
+  if (typeof value !== 'string') return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) return null;
+  return parsed;
+}
+
+function isValidIsoDateInput(value: string) {
+  return !Number.isNaN(Date.parse(value));
+}
 
 function genId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 5)}`;
@@ -110,6 +165,10 @@ function ensureOpenConsultationAndInvoice({
 
 // ─── ATTENDANCE ──────────────────────────────────────────────────────────────
 export async function getAttendanceStatus(userId: string) {
+  const actor = await requireAuthenticatedActor();
+  if (!actor) return null;
+  if (actor.id !== userId && !isStaffRole(actor.role)) return null;
+
   const last = db.prepare(`
     SELECT type, timestamp FROM employee_attendance 
     WHERE userId = ? 
@@ -119,6 +178,10 @@ export async function getAttendanceStatus(userId: string) {
 }
 
 export async function toggleAttendance(userId: string, notes: string = "") {
+  const actor = await requireAuthenticatedActor();
+  if (!actor) return { error: 'No autorizado.' };
+  if (actor.id !== userId && !isStaffRole(actor.role)) return { error: 'No autorizado.' };
+
   const last = await getAttendanceStatus(userId);
   const nextType = last?.type === 'IN' ? 'OUT' : 'IN';
   const id = genId('att');
@@ -131,7 +194,7 @@ export async function toggleAttendance(userId: string, notes: string = "") {
 }
 
 // ─── NOTIFICATIONS UTILITY ───────────────────────────────────────────────────
-export async function sendNotification(userId: string, title: string, message: string, type: string) {
+async function sendNotification(userId: string, title: string, message: string, type: string) {
   try {
     const id = genId('n');
     const user: any = db.prepare('SELECT email, name FROM users WHERE id = ?').get(userId);
@@ -174,6 +237,9 @@ export async function sendNotification(userId: string, title: string, message: s
 
 // ─── PATIENTS ─────────────────────────────────────────────────────────────────
 export async function createPatient(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const name = (formData.get('name') as string)?.trim();
   const species = formData.get('species') as string;
   const breed = (formData.get('breed') as string)?.trim() || null;
@@ -206,6 +272,9 @@ export async function createPatient(prevState: any, formData: FormData) {
 }
 
 export async function updatePatient(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   const name = (formData.get('name') as string)?.trim();
   const species = formData.get('species') as string;
@@ -239,6 +308,9 @@ export async function updatePatient(prevState: any, formData: FormData) {
 }
 
 export async function updatePatientStatus(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   const status = formData.get('status') as string;
   db.prepare(`UPDATE patients SET status=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?`).run(status, id);
@@ -248,6 +320,9 @@ export async function updatePatientStatus(formData: FormData) {
 }
 
 export async function deletePatient(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   db.prepare('DELETE FROM patients WHERE id=?').run(id);
   revalidatePath('/dashboard/patients');
@@ -256,6 +331,9 @@ export async function deletePatient(formData: FormData) {
 
 // ─── MEDICAL RECORDS ──────────────────────────────────────────────────────────
 export async function createMedicalRecord(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const patientId = formData.get('patientId') as string;
   const veterinarianId = formData.get('veterinarianId') as string;
   const diagnosis = (formData.get('diagnosis') as string)?.trim();
@@ -282,6 +360,9 @@ export async function createMedicalRecord(prevState: any, formData: FormData) {
 
 // ─── HOSPITALIZATIONS ─────────────────────────────────────────────────────────
 export async function admitPatient(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const patientId = formData.get('patientId') as string;
   const notes = (formData.get('notes') as string)?.trim() || '';
   const status = formData.get('hospStatus') as string || 'OBSERVATION';
@@ -320,6 +401,9 @@ export async function admitPatient(prevState: any, formData: FormData) {
 }
 
 export async function updateHospitalization(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   const notes = formData.get('notes') as string;
   const status = formData.get('status') as string;
@@ -346,6 +430,9 @@ export async function updateHospitalization(formData: FormData) {
 }
 
 export async function dischargePatient(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const hospId = formData.get('hospId') as string;
   const patientId = formData.get('patientId') as string;
   const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -367,6 +454,9 @@ export async function dischargePatient(formData: FormData) {
 
 // ─── APPOINTMENTS ─────────────────────────────────────────────────────────────
 export async function createAppointment(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const patientId = formData.get('patientId') as string;
   const reason = (formData.get('reason') as string)?.trim();
   const dateTime = formData.get('dateTime') as string;
@@ -375,6 +465,11 @@ export async function createAppointment(prevState: any, formData: FormData) {
   if (!patientId || !reason || !dateTime || !type) {
     return { error: 'Todos los campos son obligatorios.' };
   }
+
+  if (!isValidIsoDateInput(dateTime)) {
+    return { error: 'La fecha de la cita no es válida.' };
+  }
+
   const id = genId('a');
   db.prepare(`INSERT INTO appointments (id,patientId,reason,dateTime,type,status) VALUES (?,?,?,?,?,'SCHEDULED')`)
     .run(id, patientId, reason, dateTime.replace('T', ' '), type);
@@ -392,6 +487,9 @@ export async function createAppointment(prevState: any, formData: FormData) {
 }
 
 export async function updateAppointmentStatus(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   const status = formData.get('status') as string;
   db.prepare(`UPDATE appointments SET status=? WHERE id=?`).run(status, id);
@@ -415,6 +513,9 @@ export async function updateAppointmentStatus(formData: FormData) {
 }
 
 export async function startAppointment(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   db.prepare(`UPDATE appointments SET status='IN_PROGRESS' WHERE id=?`).run(id);
 
@@ -469,9 +570,12 @@ export async function startAppointment(formData: FormData) {
 }
 
 export async function addHospitalizationCharge(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const hospId = formData.get('hospId') as string;
   const catalogItemId = formData.get('catalogItemId') as string;
-  const quantity = Number(formData.get('quantity') as string);
+  const quantity = parsePositiveNumber(formData.get('quantity'));
   const notes = (formData.get('notes') as string)?.trim() || null;
 
   if (!hospId || !catalogItemId || !quantity || quantity <= 0) {
@@ -494,7 +598,7 @@ export async function addHospitalizationCharge(prevState: any, formData: FormDat
   const ownerClient: any = db.prepare('SELECT id, userId FROM clients WHERE id = ?').get(hospitalization.ownerId);
   if (!ownerClient) return { error: 'No se encontro cliente propietario.' };
 
-  const openConsultation = db.prepare(`
+  const openConsultation: any = db.prepare(`
     SELECT * FROM consultations
     WHERE patientId = ? AND status = 'OPEN'
     ORDER BY startedAt DESC
@@ -547,17 +651,25 @@ export async function addHospitalizationCharge(prevState: any, formData: FormDat
 
 // ─── INVENTORY ────────────────────────────────────────────────────────────────
 export async function createInventoryItem(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const name = (formData.get('name') as string)?.trim();
   const category = formData.get('category') as string;
-  const quantity = parseInt(formData.get('quantity') as string) || 0;
+  const quantity = parseNonNegativeInteger(formData.get('quantity'));
   const unit = (formData.get('unit') as string)?.trim();
-  const minStock = parseInt(formData.get('minStock') as string) || 0;
+  const minStock = parseNonNegativeInteger(formData.get('minStock'));
   const location = (formData.get('location') as string)?.trim() || null;
   const expiryDate = formData.get('expiryDate') as string || null;
 
-  if (!name || !category || !unit) {
+  if (!name || !category || !unit || quantity === null || minStock === null) {
     return { error: 'Nombre, categoría y unidad son obligatorios.' };
   }
+
+  if (expiryDate && !isValidIsoDateInput(expiryDate)) {
+    return { error: 'La fecha de caducidad no es válida.' };
+  }
+
   const id = genId('i');
   db.prepare(`INSERT INTO inventory_items (id,name,category,quantity,unit,minStock,location,expiryDate) VALUES (?,?,?,?,?,?,?,?)`)
     .run(id, name, category, quantity, unit, minStock, location, expiryDate || null);
@@ -566,13 +678,21 @@ export async function createInventoryItem(prevState: any, formData: FormData) {
 }
 
 export async function updateInventory(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
-  const quantity = parseInt(formData.get('quantity') as string);
+  const quantity = parseNonNegativeInteger(formData.get('quantity'));
+  if (!id || quantity === null) return { error: 'Cantidad inválida.' };
+
   db.prepare(`UPDATE inventory_items SET quantity=? WHERE id=?`).run(quantity, id);
   revalidatePath('/dashboard/inventory');
 }
 
 export async function deleteInventoryItem(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   db.prepare(`DELETE FROM inventory_items WHERE id=?`).run(id);
   revalidatePath('/dashboard/inventory');
@@ -580,14 +700,22 @@ export async function deleteInventoryItem(formData: FormData) {
 
 // ─── INVOICES ─────────────────────────────────────────────────────────────────
 export async function createInvoice(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const clientId = formData.get('clientId') as string;
-  const amount = parseFloat(formData.get('amount') as string);
+  const amount = parsePositiveNumber(formData.get('amount'));
   const dueDate = formData.get('dueDate') as string;
   const description = (formData.get('description') as string)?.trim() || null;
 
   if (!clientId || !amount || !dueDate) {
     return { error: 'Cliente, importe y fecha de vencimiento son obligatorios.' };
   }
+
+  if (!isValidIsoDateInput(dueDate)) {
+    return { error: 'La fecha de vencimiento no es válida.' };
+  }
+
   const id = genId('inv');
   const consultationNumber = (formData.get('consultationNumber') as string)?.trim() || null;
   db.prepare(`
@@ -607,14 +735,58 @@ export async function createInvoice(prevState: any, formData: FormData) {
 }
 
 export async function updateInvoiceStatus(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const id = formData.get('id') as string;
   const status = formData.get('status') as string;
   db.prepare(`UPDATE invoices SET status=? WHERE id=?`).run(status, id);
   revalidatePath('/dashboard/billing');
+  revalidatePath(`/dashboard/billing/${id}`);
+}
+
+export async function addInvoiceItem(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
+  const invoiceId = sanitizeText(formData.get('invoiceId'));
+  const description = sanitizeText(formData.get('description'));
+  const unit = sanitizeText(formData.get('unit')) || 'servicio';
+  const quantity = parsePositiveNumber(formData.get('quantity'));
+  const unitPrice = parsePositiveNumber(formData.get('unitPrice'));
+  const notes = sanitizeText(formData.get('notes')) || null;
+
+  if (!invoiceId || !description || !quantity || !unitPrice) {
+    return { error: 'Datos de línea de factura incompletos.' };
+  }
+
+  const invoice: any = db.prepare('SELECT id FROM invoices WHERE id = ?').get(invoiceId);
+  if (!invoice) {
+    return { error: 'Factura no encontrada.' };
+  }
+
+  const amount = Number((quantity * unitPrice).toFixed(2));
+
+  db.prepare(`
+    INSERT INTO invoice_items (id, invoiceId, description, quantity, unit, unitPrice, amount, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(genId('inv_item'), invoiceId, description, quantity, unit, unitPrice, amount, notes);
+
+  syncInvoiceTotal(invoiceId);
+
+  revalidatePath('/dashboard/billing');
+  revalidatePath(`/dashboard/billing/${invoiceId}`);
+  revalidatePath('/client-portal');
+  revalidatePath('/client-portal/invoices');
+
+  return { success: 'Línea de factura añadida correctamente.' };
 }
 
 // ─── EMPLOYEES ────────────────────────────────────────────────────────────────
 export async function createEmployee(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor || actor.role !== UserRole.ADMIN) return { error: 'No autorizado.' };
+
   const name = (formData.get('name') as string)?.trim();
   const email = (formData.get('email') as string)?.trim().toLowerCase();
   const role = formData.get('role') as string;
@@ -625,6 +797,17 @@ export async function createEmployee(prevState: any, formData: FormData) {
 
   if (!name || !email || !role || !password) {
     return { error: 'Nombre, email, rol y contraseña son obligatorios.' };
+  }
+
+  const passwordValidation = z
+    .string()
+    .min(10)
+    .regex(/[A-Z]/)
+    .regex(/[a-z]/)
+    .regex(/[0-9]/)
+    .safeParse(password);
+  if (!passwordValidation.success) {
+    return { error: 'La contraseña no cumple las políticas de seguridad.' };
   }
   const existing = db.prepare('SELECT id FROM users WHERE email=?').get(email);
   if (existing) return { error: 'Ya existe un usuario con ese email.' };
@@ -643,6 +826,9 @@ export async function createEmployee(prevState: any, formData: FormData) {
 }
 
 export async function deleteEmployee(formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor || actor.role !== UserRole.ADMIN) return { error: 'No autorizado.' };
+
   const userId = formData.get('userId') as string;
   db.prepare('DELETE FROM users WHERE id=?').run(userId); // cascade deletes employee too
   revalidatePath('/dashboard/staff');
@@ -650,6 +836,9 @@ export async function deleteEmployee(formData: FormData) {
 
 // ─── PAYMENTS (Client Portal) ─────────────────────────────────────────────────
 export async function payInvoice(prevState: any, formData: FormData) {
+  const actor = await requireAuthenticatedActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const invoiceId  = formData.get('invoiceId') as string;
   const method     = formData.get('method') as string;
   const cardLast4  = formData.get('cardLast4') as string | null;
@@ -662,6 +851,19 @@ export async function payInvoice(prevState: any, formData: FormData) {
   const invoice: any = db.prepare('SELECT * FROM invoices WHERE id=?').get(invoiceId);
   if (!invoice) return { error: 'Factura no encontrada.' };
   if (invoice.status === 'PAID') return { error: 'Esta factura ya está pagada.' };
+
+  if (actor.role === UserRole.CLIENT) {
+    const ownerUser: any = db.prepare(`
+      SELECT u.id as userId
+      FROM invoices i
+      JOIN clients c ON i.clientId = c.id
+      JOIN users u ON c.userId = u.id
+      WHERE i.id = ?
+    `).get(invoiceId);
+    if (!ownerUser || ownerUser.userId !== actor.id) {
+      return { error: 'No autorizado.' };
+    }
+  }
 
   const ref = `PAY-${Date.now().toString(36).toUpperCase()}`;
   const note = cardLast4
@@ -690,11 +892,18 @@ export async function payInvoice(prevState: any, formData: FormData) {
 
 // ─── CLIENT PROFILE ───────────────────────────────────────────────────────────
 export async function updateClientProfile(prevState: any, formData: FormData) {
+  const actor = await requireAuthenticatedActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const userId = formData.get('userId') as string;
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
-  const address = formData.get('address') as string;
+  const name = sanitizeText(formData.get('name'));
+  const email = sanitizeText(formData.get('email')).toLowerCase();
+  const phone = sanitizeText(formData.get('phone'));
+  const address = sanitizeText(formData.get('address'));
+
+  if (actor.id !== userId && !isStaffRole(actor.role)) {
+    return { error: 'No autorizado.' };
+  }
 
   if (!userId || !name || !email) return { error: 'Nombre y Email son obligatorios.' };
 
@@ -712,6 +921,9 @@ export async function updateClientProfile(prevState: any, formData: FormData) {
 
 // ─── ADD PET FROM PORTAL ──────────────────────────────────────────────────────
 export async function addPetFromPortal(prevState: any, formData: FormData) {
+  const actor = await requireAuthenticatedActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const clientId = formData.get('clientId') as string;
   const name     = (formData.get('name') as string)?.trim();
   const species  = formData.get('species') as string;
@@ -722,6 +934,17 @@ export async function addPetFromPortal(prevState: any, formData: FormData) {
 
   if (!clientId || !name || !species) {
     return { error: 'El nombre y la especie de tu mascota son obligatorios.' };
+  }
+
+  const ownerUser: any = db.prepare(`
+    SELECT userId FROM clients WHERE id = ?
+  `).get(clientId);
+  if (!ownerUser) {
+    return { error: 'Cliente no encontrado.' };
+  }
+
+  if (actor.role === UserRole.CLIENT && ownerUser.userId !== actor.id) {
+    return { error: 'No autorizado.' };
   }
 
   const id = genId('p');
@@ -735,6 +958,9 @@ export async function addPetFromPortal(prevState: any, formData: FormData) {
 
 // ─── OPERATING ROOMS ──────────────────────────────────────────────────────────
 export async function occupyOR(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const orId = formData.get('orId') as string;
   const patientId = formData.get('patientId') as string;
   const procedure = formData.get('procedure') as string;
@@ -763,6 +989,9 @@ export async function occupyOR(prevState: any, formData: FormData) {
 }
 
 export async function releaseOR(prevState: any, formData: FormData) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   const orId = formData.get('orId') as string;
   const findings = formData.get('findings') as string;
 
@@ -798,6 +1027,9 @@ export async function releaseOR(prevState: any, formData: FormData) {
 }
 
 export async function updateORStatus(orId: string, status: string) {
+  const actor = await requireStaffActor();
+  if (!actor) return { error: 'No autorizado.' };
+
   db.prepare('UPDATE operating_rooms SET status = ? WHERE id = ?').run(status, orId);
   revalidatePath('/dashboard/hospital/operating-rooms');
 }

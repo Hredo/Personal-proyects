@@ -27,7 +27,7 @@ export function HospitalizationEditor({
         Actualizar Seguimiento
       </button>
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Actualizar Seguimiento Clínico">
-        <form action={updateHospitalization}>
+        <form action={async (formData) => { await updateHospitalization(formData); }}>
           <input type="hidden" name="id" value={hospId} />
           <div style={fieldStyle}>
             <label style={labelStyle}>Estado Clínico</label>
@@ -85,7 +85,7 @@ export function DischargeButton({ hospId, patientId, patientName }: { hospId: st
         </p>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={() => setConfirm(false)} className="btn" style={{ flex: 1, border: '1px solid #e2e8f0' }}>Cancelar</button>
-          <form action={dischargePatient} style={{ flex: 1 }}>
+          <form action={async (formData) => { await dischargePatient(formData); }} style={{ flex: 1 }}>
             <input type="hidden" name="hospId" value={hospId} />
             <input type="hidden" name="patientId" value={patientId} />
             <button type="submit" className="btn" style={{ width: '100%', background: '#0f766e', color: 'white' }}>

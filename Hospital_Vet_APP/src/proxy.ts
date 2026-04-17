@@ -3,9 +3,7 @@ import authConfig from "./auth.config";
 import { NextResponse } from "next/server";
 import { UserRole } from "@/lib/constants";
 
-
 const { auth } = NextAuth(authConfig);
-
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
@@ -32,12 +30,8 @@ export default auth((req) => {
     }
   }
 
-  if (isPortalRoute) {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", nextUrl));
-    }
-    // Employees can access portal to see what clients see if needed, 
-    // but usually clients only.
+  if (isPortalRoute && !isLoggedIn) {
+    return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
   return NextResponse.next();

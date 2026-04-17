@@ -83,7 +83,7 @@ export function InvoiceStatusButton({ invoiceId, currentStatus }: { invoiceId: s
       <Modal isOpen={open} onClose={() => setOpen(false)} title="Cambiar Estado de Factura" width="340px">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {statuses.map(s => (
-            <form key={s.value} action={updateInvoiceStatus}>
+            <form key={s.value} action={async (formData) => { await updateInvoiceStatus(formData); }}>
               <input type="hidden" name="id" value={invoiceId} />
               <input type="hidden" name="status" value={s.value} />
               <button type="submit" onClick={() => setOpen(false)} style={{

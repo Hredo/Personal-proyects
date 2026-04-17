@@ -72,21 +72,21 @@ export function AppointmentStatusButtons({ appointmentId, currentStatus }: { app
   return (
     <div style={{ display: 'flex', gap: '0.5rem' }}>
       {currentStatus === 'SCHEDULED' && (
-        <form action={startAppointment}>
+        <form action={async (formData) => { await startAppointment(formData); }}>
           <input type="hidden" name="id" value={appointmentId} />
           <button type="submit" title="Iniciar consulta" style={{ background: '#e0f2fe', border: 'none', borderRadius: '0.4rem', padding: '0.3rem 0.6rem', cursor: 'pointer', color: '#0369a1' }}>
             <Play size={16} />
           </button>
         </form>
       )}
-      <form action={updateAppointmentStatus}>
+      <form action={async (formData) => { await updateAppointmentStatus(formData); }}>
         <input type="hidden" name="id" value={appointmentId} />
         <input type="hidden" name="status" value="COMPLETED" />
         <button type="submit" title="Marcar como completada" style={{ background: '#dcfce7', border: 'none', borderRadius: '0.4rem', padding: '0.3rem 0.6rem', cursor: 'pointer', color: '#166534' }}>
           <CheckCircle size={16} />
         </button>
       </form>
-      <form action={updateAppointmentStatus}>
+      <form action={async (formData) => { await updateAppointmentStatus(formData); }}>
         <input type="hidden" name="id" value={appointmentId} />
         <input type="hidden" name="status" value="CANCELLED" />
         <button type="submit" title="Cancelar" style={{ background: '#fee2e2', border: 'none', borderRadius: '0.4rem', padding: '0.3rem 0.6rem', cursor: 'pointer', color: '#991b1b' }}>

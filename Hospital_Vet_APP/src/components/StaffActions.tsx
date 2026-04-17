@@ -91,7 +91,7 @@ export function DeleteEmployeeButton({ userId, name }: { userId: string; name: s
         </p>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button onClick={() => setConfirm(false)} className="btn" style={{ flex: 1, border: '1px solid #e2e8f0' }}>Cancelar</button>
-          <form action={deleteEmployee} style={{ flex: 1 }}>
+          <form action={async (formData) => { await deleteEmployee(formData); }} style={{ flex: 1 }}>
             <input type="hidden" name="userId" value={userId} />
             <button type="submit" className="btn" style={{ width: '100%', background: '#ef4444', color: 'white' }}>Eliminar</button>
           </form>

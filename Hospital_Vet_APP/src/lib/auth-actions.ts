@@ -10,7 +10,12 @@ import { z } from "zod";
 const RegisterSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  password: z
+    .string()
+    .min(10, "La contraseña debe tener al menos 10 caracteres")
+    .regex(/[A-Z]/, "La contraseña debe incluir al menos una mayúscula")
+    .regex(/[a-z]/, "La contraseña debe incluir al menos una minúscula")
+    .regex(/[0-9]/, "La contraseña debe incluir al menos un número"),
 });
 
 const LoginSchema = z.object({
@@ -27,7 +32,8 @@ export async function register(formData: FormData) {
     return { error: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { name, email, password } = validatedFields.data;
+  const { name, password } = validatedFields.data;
+  const email = validatedFields.data.email.trim().toLowerCase();
 
   try {
     const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
@@ -65,7 +71,8 @@ export async function login(formData: FormData) {
     return { error: validatedFields.error.flatten().fieldErrors };
   }
 
-  const { email, password } = validatedFields.data;
+  const email = validatedFields.data.email.trim().toLowerCase();
+  const { password } = validatedFields.data;
 
   try {
     await signIn("credentials", {

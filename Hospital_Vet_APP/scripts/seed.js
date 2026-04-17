@@ -61,10 +61,25 @@ db.exec(`
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP, dueDate DATETIME NOT NULL,
     FOREIGN KEY (clientId) REFERENCES clients(id) ON DELETE CASCADE
   );
+  CREATE TABLE IF NOT EXISTS invoice_items (
+    id TEXT PRIMARY KEY, invoiceId TEXT NOT NULL, consultationId TEXT,
+    hospitalizationId TEXT, catalogItemId TEXT, description TEXT NOT NULL,
+    quantity REAL NOT NULL, unit TEXT NOT NULL, unitPrice REAL NOT NULL,
+    amount REAL NOT NULL, notes TEXT, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoiceId) REFERENCES invoices(id) ON DELETE CASCADE
+  );
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY, userId TEXT NOT NULL, title TEXT NOT NULL,
+    message TEXT NOT NULL, type TEXT NOT NULL, isRead BOOLEAN DEFAULT 0,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+  );
 `);
 
 // ─── CLEAR ────────────────────────────────────────────────────────────────────
 const clearAll = db.transaction(() => {
+  db.prepare('DELETE FROM notifications').run();
+  db.prepare('DELETE FROM invoice_items').run();
   db.prepare('DELETE FROM invoices').run();
   db.prepare('DELETE FROM appointments').run();
   db.prepare('DELETE FROM medical_records').run();
@@ -315,10 +330,98 @@ const invoices = [
   { id:'inv15', cid:'c6',  amount:220.00, status:'PAID',    created:pastDate(8),  due:pastDate(0) },
 ];
 const insInv2 = db.prepare(`INSERT INTO invoices (id,clientId,amount,status,createdAt,dueDate) VALUES (?,?,?,?,?,?)`);
+const insInvoiceLine = db.prepare(`
+  INSERT INTO invoice_items (id, invoiceId, description, quantity, unit, unitPrice, amount, notes, createdAt)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
 for (const inv of invoices) {
   insInv2.run(inv.id, inv.cid, inv.amount, inv.status, inv.created, inv.due);
+  const consultationLine = Number((inv.amount * 0.7).toFixed(2));
+  const suppliesLine = Number((inv.amount - consultationLine).toFixed(2));
+  insInvoiceLine.run(`${inv.id}_l1`, inv.id, 'Acto clínico profesional', 1, 'servicio', consultationLine, consultationLine, 'Línea generada automáticamente', inv.created);
+  insInvoiceLine.run(`${inv.id}_l2`, inv.id, 'Materiales y consumibles', 1, 'lote', suppliesLine, suppliesLine, 'Línea generada automáticamente', inv.created);
 }
 console.log(`✓ ${invoices.length} facturas creadas`);
+
+console.log('✓ Generando dataset profesional ampliado...');
+
+const EXTRA_CLIENTS = 280;
+const PETS_PER_CLIENT = 2;
+const extraTx = db.transaction(() => {
+  for (let i = 1; i <= EXTRA_CLIENTS; i++) {
+    const uid = `ux${i}`;
+    const cid = `cx${i}`;
+    const name = `Cliente Sintético ${i}`;
+    const email = `cliente.sintetico.${i}@hospitalvet.local`;
+    const created = pastDate((i % 90) + 1);
+    const due = dueDate((i % 45) + 5);
+
+    insUser.run(uid, email, userPwd, name, 'CLIENT');
+    insCli.run(cid, uid, `+34 60${String(1000000 + i).slice(-7)}`, `Calle Clínica ${i}, Madrid`);
+
+    for (let p = 1; p <= PETS_PER_CLIENT; p++) {
+      const pid = `px${i}_${p}`;
+      const species = p % 2 === 0 ? 'Perro' : 'Gato';
+      const breed = species === 'Perro' ? 'Mestizo' : 'Común Europeo';
+      const weight = species === 'Perro' ? 8 + (i % 24) : 3 + (i % 5);
+
+      insPat.run(
+        pid,
+        `${species === 'Perro' ? 'Can' : 'Fel'} ${i}-${p}`,
+        species,
+        breed,
+        `202${i % 5}-0${1 + ((i + p) % 9)}-${String(1 + ((i + p) % 27)).padStart(2, '0')}`,
+        (i + p) % 2 === 0 ? 'Macho' : 'Hembra',
+        weight,
+        cid,
+        'HEALTHY'
+      );
+
+      const appId = `ax${i}_${p}`;
+      insApp.run(
+        appId,
+        pid,
+        'Chequeo preventivo',
+        fmtDate((i + p) % 30, 9 + ((i + p) % 8), 0),
+        'Consulta',
+        (i + p) % 5 === 0 ? 'COMPLETED' : 'SCHEDULED'
+      );
+
+      insMR.run(
+        `mrx${i}_${p}`,
+        pid,
+        `e${1 + ((i + p) % 8)}`,
+        fmtDate(-((i + p) % 120), 10, 0),
+        'Revisión general sin incidencias graves',
+        'Seguimiento preventivo anual',
+        'Registro sintético profesional para pruebas de carga'
+      );
+
+      const invId = `invx${i}_${p}`;
+      const amount = 70 + ((i + p) % 180);
+      const invStatus = (i + p) % 4 === 0 ? 'OVERDUE' : (i + p) % 3 === 0 ? 'PAID' : 'PENDING';
+      insInv2.run(invId, cid, amount, invStatus, created, due);
+
+      const consult = Number((amount * 0.65).toFixed(2));
+      const meds = Number((amount - consult).toFixed(2));
+      insInvoiceLine.run(`${invId}_1`, invId, 'Consulta clínica avanzada', 1, 'consulta', consult, consult, 'Set sintético', created);
+      insInvoiceLine.run(`${invId}_2`, invId, 'Tratamiento farmacológico', 1, 'lote', meds, meds, 'Set sintético', created);
+    }
+
+    db.prepare('INSERT INTO notifications (id,userId,title,message,type,isRead,createdAt) VALUES (?,?,?,?,?,?,?)').run(
+      `nx${i}`,
+      uid,
+      'Actualización de historial clínico',
+      'Se han generado movimientos de cita y facturación en tu área de cliente.',
+      'SYSTEM',
+      0,
+      created
+    );
+  }
+});
+
+extraTx();
+console.log(`✓ Dataset ampliado: +${EXTRA_CLIENTS} clientes y +${EXTRA_CLIENTS * PETS_PER_CLIENT} pacientes sintéticos`);
 
 db.pragma('foreign_keys = ON');
 
@@ -330,5 +433,6 @@ console.log('  Vet:    carlos@hospitalvet.com  /  vet123');
 console.log('  Client: maria@gmail.com         /  user123');
 console.log('  Client: zoo@madrid.es           /  user123');
 console.log('  Client: juanpe@hotmail.com      /  user123');
+console.log('\nℹ Datos de entorno ampliado: sintéticos, realistas y aptos para pruebas (no datos personales reales).');
 
 db.close();

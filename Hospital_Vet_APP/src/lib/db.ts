@@ -6,6 +6,9 @@ const db = new Database(dbPath);
 
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
+db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
+db.pragma('busy_timeout = 5000');
 
 // Initialize database with schema
 export function initDb() {
@@ -88,6 +91,7 @@ export function initDb() {
       monitoredBy TEXT,
       notes TEXT,
       vitals TEXT,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (patientId) REFERENCES patients(id) ON DELETE CASCADE
     );
 
@@ -96,9 +100,9 @@ export function initDb() {
       name TEXT NOT NULL,
       category TEXT NOT NULL,
       speciesTarget TEXT,
-      quantity INTEGER NOT NULL,
+      quantity INTEGER NOT NULL CHECK (quantity >= 0),
       unit TEXT NOT NULL,
-      minStock INTEGER NOT NULL,
+      minStock INTEGER NOT NULL CHECK (minStock >= 0),
       expiryDate DATETIME,
       location TEXT
     );
@@ -116,7 +120,7 @@ export function initDb() {
     CREATE TABLE IF NOT EXISTS invoices (
       id TEXT PRIMARY KEY,
       clientId TEXT NOT NULL,
-      amount REAL NOT NULL,
+      amount REAL NOT NULL CHECK (amount >= 0),
       status TEXT NOT NULL DEFAULT 'PENDING',
       consultationId TEXT,
       consultationNumber TEXT,
@@ -158,10 +162,10 @@ export function initDb() {
       hospitalizationId TEXT,
       catalogItemId TEXT,
       description TEXT NOT NULL,
-      quantity REAL NOT NULL,
+      quantity REAL NOT NULL CHECK (quantity > 0),
       unit TEXT NOT NULL,
-      unitPrice REAL NOT NULL,
-      amount REAL NOT NULL,
+      unitPrice REAL NOT NULL CHECK (unitPrice >= 0),
+      amount REAL NOT NULL CHECK (amount >= 0),
       notes TEXT,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (invoiceId) REFERENCES invoices(id) ON DELETE CASCADE,
@@ -191,6 +195,16 @@ export function initDb() {
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_patients_ownerId ON patients(ownerId);
+    CREATE INDEX IF NOT EXISTS idx_appointments_patientId ON appointments(patientId);
+    CREATE INDEX IF NOT EXISTS idx_appointments_dateTime ON appointments(dateTime);
+    CREATE INDEX IF NOT EXISTS idx_hospitalizations_patientId ON hospitalizations(patientId);
+    CREATE INDEX IF NOT EXISTS idx_hospitalizations_dischargeDate ON hospitalizations(dischargeDate);
+    CREATE INDEX IF NOT EXISTS idx_consultations_patient_status ON consultations(patientId, status);
+    CREATE INDEX IF NOT EXISTS idx_invoice_items_invoiceId ON invoice_items(invoiceId);
+    CREATE INDEX IF NOT EXISTS idx_notifications_userId ON notifications(userId);
   `);
 }
 
@@ -199,6 +213,7 @@ initDb();
 
 // Migrations
 try { db.exec(`ALTER TABLE hospitalizations ADD COLUMN vitals TEXT`); } catch {}
+try { db.exec(`ALTER TABLE hospitalizations ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS operating_rooms (id TEXT PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'AVAILABLE', patientId TEXT, procedure TEXT, startTime DATETIME, staffIds TEXT, findings TEXT)`); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS notifications (id TEXT PRIMARY KEY, userId TEXT NOT NULL, title TEXT NOT NULL, message TEXT NOT NULL, type TEXT NOT NULL, isRead BOOLEAN DEFAULT 0, createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`); } catch {}
 try { db.exec(`ALTER TABLE employees ADD COLUMN qualifications TEXT`); } catch {}

@@ -11,25 +11,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("Auth: Missing credentials");
           return null;
         }
 
-        const user: any = db.prepare('SELECT * FROM users WHERE email = ?').get(credentials.email);
+        const email = String(credentials.email).trim().toLowerCase();
+        const password = String(credentials.password);
+
+        if (!email || !password) {
+          return null;
+        }
+
+        const user: any = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
 
         if (!user) {
-          console.log("Auth: User not found:", credentials.email);
           return null;
         }
 
-        const isValid = await compare(credentials.password as string, user.password);
+        const isValid = await compare(password, user.password);
 
         if (!isValid) {
-          console.log("Auth: Invalid password for:", credentials.email);
           return null;
         }
 
-        console.log("Auth: Success for:", credentials.email);
         return {
           id: user.id,
           name: user.name,
