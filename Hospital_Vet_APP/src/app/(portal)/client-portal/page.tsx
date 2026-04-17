@@ -341,8 +341,7 @@ export default async function ClientPortalPage() {
                           Abrir factura completa
                         </Link>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {!isPaid && <PaymentModal invoiceId={inv.id} amount={Number(inv.amount)} />}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
                         <span style={{
                           fontSize: '0.72rem', padding: '0.25rem 0.6rem', borderRadius: '2rem', fontWeight: '600',
                           background: isPaid ? '#dcfce7' : isOverdue ? '#fee2e2' : '#ffedd5',
@@ -351,6 +350,7 @@ export default async function ClientPortalPage() {
                         }}>
                           {isPaid ? <><CheckCircle size={12} style={{ verticalAlign: 'middle', marginRight: '2px' }} />Pagado</> : isOverdue ? 'Vencido' : 'Pendiente'}
                         </span>
+                        {!isPaid && <PaymentModal invoiceId={inv.id} amount={Number(inv.amount)} />}
                       </div>
                     </div>
                   );

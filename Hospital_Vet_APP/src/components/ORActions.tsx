@@ -30,7 +30,7 @@ export function OccupyORButton({ orId, orName, patients, staff }: {
       <Modal isOpen={open} onClose={() => setOpen(false)} title={`Ocupar ${orName}`}>
         {state?.error && <p style={{ color: '#991b1b', background: '#fee2e2', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem' }}>⚠ {state.error}</p>}
         {state?.success && <p style={{ color: '#166534', background: '#dcfce7', padding: '0.75rem', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem' }}>✓ {state.success}</p>}
-        <form action={action}>
+        <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <input type="hidden" name="orId" value={orId} />
           <input type="hidden" name="staffIds" value={JSON.stringify(selectedStaff)} />
           
@@ -49,7 +49,7 @@ export function OccupyORButton({ orId, orName, patients, staff }: {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.4rem' }}>Equipo Médico ({selectedStaff.length})</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem' }}>
               {staff.map(s => (
                 <button 
                   key={s.id} 
@@ -71,9 +71,11 @@ export function OccupyORButton({ orId, orName, patients, staff }: {
             </div>
           </div>
 
-          <button type="submit" disabled={isPending} className="btn btn-primary" style={{ width: '100%' }}>
-            {isPending ? 'Procesando...' : 'Confirmar Ingreso a Quirófano'}
-          </button>
+          <div style={{ position: 'sticky', bottom: 0, background: 'white', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0', marginTop: '0.5rem' }}>
+            <button type="submit" disabled={isPending} className="btn btn-primary" style={{ width: '100%' }}>
+              {isPending ? 'Procesando...' : 'Confirmar Ingreso a Quirófano'}
+            </button>
+          </div>
         </form>
       </Modal>
     </>
