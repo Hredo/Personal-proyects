@@ -2,6 +2,13 @@
 
 Professional veterinary hospital management platform built with Next.js and TypeScript. The app includes staff workflows, patient management, appointments, hospitalization monitoring, inventory control, billing, and a client portal.
 
+## Current Status (April 2026)
+
+- Enterprise-ready implementation available (see `ENTERPRISE_README.md` and `SLA.md`).
+- Local execution verified on 17/04/2026.
+- Development server runs successfully with `npm run dev`.
+- If port 3000 is busy, Next.js automatically uses the next available port (for example 3001).
+
 ## Table of Contents
 
 1. Overview
@@ -61,6 +68,12 @@ Before running locally, make sure you have:
 ```bash
 git clone <your-repository-url>
 cd Hospital_Vet_APP
+```
+
+If you are using this monorepo layout, move into the app folder from workspace root:
+
+```bash
+cd Personal-proyects/Hospital_Vet_APP
 ```
 
 2. Install dependencies.
@@ -137,6 +150,14 @@ Additional notes:
 - npm run start: run production server from build output.
 - npm run lint: run Next.js lint command.
 - npm run seed: execute database seed script.
+- npm run seed:full: execute full seed flow (currently mapped to `scripts/seed.js`).
+- npm run test:e2e: run Playwright end-to-end tests.
+- npm run test:e2e:ui: run Playwright in UI mode.
+- npm run test:e2e:debug: run Playwright in debug mode.
+- npm run test:unit: run unit tests (Jest).
+- npm run test:watch: run Jest in watch mode.
+- npm run test:coverage: run Jest coverage report.
+- npm run test:security: run npm audit and lint.
 
 ## Project Structure
 
@@ -174,7 +195,18 @@ npm run seed
 npm run dev -- -p 3001
 ```
 
-4. Email notifications not sending
+- Or let Next.js auto-select an available port (default behavior).
+
+4. `npm run dev` fails from workspace root
+
+- Run the command inside the app folder:
+
+```bash
+cd Personal-proyects/Hospital_Vet_APP
+npm run dev
+```
+
+5. Email notifications not sending
 
 - Confirm RESEND_API_KEY is present in .env.
 - Without that key, notifications are logged but no real email is sent.

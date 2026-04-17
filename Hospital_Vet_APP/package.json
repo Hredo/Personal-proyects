@@ -8,7 +8,14 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seed.js",
-    "seed:full": "node scripts/seed.js"
+    "seed:full": "node scripts/seed.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:unit": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:security": "npm audit && npm run lint"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +31,7 @@
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.575.0",
     "next": "^16.1.6",
     "next-auth": "^5.0.0-beta.30",
@@ -36,6 +44,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/better-sqlite3": "^7.6.13"
   }
 }

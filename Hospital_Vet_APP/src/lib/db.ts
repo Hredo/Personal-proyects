@@ -205,6 +205,62 @@ export function initDb() {
     CREATE INDEX IF NOT EXISTS idx_consultations_patient_status ON consultations(patientId, status);
     CREATE INDEX IF NOT EXISTS idx_invoice_items_invoiceId ON invoice_items(invoiceId);
     CREATE INDEX IF NOT EXISTS idx_notifications_userId ON notifications(userId);
+
+    -- GDPR Compliance Tables
+    CREATE TABLE IF NOT EXISTS gdpr_audit_log (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      eventType TEXT NOT NULL,
+      description TEXT NOT NULL,
+      ipAddress TEXT,
+      userAgent TEXT,
+      affectedRecords TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expiresAt DATETIME,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS gdpr_consents (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      consentType TEXT NOT NULL,
+      version TEXT NOT NULL,
+      given BOOLEAN DEFAULT FALSE,
+      givenAt DATETIME,
+      expiresAt DATETIME,
+      ipAddress TEXT,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(userId, consentType)
+    );
+
+    CREATE TABLE IF NOT EXISTS gdpr_deletion_requests (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      requestedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      confirmedAt DATETIME,
+      completedAt DATETIME,
+      status TEXT DEFAULT 'PENDING',
+      token TEXT NOT NULL UNIQUE,
+      expiresAt DATETIME,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS gdpr_data_exports (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      requestedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      completedAt DATETIME,
+      downloadUrl TEXT,
+      expiresAt DATETIME,
+      size INTEGER,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_audit_userId ON gdpr_audit_log(userId);
+    CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON gdpr_audit_log(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_audit_expiresAt ON gdpr_audit_log(expiresAt);
+    CREATE INDEX IF NOT EXISTS idx_consents_userId ON gdpr_consents(userId);
+    CREATE INDEX IF NOT EXISTS idx_deletion_userId ON gdpr_deletion_requests(userId);
   `);
 }
 
