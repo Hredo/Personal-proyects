@@ -1,0 +1,31 @@
+VetHospital 24h - Proprietary Software License
+
+Copyright (c) 2026 VetHospital 24h SL. All rights reserved.
+
+1. Grant of License
+This software and associated documentation files (the "Software") are proprietary and confidential. No permission is granted to use, copy, modify, merge, publish, distribute, sublicense, and or sell copies of the Software unless explicitly authorized in writing by VetHospital 24h SL.
+
+2. Ownership
+The Software is licensed, not sold. VetHospital 24h SL retains all rights, title, and interest in and to the Software, including all intellectual property rights.
+
+3. Restrictions
+You may not:
+- Reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code except where required by applicable law.
+- Remove or alter any copyright, trademark, or proprietary notices.
+- Redistribute the Software without prior written authorization.
+
+4. Confidentiality
+Any non-public materials, source code, technical documentation, and business logic are confidential and must not be disclosed to third parties without prior written consent.
+
+5. Warranty Disclaimer
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+6. Limitation of Liability
+IN NO EVENT SHALL VETHOSPITAL 24H SL BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+7. Termination
+Any unauthorized use automatically terminates any rights to use this Software.
+
+8. Contact
+For licensing requests, commercial agreements, or permissions:
+support@vethospital24h.com
