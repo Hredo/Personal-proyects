@@ -91,42 +91,69 @@ def _call_gemini(prompt: str, temperature: float) -> str:
     if not settings.gemini_api_key:
         raise ValueError("Missing Gemini API key")
 
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
-    )
+    candidate_models = [
+        settings.gemini_model,
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+    ]
+    unique_models: list[str] = []
+    for model in candidate_models:
+        if model and model not in unique_models:
+            unique_models.append(model)
+
+    base_urls = [
+        "https://generativelanguage.googleapis.com/v1beta/models",
+        "https://generativelanguage.googleapis.com/v1/models",
+    ]
+
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": temperature,
         },
     }
-    request = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
 
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as error:
-        raise ValueError(f"Gemini API error: {error.code}") from error
-    except urllib.error.URLError as error:
-        raise ValueError(f"Gemini API unavailable: {error.reason}") from error
+    last_error: Exception | None = None
+    for model in unique_models:
+        for base_url in base_urls:
+            url = f"{base_url}/{model}:generateContent?key={settings.gemini_api_key}"
+            request = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
 
-    candidates = data.get("candidates") or []
-    if not candidates:
-        raise ValueError("Gemini API returned no candidates")
+            try:
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    data = json.loads(response.read().decode("utf-8"))
+            except urllib.error.HTTPError as error:
+                last_error = error
+                # 404 suele indicar modelo/endpoint incorrecto; probar siguiente candidato.
+                if error.code == 404:
+                    continue
+                raise ValueError(f"Gemini API error: {error.code}") from error
+            except urllib.error.URLError as error:
+                raise ValueError(f"Gemini API unavailable: {error.reason}") from error
 
-    content = candidates[0].get("content") or {}
-    parts = content.get("parts") or []
-    text = "".join(part.get("text", "") for part in parts if isinstance(part, dict))
-    if not text:
-        raise ValueError("Gemini API returned empty text")
+            candidates = data.get("candidates") or []
+            if not candidates:
+                last_error = ValueError("Gemini API returned no candidates")
+                continue
 
-    return text.strip()
+            content = candidates[0].get("content") or {}
+            parts = content.get("parts") or []
+            text = "".join(part.get("text", "") for part in parts if isinstance(part, dict))
+            if text:
+                return text.strip()
+
+            last_error = ValueError("Gemini API returned empty text")
+
+    if isinstance(last_error, urllib.error.HTTPError):
+        raise ValueError(f"Gemini API error: {last_error.code}") from last_error
+    if last_error:
+        raise ValueError(str(last_error))
+    raise ValueError("Gemini API unavailable")
 
 
 def _fallback_question(role: str, level: str, context: InterviewContext | None) -> str:
@@ -174,7 +201,10 @@ def generate_question(role: str, level: str, context: InterviewContext | None = 
         "No menciones metadatos ni etiquetas como contexto, resumen, tema elegido o conversación previa. "
         "Responde solo con la pregunta, sin comillas ni explicaciones."
     )
-    return _call_gemini(prompt, temperature=0.8)
+    try:
+        return _call_gemini(prompt, temperature=0.8)
+    except ValueError:
+        return _fallback_question(role, level, context)
 
 
 def _fallback_follow_up_question(role: str, level: str, last_answer: str) -> str:
@@ -213,7 +243,10 @@ def generate_follow_up_question(
         "Profundiza en un hueco técnico concreto de la última respuesta. "
         "Responde solamente con la pregunta final."
     )
-    return _call_gemini(prompt, temperature=0.7)
+    try:
+        return _call_gemini(prompt, temperature=0.7)
+    except ValueError:
+        return _fallback_follow_up_question(role, level, last_answer)
 
 
 def evaluate_answer(payload: EvaluateAnswerRequest) -> EvaluateAnswerResponse:
@@ -231,7 +264,10 @@ def evaluate_answer(payload: EvaluateAnswerRequest) -> EvaluateAnswerResponse:
         + " Responde solo con JSON valido, sin bloques de codigo, sin texto extra."
     )
 
-    text = _call_gemini(prompt, temperature=0.2)
+    try:
+        text = _call_gemini(prompt, temperature=0.2)
+    except ValueError:
+        return _fallback_feedback(payload.answer)
 
     try:
         parsed = json.loads(_strip_json_wrappers(text))

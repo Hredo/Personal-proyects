@@ -1,8 +1,40 @@
-# 🎤 AI Interview Coach - Full Stack Complete
+# 🎤 AI Interview Coach
 
-Plataforma profesional para preparación de entrevistas técnicas con evaluación de IA.
+Plataforma en desarrollo para preparación de entrevistas técnicas con evaluación asistida por IA.
 
-**Status**: ✅ **COMPLETADO Y FUNCIONAL**
+## ⚠️ Estado Actual
+
+**Proyecto NO terminado.**
+
+Este repositorio está en fase de desarrollo activo y todavía presenta limitaciones importantes.
+No está listo para producción ni para uso estable.
+
+### Problemas abiertos (abril 2026)
+
+- Flujo de entrevista aún inestable en algunos escenarios de chat.
+- Calidad de generación de preguntas inconsistente según configuración de IA.
+- Integración Gemini en ajuste (depende de clave/modelo válidos y pruebas adicionales).
+- UX/UI en revisión: hay pantallas y comportamientos pendientes de pulir.
+- Documentación histórica desactualizada respecto al estado real del proyecto.
+
+### Qué falta para considerarlo terminado
+
+- Estabilizar conversación multi-turno sin repeticiones ni arrastre de contexto.
+- Validar integración Gemini de extremo a extremo con manejo sólido de errores.
+- Revisar y simplificar interfaz completa (web) para flujo práctico.
+- Añadir pruebas automáticas mínimas de backend y frontend.
+- Actualizar toda la documentación técnica y de despliegue.
+
+## Nota
+
+Si solo quieres probar rápido el prototipo, puedes hacerlo, pero asume comportamiento experimental.
+Para contribuciones o uso serio, esperar a una versión marcada como estable.
+
+---
+
+## Documentación anterior (pendiente de revisión)
+
+Las secciones siguientes reflejan una versión anterior del proyecto y pueden contener información no vigente.
 
 ## 🎯 Características Principales
 
