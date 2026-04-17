@@ -14,8 +14,14 @@ interface ModalProps {
 export default function Modal({ isOpen, onClose, title, children, width = '520px' }: ModalProps) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    if (isOpen) document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    if (isOpen) {
+      document.addEventListener('keydown', handler);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -25,7 +31,7 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)',
-        zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
         backdropFilter: 'blur(4px)', padding: '1rem'
       }}
     >
@@ -33,7 +39,8 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
         onClick={e => e.stopPropagation()}
         style={{
           background: 'white', borderRadius: '1rem', width: '100%', maxWidth: width,
-          maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+          maxHeight: 'calc(100vh - 2rem)', display: 'flex', flexDirection: 'column',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
         }}
       >
         <div style={{
@@ -45,7 +52,7 @@ export default function Modal({ isOpen, onClose, title, children, width = '520px
             <X size={20} />
           </button>
         </div>
-        <div style={{ padding: '2rem' }}>
+        <div style={{ padding: '2rem', overflowY: 'auto' }}>
           {children}
         </div>
       </div>

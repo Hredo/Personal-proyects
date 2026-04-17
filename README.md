@@ -6,7 +6,6 @@ Welcome to the **Personal Projects** repository! This repository is dedicated to
 
 - [Tennis Game](Tennis/README.md)
 - [Train Game](Train/README.md)
-- [Local Chat GPT](ChatGPT-Local/README.md)
 - [Hospital Vet App](Hospital_Vet_APP/README.md)
 - [SPAINCINEMA Web Application](WEB_SPAINCINEMA/README.md)
 - [OnlyCars Marketplace Web Application](WEB_VEHICULOS/README.md)
