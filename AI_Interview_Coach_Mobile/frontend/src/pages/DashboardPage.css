@@ -4,6 +4,15 @@
   padding-bottom: 2rem;
 }
 
+.dashboard-page .page-shell,
+.dashboard-page .dashboard-hero,
+.dashboard-page .chart-card,
+.dashboard-page .kpi-card,
+.dashboard-page .empty-state,
+.dashboard-loading {
+  animation: fadeInUp 0.55s ease both;
+}
+
 .btn-export-pdf {
   background: linear-gradient(135deg, #3b82f6 0%, #22c55e 100%);
   color: #fff;

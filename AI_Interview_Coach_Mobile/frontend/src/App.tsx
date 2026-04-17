@@ -13,14 +13,14 @@ function App() {
     }
 
     try {
-      const parsed = JSON.parse(stored) as AuthState & { user_id?: string };
+      const parsed = JSON.parse(stored) as AuthState & { user_id?: string; username?: string };
       const normalized = {
         userId: parsed.userId || parsed.user_id || '',
-        username: parsed.username,
+        email: parsed.email || parsed.username || '',
         token: parsed.token,
       };
 
-      if (!normalized.userId || !normalized.username || !normalized.token) {
+      if (!normalized.userId || !normalized.email || !normalized.token) {
         localStorage.removeItem('authState');
         return null;
       }
@@ -31,6 +31,7 @@ function App() {
     }
   });
   const [currentPage, setCurrentPage] = useState<'interview' | 'dashboard'>('interview');
+  const displayName = authState?.email ? authState.email.split('@')[0] : '';
 
   const handleAuth = (state: AuthState) => {
     localStorage.setItem('authState', JSON.stringify(state));
@@ -51,30 +52,30 @@ function App() {
       ) : (
         <>
           <header className="header">
-            <div className="brand-block">
-              <span className="brand-mark">AI</span>
-              <div>
-                <h2>{authState.username}</h2>
-                <p>Sesiones guardadas y progreso continuo</p>
-              </div>
+            <div className="app-title-block">
+              <h1>Interview Coach</h1>
+              <p>Simulador de entrevistas técnicas con IA</p>
             </div>
             <nav className="nav-tabs">
               <button
                 className={`nav-tab ${currentPage === 'interview' ? 'active' : ''}`}
                 onClick={() => setCurrentPage('interview')}
               >
-                🎤 Entrevista
+                Entrevista
               </button>
               <button
                 className={`nav-tab ${currentPage === 'dashboard' ? 'active' : ''}`}
                 onClick={() => setCurrentPage('dashboard')}
               >
-                📊 Progreso
+                Progreso
               </button>
             </nav>
-            <button onClick={handleLogout} className="btn-logout">
-              Salir
-            </button>
+            <div className="header-user-actions">
+              <span className="user-chip" title={authState.email}>{displayName}</span>
+              <button onClick={handleLogout} className="btn-logout" type="button">
+                Salir
+              </button>
+            </div>
           </header>
           {currentPage === 'interview' ? (
             <InterviewPage auth={authState} />

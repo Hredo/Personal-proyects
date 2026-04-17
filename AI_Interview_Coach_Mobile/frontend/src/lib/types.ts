@@ -8,13 +8,13 @@ export type Competency = {
 
 export type AuthState = {
   userId: string;
-  username: string;
+  email: string;
   token: string;
 };
 
 export type AuthApiResponse = {
   user_id: string;
-  username: string;
+  email: string;
   token: string;
 };
 
@@ -23,11 +23,18 @@ export type AuthResponse = AuthState;
 export type InterviewContext = {
   target_role: string;
   company: string;
-  education: string;
-  experience: string;
-  technologies: string;
-  goals: string;
+  summary: string;
   notes: string;
+  education?: string;
+  experience?: string;
+  technologies?: string;
+  goals?: string;
+};
+
+export type ChatMessage = {
+  role: 'assistant' | 'user' | 'system';
+  title: string;
+  content: string;
 };
 
 export type SessionResponse = {
@@ -42,6 +49,7 @@ export type SessionResponse = {
   strengths: string[];
   improvements: string[];
   competencies: Competency[];
+  messages: ChatMessage[];
   status: 'pending' | 'completed';
 };
 

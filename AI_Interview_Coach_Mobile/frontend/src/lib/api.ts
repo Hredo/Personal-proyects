@@ -12,7 +12,17 @@ function buildHeaders(token?: string) {
 async function parseResponse<T>(response: Response, fallbackMessage: string): Promise<T> {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.detail || fallbackMessage);
+    const detail = errorBody?.detail;
+    if (typeof detail === 'string') {
+      throw new Error(detail);
+    }
+    if (Array.isArray(detail)) {
+      const message = detail
+        .map((item) => item?.msg || JSON.stringify(item))
+        .join(' | ');
+      throw new Error(message || fallbackMessage);
+    }
+    throw new Error(fallbackMessage);
   }
 
   return response.json();
@@ -21,13 +31,13 @@ async function parseResponse<T>(response: Response, fallbackMessage: string): Pr
 function normalizeAuthResponse(payload: AuthApiResponse): AuthResponse {
   return {
     userId: payload.user_id,
-    username: payload.username,
+    email: payload.email,
     token: payload.token,
   };
 }
 
 export async function register(payload: {
-  username: string;
+  email: string;
   password: string;
 }): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -41,7 +51,7 @@ export async function register(payload: {
 }
 
 export async function login(payload: {
-  username: string;
+  email: string;
   password: string;
 }): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -61,11 +71,12 @@ export async function startSession(payload: {
   context: {
     target_role: string;
     company: string;
-    education: string;
-    experience: string;
-    technologies: string;
-    goals: string;
+    summary: string;
     notes: string;
+    education?: string;
+    experience?: string;
+    technologies?: string;
+    goals?: string;
   };
 }, token?: string): Promise<SessionResponse> {
   const response = await fetch(`${API_BASE_URL}/api/sessions/start`, {
@@ -84,7 +95,16 @@ export async function submitSessionAnswer(sessionId: string, answer: string): Pr
     body: JSON.stringify({ answer }),
   });
 
-  return parseResponse<SessionResponse>(response, 'No se pudo enviar la respuesta.');
+  return parseResponse<SessionResponse>(response, 'No se pudo continuar la entrevista.');
+}
+
+export async function evaluateSession(sessionId: string): Promise<SessionResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/evaluate`, {
+    method: 'POST',
+    headers: buildHeaders(),
+  });
+
+  return parseResponse<SessionResponse>(response, 'No se pudo evaluar la entrevista.');
 }
 
 export async function getProgress(userId: string, token?: string): Promise<ProgressResponse> {
@@ -101,4 +121,24 @@ export async function getHistory(userId: string, token?: string): Promise<Sessio
   });
 
   return parseResponse<SessionHistoryItem[]>(response, 'No se pudo cargar el historial.');
+}
+
+export async function getSession(sessionId: string, token?: string): Promise<SessionResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`, {
+    headers: buildHeaders(token),
+  });
+
+  return parseResponse<SessionResponse>(response, 'No se pudo cargar la sesión.');
+}
+
+export async function deleteSession(sessionId: string, token: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`, {
+    method: 'DELETE',
+    headers: buildHeaders(token),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(errorBody?.detail || 'No se pudo borrar la conversación.');
+  }
 }

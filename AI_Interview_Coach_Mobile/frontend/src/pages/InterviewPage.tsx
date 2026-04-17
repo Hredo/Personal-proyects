@@ -1,58 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
-import { getHistory, getProgress, startSession, submitSessionAnswer } from '../lib/api';
-import { AuthState, Competency, InterviewContext, ProgressResponse, SessionHistoryItem, SessionResponse } from '../lib/types';
+import { useEffect, useState } from 'react';
+import { deleteSession, evaluateSession, getHistory, getSession, startSession, submitSessionAnswer } from '../lib/api';
+import { AuthState, InterviewContext, SessionHistoryItem, SessionResponse } from '../lib/types';
 import './InterviewPage.css';
 
-type ChatMessage = {
-  id: string;
-  role: 'assistant' | 'user' | 'system';
-  title: string;
-  content: string;
-};
-
-const emptyContext: InterviewContext = {
-  target_role: '',
-  company: '',
+const defaultContext: InterviewContext = {
+  target_role: 'Sin definir por el usuario',
+  company: 'No especificada por el usuario',
+  summary: 'Contexto pendiente: la IA debe preguntar primero el tema de la entrevista.',
+  notes: '',
   education: '',
   experience: '',
   technologies: '',
   goals: '',
-  notes: '',
 };
 
-const levelOptions = [
-  { label: 'Junior', value: 'junior' },
-  { label: 'Mid', value: 'mid' },
-  { label: 'Senior', value: 'senior' },
-];
-
 export function InterviewPage({ auth }: { auth: AuthState }) {
-  const [contextDraft, setContextDraft] = useState<InterviewContext>(emptyContext);
-  const [level, setLevel] = useState('junior');
   const [session, setSession] = useState<SessionResponse | null>(null);
-  const [answer, setAnswer] = useState('');
-  const [result, setResult] = useState<{
-    total_score: number;
-    strengths: string[];
-    improvements: string[];
-    competencies: Competency[];
-  } | null>(null);
-  const [progress, setProgress] = useState<ProgressResponse | null>(null);
+  const [messageInput, setMessageInput] = useState('');
   const [history, setHistory] = useState<SessionHistoryItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [sessionStarted, setSessionStarted] = useState(false);
+  const [uiError, setUiError] = useState<string>('');
 
   const refreshSidebar = async () => {
     try {
-      const [historyData, progressData] = await Promise.all([
-        getHistory(auth.userId, auth.token),
-        getProgress(auth.userId, auth.token),
-      ]);
+      const historyData = await getHistory(auth.userId, auth.token);
       setHistory(historyData);
-      setProgress(progressData);
     } catch (err) {
       console.error(err);
+      setUiError((err as Error).message || 'No se pudo cargar el historial.');
     } finally {
       setLoadingHistory(false);
     }
@@ -62,122 +38,119 @@ export function InterviewPage({ auth }: { auth: AuthState }) {
     refreshSidebar();
   }, [auth.userId, auth.token]);
 
-  const canStart = useMemo(() => {
-    return Boolean(
-      contextDraft.target_role.trim() &&
-        contextDraft.company.trim() &&
-        contextDraft.education.trim() &&
-        contextDraft.experience.trim() &&
-        contextDraft.technologies.trim() &&
-        contextDraft.goals.trim(),
-    );
-  }, [contextDraft]);
-
-  const conversation = useMemo<ChatMessage[]>(() => {
-    const messages: ChatMessage[] = [
-      {
-        id: 'system-welcome',
-        role: 'system',
-        title: 'Asistente',
-        content: 'Primero completa el contexto. Después la IA generará preguntas adaptadas a tu perfil.',
-      },
-    ];
-
-    if (session) {
-      messages.push({
-        id: session.session_id,
-        role: 'assistant',
-        title: 'Pregunta generada',
-        content: session.question,
-      });
-    }
-
-    if (answer) {
-      messages.push({
-        id: `user-answer-${session?.session_id ?? 'draft'}`,
-        role: 'user',
-        title: 'Tu respuesta',
-        content: answer,
-      });
-    }
-
-    return messages;
-  }, [answer, session]);
-
-  const handleContextChange = (field: keyof InterviewContext, value: string) => {
-    setContextDraft((current) => ({ ...current, [field]: value }));
-  };
-
-  const handleGenerateQuestion = async () => {
-    if (!canStart) {
-      alert('Completa el contexto antes de generar la entrevista.');
+  const handleStartInterview = async (topic: string) => {
+    const cleanTopic = topic.trim();
+    if (cleanTopic.length < 2) {
+      setUiError('Escribe un tema válido para empezar.');
       return;
     }
 
-    setLoading(true);
-    setResult(null);
+    setUiError('');
+    setLoadingChat(true);
     try {
       const newSession = await startSession(
         {
           user_id: auth.userId,
-          role: contextDraft.target_role,
-          level,
-          context: contextDraft,
+          role: cleanTopic ? cleanTopic.slice(0, 50) : 'Entrevista abierta',
+          level: 'mid',
+          context: cleanTopic
+            ? {
+                ...defaultContext,
+                target_role: cleanTopic,
+                summary: `Tema elegido por el candidato: ${cleanTopic}`,
+              }
+            : defaultContext,
         },
         auth.token,
       );
       setSession(newSession);
-      setAnswer('');
-      setSessionStarted(true);
       await refreshSidebar();
     } catch (err) {
-      alert((err as Error).message);
+      setUiError((err as Error).message || 'No se pudo iniciar la entrevista.');
     } finally {
-      setLoading(false);
+      setLoadingChat(false);
     }
   };
 
-  const handleEvaluate = async () => {
-    if (!session || !answer.trim()) return;
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || session?.status === 'completed') {
+      return;
+    }
 
-    setLoading(true);
+    const content = messageInput.trim();
+    setUiError('');
+
+    if (!session) {
+      setMessageInput('');
+      await handleStartInterview(content);
+      return;
+    }
+
+    setLoadingChat(true);
     try {
-      const updated = await submitSessionAnswer(session.session_id, answer);
+      const updated = await submitSessionAnswer(session.session_id, content);
       setSession(updated);
-      setResult({
-        total_score: updated.total_score || 0,
-        strengths: updated.strengths,
-        improvements: updated.improvements,
-        competencies: updated.competencies || [],
-      });
+      setMessageInput('');
       await refreshSidebar();
     } catch (err) {
-      alert((err as Error).message);
+      setUiError((err as Error).message || 'No se pudo enviar el mensaje.');
     } finally {
-      setLoading(false);
+      setLoadingChat(false);
     }
   };
 
-  const handleLoadHistoryItem = (item: SessionHistoryItem) => {
-    setContextDraft(item.context);
-    setLevel(item.level);
-    setSession({
-      session_id: item.session_id,
-      user_id: item.user_id,
-      role: item.role,
-      level: item.level,
-      context: item.context,
-      question: item.question,
-      answer: item.answer,
-      total_score: item.total_score,
-      strengths: [],
-      improvements: [],
-      competencies: [],
-      status: item.status,
-    });
-    setAnswer(item.answer ?? '');
-    setSessionStarted(true);
-    setResult(null);
+  const handleEvaluateInterview = async () => {
+    if (!session) {
+      return;
+    }
+
+    setLoadingChat(true);
+    try {
+      const evaluated = await evaluateSession(session.session_id);
+      setSession(evaluated);
+      await refreshSidebar();
+    } catch (err) {
+      setUiError((err as Error).message || 'No se pudo evaluar la entrevista.');
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  const handleLoadHistoryItem = async (item: SessionHistoryItem) => {
+    setLoadingChat(true);
+    try {
+      const fullSession = await getSession(item.session_id, auth.token);
+      setSession(fullSession);
+      setUiError('');
+    } catch (err) {
+      setUiError((err as Error).message || 'No se pudo abrir esta entrevista.');
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  const handleDeleteHistoryItem = async (sessionId: string) => {
+    const confirmed = window.confirm('¿Quieres borrar esta conversación?');
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteSession(sessionId, auth.token);
+      if (session?.session_id === sessionId) {
+        setSession(null);
+        setMessageInput('');
+      }
+      await refreshSidebar();
+    } catch (err) {
+      setUiError((err as Error).message || 'No se pudo borrar la entrevista.');
+    }
+  };
+
+  const handleResetToTopicStep = () => {
+    setSession(null);
+    setMessageInput('');
+    setUiError('');
   };
 
   return (
@@ -187,7 +160,7 @@ export function InterviewPage({ auth }: { auth: AuthState }) {
           <div className="sidebar-header">
             <div>
               <span className="eyebrow">Historial</span>
-              <h3>Conversaciones</h3>
+              <h3>Entrevistas</h3>
             </div>
             <span className="pill subtle">{loadingHistory ? '...' : `${history.length}`}</span>
           </div>
@@ -197,118 +170,100 @@ export function InterviewPage({ auth }: { auth: AuthState }) {
               <p className="empty-history">Todavía no hay entrevistas guardadas.</p>
             ) : (
               history.slice(0, 10).map((item) => (
-                <button key={item.session_id} className="history-tile" onClick={() => handleLoadHistoryItem(item)}>
-                  <strong>{item.context.target_role}</strong>
-                  <span>{item.context.company}</span>
-                  <small>{item.total_score ?? '—'}/100 · {new Date(item.updated_at).toLocaleDateString()}</small>
-                </button>
+                <div key={item.session_id} className="history-tile-wrap">
+                  <button className="history-tile" onClick={() => handleLoadHistoryItem(item)}>
+                    <strong>{item.context.target_role || 'Tema por definir'}</strong>
+                    <span>{item.context.company || 'Sin empresa indicada'}</span>
+                    <small>{item.total_score ?? '—'}/100 · {new Date(item.updated_at).toLocaleDateString()}</small>
+                  </button>
+                  <button className="history-delete" onClick={() => handleDeleteHistoryItem(item.session_id)} type="button">
+                    Borrar
+                  </button>
+                </div>
               ))
             )}
           </div>
         </aside>
 
         <main className="chat-main">
-          <section className="page-hero card-glass">
-            <div>
-              <span className="eyebrow">Simulación técnica</span>
-              <h1>Entrevista adaptada a tu contexto real</h1>
-              <p>
-                Cuéntale al sistema a qué puesto aplicas, en qué empresa, qué has estudiado y qué experiencia tienes.
-                La IA generará preguntas coherentes con ese perfil.
-              </p>
-            </div>
-            <button onClick={handleGenerateQuestion} disabled={loading} className="btn-primary">
-              {loading ? 'Generando...' : sessionStarted ? 'Nueva pregunta' : 'Empezar entrevista'}
-            </button>
-          </section>
-
-          <section className="card context-card animate-in">
-            <div className="context-grid">
-              <label>
-                Puesto objetivo
-                <input value={contextDraft.target_role} onChange={(e) => handleContextChange('target_role', e.target.value)} placeholder="Frontend Engineer" />
-              </label>
-              <label>
-                Empresa
-                <input value={contextDraft.company} onChange={(e) => handleContextChange('company', e.target.value)} placeholder="Acme Corp" />
-              </label>
-              <label>
-                Formación
-                <input value={contextDraft.education} onChange={(e) => handleContextChange('education', e.target.value)} placeholder="Ingeniería Informática" />
-              </label>
-              <label>
-                Experiencia
-                <input value={contextDraft.experience} onChange={(e) => handleContextChange('experience', e.target.value)} placeholder="2 años en React y Node" />
-              </label>
-              <label>
-                Tecnologías
-                <input value={contextDraft.technologies} onChange={(e) => handleContextChange('technologies', e.target.value)} placeholder="React, TypeScript, FastAPI" />
-              </label>
-              <label>
-                Objetivo
-                <input value={contextDraft.goals} onChange={(e) => handleContextChange('goals', e.target.value)} placeholder="Quiero practicar entrevistas de seniority media" />
-              </label>
-              <label className="full-width">
-                Notas opcionales
-                <textarea value={contextDraft.notes} onChange={(e) => handleContextChange('notes', e.target.value)} placeholder="Añade detalles que ayuden a personalizar la entrevista..." rows={3} />
-              </label>
-              <div className="level-switch full-width">
-                {levelOptions.map((item) => (
-                  <button key={item.value} type="button" className={level === item.value ? 'active' : ''} onClick={() => setLevel(item.value)}>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
           <section className="chat-window card-glass">
+            <div className="chat-topline">
+              <span className="eyebrow">Entrevista continua</span>
+              <button onClick={handleResetToTopicStep} disabled={loadingChat} className="btn-primary" type="button">
+                Nueva entrevista
+              </button>
+            </div>
+            {uiError && <div className="inline-error">{uiError}</div>}
             <div className="chat-stream">
-              {conversation.map((message) => (
-                <article key={message.id} className={`chat-bubble ${message.role}`}>
-                  <span className="bubble-role">{message.title}</span>
-                  <p>{message.content}</p>
-                </article>
-              ))}
+              {!session ? (
+                <div className="empty-chat animate-in">
+                  <span className="eyebrow">Primero, el tema</span>
+                  <h3>¿Sobre qué quieres la entrevista?</h3>
+                  <p>Escribe el puesto o área (por ejemplo: backend Python, data analyst, frontend React).</p>
+                </div>
+              ) : (
+                session.messages.map((message, index) => (
+                  <article key={`${message.role}-${index}`} className={`chat-bubble ${message.role}`}>
+                    <span className="bubble-role">{message.title}</span>
+                    <p>{message.content}</p>
+                  </article>
+                ))
+              )}
             </div>
 
-            {session && (
-              <div className="answer-composer">
-                <textarea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="Escribe tu respuesta aquí con claridad, estructura y trade-offs..."
-                  rows={7}
-                />
-                <div className="composer-actions">
-                  <span className="helper-text">Mínimo 10 caracteres para evaluar.</span>
+            <div className="answer-composer">
+              <textarea
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                placeholder={session ? 'Escribe tu respuesta...' : 'Escribe el tema de la entrevista...'}
+                rows={4}
+                disabled={session?.status === 'completed' || loadingChat}
+              />
+              <div className="composer-actions">
+                <span className="helper-text">
+                  {session?.status === 'completed'
+                    ? 'Entrevista evaluada. Inicia otra sesión para seguir practicando.'
+                    : session
+                      ? 'Pulsa enviar para continuar o evaluar para cerrar la entrevista.'
+                      : 'Pulsa enviar para empezar la entrevista con ese tema.'}
+                </span>
+                {session && (
                   <button
-                    onClick={handleEvaluate}
-                    disabled={loading || answer.trim().length < 10}
-                    className="btn-primary"
+                    onClick={handleEvaluateInterview}
+                    disabled={loadingChat || session.status === 'completed'}
+                    className="btn-secondary"
+                    type="button"
                   >
-                    {loading ? 'Evaluando...' : 'Enviar respuesta'}
+                    {loadingChat ? 'Procesando...' : session.status === 'completed' ? 'Evaluada' : 'Evaluar entrevista'}
                   </button>
-                </div>
+                )}
+                <button
+                  onClick={handleSendMessage}
+                  disabled={loadingChat || messageInput.trim().length < 2 || session?.status === 'completed'}
+                  className="btn-primary"
+                  type="button"
+                >
+                  {loadingChat ? 'Enviando...' : session ? 'Enviar' : 'Empezar'}
+                </button>
               </div>
-            )}
+            </div>
           </section>
 
-          {result && (
+          {session && session.status === 'completed' && session.total_score !== null && (
             <section className="card result animate-in delay-2">
               <div className="result-header">
                 <div>
                   <span className="eyebrow">Resultado</span>
-                  <h3>Score total: {result.total_score}/100</h3>
+                  <h3>Score: {session.total_score}/100</h3>
                 </div>
-                <div className="score-badge">{result.total_score}</div>
+                <div className="score-badge">{session.total_score}</div>
               </div>
 
-              {result.competencies.length > 0 && (
+              {session.competencies.length > 0 && (
                 <div className="competencies">
                   <h4>Evaluación por competencia</h4>
                   <div className="competencies-grid">
-                    {result.competencies.map((comp) => (
+                    {session.competencies.map((comp) => (
                       <div key={comp.name} className="competency-item">
                         <div className="competency-name">{comp.name}</div>
                         <div className="competency-bar">
@@ -338,7 +293,7 @@ export function InterviewPage({ auth }: { auth: AuthState }) {
                 <div>
                   <h4>Fortalezas</h4>
                   <ul>
-                    {result.strengths.map((item) => (
+                    {session.strengths.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>
@@ -346,7 +301,7 @@ export function InterviewPage({ auth }: { auth: AuthState }) {
                 <div>
                   <h4>Mejoras</h4>
                   <ul>
-                    {result.improvements.map((item) => (
+                    {session.improvements.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
                   </ul>

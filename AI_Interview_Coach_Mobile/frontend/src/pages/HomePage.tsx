@@ -5,16 +5,22 @@ import './HomePage.css';
 
 export function HomePage({ onAuth }: { onAuth: (auth: AuthState) => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const valueProps = ['Gemini', 'Correo', 'Historial'];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) {
-      setError('Escribe un nombre de usuario');
+    if (!email.trim()) {
+      setError('Escribe un correo electrónico');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError('Escribe un correo electrónico válido');
       return;
     }
 
@@ -33,8 +39,8 @@ export function HomePage({ onAuth }: { onAuth: (auth: AuthState) => void }) {
 
     try {
       const auth = mode === 'login'
-        ? await login({ username: username.trim(), password })
-        : await register({ username: username.trim(), password });
+        ? await login({ email: email.trim(), password })
+        : await register({ email: email.trim(), password });
 
       onAuth(auth);
     } catch (err) {
@@ -49,31 +55,34 @@ export function HomePage({ onAuth }: { onAuth: (auth: AuthState) => void }) {
       <div className="aurora aurora-one" />
       <div className="aurora aurora-two" />
       <div className="home-grid">
-        <section className="hero">
+        <section className="hero card-glass">
           <span className="badge">AI Interview Coach</span>
-          <h1>Prepárate con una experiencia clara, rápida y profesional</h1>
-          <p>
-            Registro, historial, feedback estructurado y un panel visual pensado para que
-            cualquiera pueda avanzar sin pelearse con la interfaz.
-          </p>
+          <h1>Interfaz limpia para practicar entrevistas con Gemini</h1>
+          <p>Acceso propio con correo. Historial guardado. Feedback sin ruido.</p>
+
+          <div className="value-strip">
+            {valueProps.map((item) => (
+              <span key={item} className="value-chip">{item}</span>
+            ))}
+          </div>
 
           <div className="feature-grid">
             <article className="feature-card">
-              <strong>Login seguro</strong>
-              <span>Usuario y contraseña con token persistente.</span>
+              <strong>Claro</strong>
+              <span>Menos pasos, más práctica.</span>
             </article>
             <article className="feature-card">
-              <strong>Historial guardado</strong>
-              <span>Tu conversación y tus sesiones quedan en la base de datos.</span>
+              <strong>Útil</strong>
+              <span>Contexto, pregunta y evaluación.</span>
             </article>
             <article className="feature-card">
-              <strong>Feedback útil</strong>
-              <span>Rúbricas, progreso y mejoras accionables en cada sesión.</span>
+              <strong>Rápido</strong>
+              <span>Arranca con correo y contraseña.</span>
             </article>
           </div>
         </section>
 
-        <section className="auth-panel">
+        <section className="auth-panel card-glass animate-in delay-1">
           <div className="auth-toggle">
             <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')} type="button">
               Entrar
@@ -85,14 +94,14 @@ export function HomePage({ onAuth }: { onAuth: (auth: AuthState) => void }) {
 
           <form onSubmit={handleSubmit} className="form card-glass">
             <label>
-              Usuario
+              Correo electrónico
               <input
-                type="text"
-                placeholder="tu_usuario"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                placeholder="tu_correo@dominio.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input"
-                autoComplete="username"
+                autoComplete="email"
               />
             </label>
             <label>
