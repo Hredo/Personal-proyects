@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "AI Interview Coach",
+    "slug": "ai-interview-coach-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "aiinterviewcoach",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {},
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

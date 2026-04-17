@@ -1,0 +1,17 @@
+# General
+.env
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local databases
+backend/*.db
+
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+dist/
