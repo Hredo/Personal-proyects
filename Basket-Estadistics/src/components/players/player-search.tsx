@@ -11,6 +11,7 @@ import {
   useState,
 } from "react"
 import { useRouter } from "next/navigation"
+import { SmartImage } from "@/components/ui/smart-image"
 
 export type AutocompleteSort = "points" | "assists" | "rebounds" | "name"
 
@@ -249,12 +250,9 @@ export const PlayerSearch = forwardRef<PlayerSearchHandle, PlayerSearchProps>(
 
     function pick(slug: string) {
       setOpen(false)
-      if (onPick) {
-        onPick(slug)
-      } else {
-        router.push(`/players/${slug}`)
-      }
       setQ("")
+      onPick?.(slug)
+      router.push(`/players/${slug}`)
     }
 
     function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -553,27 +551,24 @@ function ResultCard({
             compact ? "h-12 w-12" : "h-14 w-14"
           }`}
         >
-          {player.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={player.photoUrl}
-              alt=""
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-court-800 to-ink-900 text-xs font-bold text-brand-300">
-              {initials(player.fullName)}
-            </div>
-          )}
+          <SmartImage
+            src={player.photoUrl}
+            alt={player.fullName}
+            fit="cover"
+            className="transition duration-300 group-hover:scale-105"
+            fallbackClassName="bg-gradient-to-br from-court-800 to-ink-900 text-xs font-bold text-brand-300"
+            fallback={initials(player.fullName)}
+          />
           {player.team?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={player.team.logoUrl}
-              alt=""
-              className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-ink-950 object-cover ring-2 ring-ink-950"
-              loading="lazy"
-            />
+            <span className="absolute -bottom-1 -right-1 h-5 w-5 overflow-hidden rounded-full bg-ink-950 ring-2 ring-ink-950">
+              <SmartImage
+                src={player.team.logoUrl}
+                alt={player.team.name}
+                fit="cover"
+                fallbackClassName="text-[7px] font-bold text-brand-300"
+                fallback={initials(player.team.name)}
+              />
+            </span>
           ) : null}
         </div>
 
@@ -605,14 +600,16 @@ function ResultCard({
 
         {player.season ? (
           <div
-            className={`hidden shrink-0 gap-x-4 gap-y-1 font-mono text-right sm:grid ${
+            className={`hidden shrink-0 gap-x-3 gap-y-1 font-mono text-right sm:grid ${
               compact ? "text-[10px]" : "text-[11px]"
             }`}
-            style={{ gridTemplateColumns: "auto auto auto" }}
+            style={{ gridTemplateColumns: "auto auto auto auto" }}
           >
             <Stat label="PPG" value={formatNum(player.season.points)} highlight />
-            <Stat label="APG" value={formatNum(player.season.assists)} />
             <Stat label="RPG" value={formatNum(player.season.rebounds)} />
+            <Stat label="APG" value={formatNum(player.season.assists)} />
+            <Stat label="SPG" value={formatNum(player.season.steals)} />
+            <Stat label="BPG" value={formatNum(player.season.blocks)} />
             <Stat label="FG%" value={formatPct(player.season.fgPct)} />
             <Stat label="3P%" value={formatPct(player.season.threePct)} />
             <Stat label="FT%" value={formatPct(player.season.ftPct)} />

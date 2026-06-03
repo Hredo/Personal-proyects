@@ -1,6 +1,6 @@
 export type SourceId = "nba" | "acb" | "euroleague"
 
-export const CURRENT_SEASON = 2024
+export const CURRENT_SEASON = 2025
 
 export const SOURCE_META: Record<
   SourceId,
@@ -11,18 +11,18 @@ export const SOURCE_META: Record<
     season: number
   }
 > = {
-  nba: { displayName: "NBA", country: "USA", seasonCode: "2024-25", season: 2024 },
+  nba: { displayName: "NBA", country: "USA", seasonCode: "2025-26", season: 2025 },
   euroleague: {
     displayName: "EuroLeague",
     country: "EU",
-    seasonCode: "E2024",
-    season: 2024,
+    seasonCode: "E2025",
+    season: 2025,
   },
   acb: {
     displayName: "Liga Endesa",
     country: "ES",
-    seasonCode: "2024-25",
-    season: 2024,
+    seasonCode: "2025-26",
+    season: 2025,
   },
 }
 

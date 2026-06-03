@@ -20,6 +20,16 @@ export type ListCoachesInput = {
   league?: string
   team?: string
   role?: "head_coach" | "assistant_coach" | "staff"
+  page?: number
+  pageSize?: number
+}
+
+export type ListCoachesResult = {
+  items: CoachListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 const ROLE_PRIORITY: Record<CoachListItem["role"], number> = {
@@ -30,8 +40,12 @@ const ROLE_PRIORITY: Record<CoachListItem["role"], number> = {
 
 export async function listCoaches(
   input: ListCoachesInput = {},
-): Promise<CoachListItem[]> {
+): Promise<ListCoachesResult> {
   const db = getDb()
+  const page = Math.max(1, input.page ?? 1)
+  const pageSize = Math.max(1, Math.min(input.pageSize ?? 24, 200))
+  const offset = (page - 1) * pageSize
+
   const conditions = []
   if (input.league) conditions.push(eq(leagues.slug, input.league))
   if (input.team) {
@@ -44,6 +58,14 @@ export async function listCoaches(
     conditions.push(like(sql`lower(${coaches.fullName})`, q))
   }
   const where = conditions.length ? and(...conditions) : undefined
+
+  const countRow = await db
+    .select({ c: sql<number>`count(*)` })
+    .from(coaches)
+    .innerJoin(leagues, eq(coaches.leagueId, leagues.id))
+    .innerJoin(teams, eq(coaches.teamId, teams.id))
+    .where(where)
+  const total = Number(countRow[0]?.c ?? 0)
 
   const rows = await db
     .select({
@@ -69,29 +91,39 @@ export async function listCoaches(
     .innerJoin(teams, eq(coaches.teamId, teams.id))
     .where(where)
     .orderBy(asc(teams.name), asc(coaches.role), asc(coaches.fullName))
+    .limit(pageSize)
+    .offset(offset)
 
-  return rows.map((r) => ({
-    id: r.id,
-    fullName: r.fullName,
-    slug: r.slug,
-    role: r.role as CoachListItem["role"],
-    nationality: r.nationality,
-    age: r.age,
-    photoUrl: r.photoUrl,
-    licenseType: r.licenseType,
-    league: {
-      id: r.leagueId,
-      name: r.leagueName,
-      slug: r.leagueSlug,
-      country: r.leagueCountry,
-    },
-    team: {
-      id: r.teamId,
-      name: r.teamName,
-      slug: r.teamSlug,
-      logoUrl: r.teamLogo,
-    },
-  }))
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      fullName: r.fullName,
+      slug: r.slug,
+      role: r.role as CoachListItem["role"],
+      nationality: r.nationality,
+      age: r.age,
+      photoUrl: r.photoUrl,
+      licenseType: r.licenseType,
+      league: {
+        id: r.leagueId,
+        name: r.leagueName,
+        slug: r.leagueSlug,
+        country: r.leagueCountry,
+      },
+      team: {
+        id: r.teamId,
+        name: r.teamName,
+        slug: r.teamSlug,
+        logoUrl: r.teamLogo,
+      },
+    })),
+    total,
+    page,
+    pageSize,
+    totalPages,
+  }
 }
 
 export type CoachGroup = {
@@ -119,4 +151,57 @@ export function groupCoachesByTeam(items: CoachListItem[]): CoachGroup[] {
     )
   }
   return [...map.values()].sort((a, b) => a.team.name.localeCompare(b.team.name))
+}
+
+export async function listCoachesByTeam(
+  teamId: string,
+): Promise<CoachListItem[]> {
+  const db = getDb()
+  const rows = await db
+    .select({
+      id: coaches.id,
+      fullName: coaches.fullName,
+      slug: coaches.slug,
+      role: coaches.role,
+      nationality: coaches.nationality,
+      age: coaches.age,
+      photoUrl: coaches.photoUrl,
+      licenseType: coaches.licenseType,
+      leagueId: leagues.id,
+      leagueName: leagues.name,
+      leagueSlug: leagues.slug,
+      leagueCountry: leagues.country,
+      teamId: teams.id,
+      teamName: teams.name,
+      teamSlug: teams.slug,
+      teamLogo: teams.logoUrl,
+    })
+    .from(coaches)
+    .innerJoin(leagues, eq(coaches.leagueId, leagues.id))
+    .innerJoin(teams, eq(coaches.teamId, teams.id))
+    .where(eq(coaches.teamId, teamId))
+    .orderBy(asc(coaches.role), asc(coaches.fullName))
+
+  return rows.map((r) => ({
+    id: r.id,
+    fullName: r.fullName,
+    slug: r.slug,
+    role: r.role as CoachListItem["role"],
+    nationality: r.nationality,
+    age: r.age,
+    photoUrl: r.photoUrl,
+    licenseType: r.licenseType,
+    league: {
+      id: r.leagueId,
+      name: r.leagueName,
+      slug: r.leagueSlug,
+      country: r.leagueCountry,
+    },
+    team: {
+      id: r.teamId,
+      name: r.teamName,
+      slug: r.teamSlug,
+      logoUrl: r.teamLogo,
+    },
+  }))
 }

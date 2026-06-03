@@ -1,9 +1,67 @@
    ▲ Next.js 15.5.18
-   - Local:        http://localhost:3001
-   - Network:      http://10.188.47.1:3001
+   - Local:        http://localhost:3000
+   - Network:      http://10.188.47.1:3000
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 2.7s
+ ✓ Ready in 2s
+ ○ Compiling /api/compare/players/search ...
+ ✓ Compiled /api/compare/players/search in 1991ms (493 modules)
+ GET /api/compare/players/search?q=alba&limit=5 200 in 2308ms
+ ○ Compiling /teams ...
+ ✓ Compiled /teams in 5.1s (1641 modules)
+ GET /teams?league=euroleague 200 in 6060ms
+ ✓ Compiled in 793ms (653 modules)
+ ✓ Compiled in 287ms (653 modules)
+ ✓ Compiled in 461ms (653 modules)
+ ✓ Compiled in 302ms (653 modules)
+ ✓ Compiled in 520ms (653 modules)
+ ✓ Compiled in 328ms (653 modules)
+ ✓ Compiled in 449ms (653 modules)
+ ✓ Compiled in 400ms (653 modules)
+ ✓ Compiled in 419ms (653 modules)
+ ✓ Compiled in 320ms (653 modules)
+ ✓ Compiled in 315ms (653 modules)
+ ✓ Compiled in 297ms (653 modules)
+ ✓ Compiled in 321ms (653 modules)
+ ✓ Compiled in 362ms (653 modules)
+ ✓ Compiled in 324ms (653 modules)
+ ✓ Compiled in 281ms (653 modules)
+ ✓ Compiled in 296ms (653 modules)
+ ✓ Compiled in 269ms (653 modules)
+ ✓ Compiled in 335ms (653 modules)
+ ✓ Compiled in 300ms (653 modules)
+ ✓ Compiled in 329ms (653 modules)
+ ✓ Compiled in 307ms (653 modules)
+ ✓ Compiled in 259ms (653 modules)
+ ✓ Compiled in 397ms (653 modules)
+ ✓ Compiled in 319ms (653 modules)
+ ✓ Compiled in 313ms (653 modules)
+ ✓ Compiled in 410ms (653 modules)
+ ✓ Compiled in 356ms (653 modules)
+ ✓ Compiled in 379ms (653 modules)
+ ✓ Compiled in 384ms (653 modules)
+ ✓ Compiled in 326ms (653 modules)
+ ✓ Compiled in 224ms (653 modules)
+ ○ Compiling /compare ...
+ ✓ Compiled /compare in 1132ms (1637 modules)
+ GET /compare?a=nba-lebron-james&b=nba-nikola-jokic 200 in 1978ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 707ms (1628 modules)
+ GET /compare?a=nba-lebron-james&b=nba-nikola-jokic 404 in 1224ms
+ GET /compare 200 in 246ms
    Reload env: .env.local
-   Reload env: .env.local
+ ✓ Compiled in 800ms (1623 modules)
+ ✓ Compiled in 455ms (656 modules)
+ ✓ Compiled in 436ms (656 modules)
+ ✓ Compiled in 284ms (656 modules)
+ ✓ Compiled in 295ms (656 modules)
+ ✓ Compiled in 329ms (656 modules)
+ ✓ Compiled in 396ms (656 modules)
+ ✓ Compiled in 403ms (656 modules)
+ ✓ Compiled in 311ms (656 modules)
+ ✓ Compiled in 270ms (656 modules)
+ ✓ Compiled in 302ms (656 modules)
+ ✓ Compiled in 378ms (656 modules)
+ ✓ Compiled in 327ms (656 modules)
+[?25h

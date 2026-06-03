@@ -9,14 +9,16 @@ export function SearchTrigger() {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform))
   }, [])
 
+  function open() {
+    document.dispatchEvent(new CustomEvent("open-search-palette"))
+  }
+
   return (
     <button
       type="button"
-      onClick={() =>
-        document.dispatchEvent(new CustomEvent("open-search-palette"))
-      }
+      onClick={open}
       aria-label="Search players"
-      className="group hidden items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-ink-200 transition hover:border-brand-400/40 hover:bg-white/[0.07] hover:text-ink-50 sm:inline-flex"
+      className="group inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-2 text-sm text-ink-200 transition hover:border-brand-400/40 hover:bg-white/[0.07] hover:text-ink-50 sm:px-3"
     >
       <svg
         aria-hidden

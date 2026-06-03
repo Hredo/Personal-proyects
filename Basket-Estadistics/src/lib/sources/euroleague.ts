@@ -7,7 +7,7 @@ import {
   type SourceTeamStats,
   SOURCE_META,
 } from "@/lib/sources/types"
-import { brSlugToEuroleagueCode } from "@/lib/sources/euroleague-teams"
+import { brSlugToEuroleagueCode, euroleagueTeamLogoUrl } from "@/lib/sources/euroleague-teams"
 import { parseBirthdate, parseHeightToCm, parseWeightToKg } from "@/lib/sync/slug"
 
 const BR_BASE = "https://www.basketball-reference.com"
@@ -121,7 +121,7 @@ export const euroleagueAdapter: SourceAdapter = {
         sourceId: teamCode,
         name,
         country: "EU",
-        logoUrl: undefined,
+        logoUrl: euroleagueTeamLogoUrl(teamCode),
       })
     }
     return out
@@ -243,46 +243,109 @@ export const euroleagueAdapter: SourceAdapter = {
   async fetchTeamStats(): Promise<SourceTeamStats[]> {
     const url = `${BR_BASE}${BR_LEAGUE_PATH}/${SEASON_START_YEAR}.html`
     const html = await fetchHtml(url)
-    const tableHtml = extractTableById(html, "team_stats_per_game")
-    const rows = rowsFromTable(tableHtml)
-    const out: SourceTeamStats[] = []
-    for (const row of rows) {
-      const cells = getRowCells(row)
+
+    const standingsHtml = extractTableById(html, "elg_standings")
+    const standingsRows = rowsFromTable(standingsHtml)
+    const standingsByCode = new Map<
+      string,
+      {
+        wins: number
+        losses: number
+        pointsFor: number | undefined
+        pointsAgainst: number | undefined
+        position: number
+      }
+    >()
+    let position = 0
+    for (const row of standingsRows) {
       const teamHref =
         row.match(
           /<a[^>]*href=(?:"|')(\/international\/teams\/[^"']+\.html)(?:"|')/,
         )?.[1] ?? undefined
       const teamCode = brSlugToEuroleagueCode(extractTeamSlug(teamHref))
       if (!teamCode) continue
-      const teamName = cells.get("team_name") ?? cells.get("team")
-      if (!teamName) continue
-      const g = toNumberOrNull(cells.get("g")) ?? 0
-      const w = toNumberOrNull(cells.get("wins")) ?? 0
-      const l = toNumberOrNull(cells.get("losses")) ?? 0
-      const pts = toNumberOrNull(cells.get("pts_per_g"))
-      const oppPts = toNumberOrNull(cells.get("opp_pts_per_g"))
+      const cells = getRowCells(row)
+      const w = toNumberOrNull(cells.get("wins|regular-season"))
+      const l = toNumberOrNull(cells.get("losses|regular-season"))
+      const pts = toNumberOrNull(cells.get("pts_per_g|regular-season"))
+      const oppPts = toNumberOrNull(cells.get("opp_pts_per_g|regular-season"))
+      position++
+      standingsByCode.set(teamCode, {
+        wins: Math.round(w ?? 0),
+        losses: Math.round(l ?? 0),
+        pointsFor: pts,
+        pointsAgainst: oppPts,
+        position,
+      })
+    }
+
+    const totalsHtml = extractTableById(html, "team_stats_totals")
+    const totalsRows = rowsFromTable(totalsHtml)
+    type Totals = {
+      fga: number
+      orb: number
+      drb: number
+      tov: number
+      fta: number
+      pts: number
+      g: number
+    }
+    const totalsByCode = new Map<string, Totals>()
+    for (const row of totalsRows) {
+      const teamHref =
+        row.match(
+          /<a[^>]*href=(?:"|')(\/international\/teams\/[^"']+\.html)(?:"|')/,
+        )?.[1] ?? undefined
+      const teamCode = brSlugToEuroleagueCode(extractTeamSlug(teamHref))
+      if (!teamCode) continue
+      const cells = getRowCells(row)
+      totalsByCode.set(teamCode, {
+        fga: toNumberOrNull(cells.get("fga")) ?? 0,
+        orb: toNumberOrNull(cells.get("orb")) ?? 0,
+        drb: toNumberOrNull(cells.get("drb")) ?? 0,
+        tov: toNumberOrNull(cells.get("tov")) ?? 0,
+        fta: toNumberOrNull(cells.get("fta")) ?? 0,
+        pts: toNumberOrNull(cells.get("pts")) ?? 0,
+        g: toNumberOrNull(cells.get("g")) ?? 0,
+      })
+    }
+
+    const out: SourceTeamStats[] = []
+    for (const [teamCode, st] of standingsByCode) {
+      const t = totalsByCode.get(teamCode)
+      const gp = st.wins + st.losses
+      let offRtg: number | undefined
+      let defRtg: number | undefined
+      let netRtg: number | undefined
+      let pace: number | undefined
+      if (t && t.g > 0 && t.fga > 0) {
+        const teamPoss = t.fga - t.orb + t.tov + 0.4 * t.fta
+        const teamPossPerG = teamPoss / t.g
+        offRtg = Number((100 * (t.pts / teamPoss)).toFixed(1))
+        const oppPossPerG = teamPossPerG
+        const oppPts = (st.pointsAgainst ?? 0) * t.g
+        defRtg = Number((100 * (oppPts / teamPoss)).toFixed(1))
+        netRtg = Number((offRtg - defRtg).toFixed(1))
+        pace = Number((48 * (2 * teamPossPerG) / 40).toFixed(1))
+        if (!Number.isFinite(offRtg)) offRtg = undefined
+        if (!Number.isFinite(defRtg)) defRtg = undefined
+        if (!Number.isFinite(netRtg)) netRtg = undefined
+        if (!Number.isFinite(pace)) pace = undefined
+      }
       out.push({
         teamSourceId: teamCode,
         season: SOURCE_META.euroleague.season,
-        gamesPlayed: g,
-        wins: w,
-        losses: l,
-        winPct: g > 0 ? Number((w / g).toFixed(3)) : undefined,
-        pointsFor: pts,
-        pointsAgainst: oppPts,
-        pace: toNumberOrNull(cells.get("pace")),
-        offRtg: toNumberOrNull(cells.get("off_rtg")),
-        defRtg: toNumberOrNull(cells.get("def_rtg")),
-        netRtg:
-          toNumberOrNull(cells.get("off_rtg")) != null &&
-          toNumberOrNull(cells.get("def_rtg")) != null
-            ? Number(
-                (
-                  (toNumberOrNull(cells.get("off_rtg")) ?? 0) -
-                  (toNumberOrNull(cells.get("def_rtg")) ?? 0)
-                ).toFixed(1),
-              )
-            : undefined,
+        gamesPlayed: gp,
+        wins: st.wins,
+        losses: st.losses,
+        winPct: gp > 0 ? Number((st.wins / gp).toFixed(3)) : undefined,
+        pointsFor: st.pointsFor,
+        pointsAgainst: st.pointsAgainst,
+        position: st.position,
+        pace,
+        offRtg,
+        defRtg,
+        netRtg,
       })
     }
     return out

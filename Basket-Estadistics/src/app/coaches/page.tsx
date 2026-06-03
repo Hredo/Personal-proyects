@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
 import { CoachCard } from "@/components/staff/coach-card"
 import { CoachFilters } from "@/components/staff/coach-filters"
-import { groupCoachesByTeam, listCoaches } from "@/lib/data/staff"
+import { Pagination } from "@/components/ui/pagination"
+import { listCoaches, type ListCoachesInput } from "@/lib/data/staff"
 
-type SearchParams = Record<string, string | string[] | undefined>
-
-const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
-const ROLE_VALUES = new Set(["head_coach", "assistant_coach", "staff"])
+type SearchParams = Partial<
+  Record<keyof ListCoachesInput | "q" | "page", string>
+>
 
 export const metadata: Metadata = {
   title: "Coaches & Staff",
@@ -14,42 +14,59 @@ export const metadata: Metadata = {
     "Browse every head coach, assistant and staff member across the NBA, EuroLeague and Liga ACB.",
 }
 
-function firstParam(v: string | string[] | undefined): string | undefined {
-  if (Array.isArray(v)) return v[0]
-  return v
+const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
+const ROLE_VALUES = new Set(["head_coach", "assistant_coach", "staff"])
+const PAGE_SIZE = 24
+
+function parseInput(sp: SearchParams): ListCoachesInput {
+  const league = sp.league
+  const team = sp.team?.trim()
+  const role = sp.role
+  const query = sp.q?.trim()
+  const page = Number(sp.page ?? 1)
+  return {
+    league: league && LEAGUE_VALUES.has(league) ? league : undefined,
+    team: team || undefined,
+    role:
+      role && ROLE_VALUES.has(role)
+        ? (role as ListCoachesInput["role"])
+        : undefined,
+    query: query || undefined,
+    page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
+    pageSize: PAGE_SIZE,
+  }
 }
 
 export default async function CoachesPage(props: {
   searchParams: Promise<SearchParams>
 }) {
   const sp = await props.searchParams
-  const league = firstParam(sp.league)
-  const team = firstParam(sp.team)?.trim()
-  const role = firstParam(sp.role)
-  const query = firstParam(sp.q)?.trim()
+  const input = parseInput(sp)
+  const result = await listCoaches(input)
+  const { items, total, page, totalPages, pageSize } = result
 
-  const coaches = await listCoaches({
-    league: league && LEAGUE_VALUES.has(league) ? league : undefined,
-    team: team || undefined,
-    role: role && ROLE_VALUES.has(role) ? (role as "head_coach" | "assistant_coach" | "staff") : undefined,
-    query: query || undefined,
-  })
-
-  const groups = groupCoachesByTeam(coaches)
+  const filterSearchParams: Record<string, string | undefined> = {
+    league: sp.league,
+    team: sp.team,
+    role: sp.role,
+    q: sp.q,
+  }
 
   return (
-    <div className="py-12">
-      <header className="mb-8">
-        <p className="text-sm uppercase tracking-widest text-brand-300">
+    <div className="py-8 sm:py-12">
+      <header className="mb-6 sm:mb-8">
+        <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
           Directory
         </p>
-        <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl">
+        <h1 className="mt-2 font-display text-3xl font-bold text-ink-50 sm:text-4xl md:text-5xl">
           Coaches &amp; <span className="text-gradient-brand">staff</span>
         </h1>
-        <p className="mt-3 max-w-2xl text-ink-300">
-          {coaches.length} staff member{coaches.length === 1 ? "" : "s"} across{" "}
-          {groups.length} team{groups.length === 1 ? "" : "s"} in the NBA,
-          EuroLeague and Liga ACB. Filter by league, team or role.
+        <p className="mt-3 max-w-2xl text-sm text-ink-300 sm:text-base">
+          <span className="font-mono font-semibold text-ink-100">
+            {total.toLocaleString("en-US")}
+          </span>{" "}
+          staff member{total === 1 ? "" : "s"} across the NBA, EuroLeague and
+          Liga ACB. Filter by league, team or role.
         </p>
       </header>
 
@@ -57,56 +74,36 @@ export default async function CoachesPage(props: {
         <CoachFilters />
       </div>
 
-      {groups.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-12 text-center">
-          <p className="text-ink-200">No staff match your filters.</p>
-          <p className="mt-1 text-sm text-ink-400">
+      {items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center sm:p-12">
+          <p className="text-sm text-ink-200 sm:text-base">
+            No staff match your filters.
+          </p>
+          <p className="mt-1 text-xs text-ink-400 sm:text-sm">
             Try a different league, role or partial name.
           </p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {groups.map((g) => (
-            <li
-              key={g.team.id}
-              className="rounded-xl border border-white/5 bg-white/[0.02] p-4"
-            >
-              <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md bg-court-800 ring-1 ring-white/5">
-                  {g.team.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={g.team.logoUrl}
-                      alt={g.team.name}
-                      className="h-full w-full object-contain p-1"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span className="text-[10px] font-bold text-brand-300">
-                      {g.team.name.slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-ink-50">
-                    {g.team.name}
-                  </p>
-                  <p className="text-xs text-ink-400">{g.league.name}</p>
-                </div>
-                <span className="rounded-md bg-white/5 px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-ink-300">
-                  {g.coaches.length}
-                </span>
-              </div>
-              <ul className="space-y-2">
-                {g.coaches.map((c) => (
-                  <li key={c.id}>
-                    <CoachCard coach={c} />
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+            {items.map((c, idx) => (
+              <li key={c.id}>
+                <CoachCard coach={c} index={idx} />
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 sm:mt-8">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              basePath="/coaches"
+              searchParams={filterSearchParams}
+            />
+          </div>
+        </>
       )}
     </div>
   )

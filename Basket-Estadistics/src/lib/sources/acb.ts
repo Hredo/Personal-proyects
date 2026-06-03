@@ -453,8 +453,9 @@ export const acbAdapter: SourceAdapter = {
         wins,
         losses,
         winPct: gp > 0 ? Number((wins / gp).toFixed(3)) : undefined,
-        pointsFor,
-        pointsAgainst,
+        pointsFor: pointsFor != null ? Number((pointsFor / gp).toFixed(1)) : undefined,
+        pointsAgainst:
+          pointsAgainst != null ? Number((pointsAgainst / gp).toFixed(1)) : undefined,
         position,
       })
     }

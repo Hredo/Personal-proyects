@@ -1,159 +1,331 @@
-import { Basketball } from "@/components/svg/basketball"
-import { Court } from "@/components/svg/court"
+import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
 import { Float } from "@/components/animations/float"
-import { PlayerSearch } from "@/components/players/player-search"
+import { CourtPerspective } from "@/components/svg/court-perspective"
+import { AnimatedBars } from "@/components/svg/animated-bars"
+import { AnimatedRadar } from "@/components/svg/animated-radar"
+import { CountUp } from "@/components/marketing/count-up"
+import { Marquee } from "@/components/marketing/marquee"
+
+const TICKER_LEFT = [
+  { name: "Luka Dončić", team: "DAL · NBA", stat: "32.4 PPG" },
+  { name: "Facundo Campazzo", team: "RMB · EuroLeague", stat: "6.8 APG" },
+  { name: "Santi Aldama", team: "MEM · NBA", stat: "51% FG" },
+  { name: "Nikola Mirotić", team: "FCB · EuroLeague", stat: "18.1 PPG" },
+  { name: "Willy Hernangómez", team: "RMB · EuroLeague", stat: "8.4 RPG" },
+  { name: "Carlos Alocén", team: "ZAR · ACB", stat: "5.2 APG" },
+  { name: "Juan Núñez", team: "RMB · EuroLeague", stat: "4.9 APG" },
+  { name: "Dario Brizuela", team: "FCB · ACB", stat: "14.2 PPG" },
+]
+
+const TICKER_RIGHT = [
+  { name: "Jokić", stat: "27.1 / 12.4 / 9.0" },
+  { name: "Doncic", stat: "32.4 / 8.6 / 9.1" },
+  { name: "Antetokounmpo", stat: "30.4 / 11.5 / 6.5" },
+  { name: "Campazzo", stat: "11.2 / 3.0 / 6.8" },
+  { name: "Mirotic", stat: "18.1 / 5.3 / 1.4" },
+  { name: "Aldama", stat: "10.7 / 5.0 / 1.4" },
+  { name: "Brizuela", stat: "14.2 / 2.4 / 2.1" },
+  { name: "Núñez", stat: "8.1 / 2.6 / 4.9" },
+]
 
 const PILLARS = [
   {
-    title: "Global stats, normalized",
-    body: "One model for NBA, ACB and EuroLeague. Per-game, advanced metrics and season splits in a single view.",
+    n: "01",
+    title: "Ingest",
+    body: "Public box scores from the NBA, ACB and EuroLeague pipelines. Refreshed after every tip-off.",
   },
   {
-    title: "Side-by-side compare",
-    body: "Stack up to four players with a radar overlay and a color-coded diff table. Spot strengths and gaps in seconds.",
+    n: "02",
+    title: "Normalize",
+    body: "Same per-game scale, same advanced metrics, same court. Spanish minutes, American possessions, one model.",
   },
   {
-    title: "Highlights on demand",
-    body: "YouTube-powered highlight reels fetched on demand for every player in the database.",
+    n: "03",
+    title: "Compare",
+    body: "Side-by-side overlays, radar diffs, and color-coded bars. Spot the gap in seconds, not film sessions.",
   },
-] as const
+]
 
-const ROADMAP = [
-  { tag: "Now", label: "NBA · ACB · EuroLeague ingest" },
-  { tag: "Q3", label: "WNCAA, Liga Endesa Femenina, Lega Basket Serie A" },
-  { tag: "Q4", label: "Asia (B.League, CBA, KBL) and Latin America (NBB, LMB)" },
-  { tag: "Next", label: "Shortlists, scouting reports, shareable comparisons" },
-] as const
+const STATS = [
+  { v: 3, suffix: "", label: "Leagues live" },
+  { v: 2400, suffix: "+", label: "Players indexed" },
+  { v: 24, suffix: "", label: "Advanced metrics" },
+  { v: 2, suffix: "s", label: "To compare any two", decimals: 0 },
+]
 
 export default function Home() {
   return (
     <div className="relative">
-      <section className="relative isolate overflow-hidden pb-24 pt-16 md:pt-24">
+      <section className="relative isolate overflow-hidden pb-12 pt-8 sm:pb-20 sm:pt-14 md:pt-20">
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-court-grid opacity-40"
+          className="absolute inset-0 -z-20 bg-grid-fade opacity-70"
         />
         <div
           aria-hidden
-          className="absolute -top-32 left-1/2 -z-10 h-[520px] w-[920px] -translate-x-1/2 rounded-full bg-brand-500/20 blur-3xl"
+          className="absolute -top-40 left-1/2 -z-10 h-[420px] w-[760px] -translate-x-1/2 rounded-full bg-brand-500/20 blur-3xl sm:h-[560px] sm:w-[1100px]"
         />
-        <div className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
+        <div
+          aria-hidden
+          className="absolute right-[5%] top-[30%] -z-10 hidden h-72 w-72 rounded-full bg-accent-magenta/15 blur-3xl md:block"
+        />
+
+        <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-12">
           <div>
             <FadeIn>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-ink-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
-                Scouting intelligence
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-ink-200 sm:text-xs">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-400" />
+                </span>
+                v0.3 — NBA · ACB · EuroLeague
               </span>
             </FadeIn>
-            <FadeIn delay={0.1} y={32}>
-              <h1 className="mt-6 font-display text-5xl font-bold leading-[1.05] tracking-tight text-balance text-ink-50 md:text-7xl">
-                Every stat from{" "}
-                <span className="text-gradient-brand">every league</span>,
-                one scouting console.
+
+            <FadeIn delay={0.08} y={28}>
+              <h1 className="mt-5 font-display text-[2.6rem] font-bold leading-[0.95] tracking-[-0.02em] text-ink-50 sm:mt-6 sm:text-6xl md:text-7xl xl:text-[5.5rem]">
+                Hoops,{" "}
+                <span className="text-gradient-shimmer">decoded.</span>
               </h1>
             </FadeIn>
-            <FadeIn delay={0.2} y={20}>
-              <p className="mt-6 max-w-xl text-lg text-ink-200">
-                Basket Estadistics aggregates public data from professional
-                leagues worldwide, normalizes it, and exposes player
-                profiles, comparatives and highlight reels built for front
-                offices.
+
+            <FadeIn delay={0.18} y={20}>
+              <p className="mt-5 max-w-xl text-base text-ink-200 sm:mt-6 sm:text-lg">
+                The basketball operating system for serious scouts. Box scores,
+                advanced splits and side-by-side comparisons from the NBA, ACB
+                and EuroLeague — all in one console, all in the same language.
               </p>
             </FadeIn>
-            <FadeIn delay={0.3} y={16}>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <a
-                  href="#waitlist"
-                  className="rounded-md bg-brand-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
+
+            <FadeIn delay={0.28} y={16}>
+              <div className="mt-7 flex flex-wrap items-center gap-3 sm:mt-8 sm:gap-4">
+                <Link
+                  href="/compare"
+                  className="group inline-flex items-center gap-2 rounded-md bg-brand-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400 sm:px-6 sm:text-base"
                 >
-                  Get team access
-                </a>
-                <a
-                  href="#product"
-                  className="rounded-md border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200"
+                  Open the console
+                  <svg
+                    className="h-4 w-4 transition group-hover:translate-x-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M5 12h14M13 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link
+                  href="/players"
+                  className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200 sm:text-base"
                 >
-                  See the product
-                </a>
+                  Browse the database
+                </Link>
               </div>
             </FadeIn>
+
             <FadeIn delay={0.4}>
-              <div className="mt-8 max-w-xl">
-                <PlayerSearch
-                  inputClassName="py-5 text-lg"
-                  emptyHeadline="Top scorers this season"
-                />
-                <p className="mt-2 flex items-center gap-2 text-xs text-ink-400">
-                  <span>
-                    Live data from the NBA, EuroLeague and Liga ACB — points,
-                    assists, rebounds and shooting splits, one keystroke away.
-                  </span>
-                </p>
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.45}>
-              <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">
-                {[
-                  { k: "3", v: "leagues live" },
-                  { k: "20+", v: "advanced metrics" },
-                  { k: "<2s", v: "compare overlay" },
-                ].map((stat) => (
-                  <div key={stat.v}>
-                    <dt className="font-display text-3xl font-bold text-ink-50">
-                      {stat.k}
+              <dl className="mt-9 grid max-w-lg grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-4 sm:gap-6">
+                {STATS.map((s) => (
+                  <div key={s.label} className="border-l border-white/10 pl-3 sm:pl-4">
+                    <dt className="font-display text-2xl font-bold text-ink-50 sm:text-3xl">
+                      <CountUp
+                        to={s.v}
+                        suffix={s.suffix}
+                        decimals={"decimals" in s ? s.decimals : 0}
+                      />
                     </dt>
-                    <dd className="mt-1 text-xs uppercase tracking-wider text-ink-300">
-                      {stat.v}
+                    <dd className="mt-1 text-[10px] uppercase tracking-wider text-ink-300 sm:text-[11px]">
+                      {s.label}
                     </dd>
                   </div>
                 ))}
               </dl>
             </FadeIn>
           </div>
+
           <div className="relative">
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-brand-500/20 via-transparent to-accent-cyan/10 blur-2xl" />
-            <FadeIn delay={0.15}>
-              <div className="relative aspect-[5/3] w-full">
-                <Court className="absolute inset-0 h-full w-full" />
-                <Float className="absolute right-[6%] top-[6%] h-24 w-24 md:h-32 md:w-32">
-                  <Basketball className="h-full w-full drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]" />
-                </Float>
-                <Float
-                  className="absolute left-[10%] bottom-[10%] h-12 w-12 md:h-16 md:w-16"
-                  duration={5}
-                  y={8}
-                >
-                  <Basketball className="h-full w-full opacity-80" />
-                </Float>
-              </div>
-            </FadeIn>
+            <div
+              aria-hidden
+              className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-brand-500/25 via-transparent to-accent-cyan/15 blur-2xl"
+            />
+            <div className="relative aspect-[5/4] w-full">
+              <CourtPerspective className="absolute inset-0 h-full w-full" />
+              <Float
+                className="absolute right-[2%] top-[2%] h-3 w-3 sm:h-4 sm:w-4"
+                duration={3}
+                y={6}
+              >
+                <div className="h-full w-full rounded-full bg-accent-cyan/80 shadow-[0_0_20px_4px_rgba(125,200,255,0.45)]" />
+              </Float>
+              <Float
+                className="absolute left-[4%] top-[44%] h-2 w-2 sm:h-3 sm:w-3"
+                duration={4}
+                y={4}
+              >
+                <div className="h-full w-full rounded-full bg-accent-magenta/80 shadow-[0_0_20px_4px_rgba(255,100,200,0.45)]" />
+              </Float>
+            </div>
+            <div className="pointer-events-none absolute -bottom-3 left-4 right-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-ink-400 sm:text-[11px]">
+              <span>shot chart · live</span>
+              <span>trajectory @scroll</span>
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="product" className="border-t border-white/5 py-24">
+      <section
+        aria-label="Top performers"
+        className="border-y border-white/5 bg-ink-950/40 py-3"
+      >
+        <Marquee duration={55} className="text-sm">
+          {TICKER_LEFT.map((t) => (
+            <div
+              key={t.name}
+              className="flex items-center gap-3 whitespace-nowrap font-mono text-[11px] uppercase tracking-wider text-ink-300 sm:text-xs"
+            >
+              <span className="h-1 w-1 rounded-full bg-brand-400" />
+              <span className="text-ink-100">{t.name}</span>
+              <span className="text-ink-400">{t.team}</span>
+              <span className="text-brand-300">{t.stat}</span>
+            </div>
+          ))}
+        </Marquee>
+        <Marquee duration={70} reverse className="mt-2 text-sm">
+          {TICKER_RIGHT.map((t) => (
+            <div
+              key={t.name}
+              className="flex items-center gap-3 whitespace-nowrap font-mono text-[11px] uppercase tracking-wider text-ink-300 sm:text-xs"
+            >
+              <span className="h-1 w-1 rounded-full bg-accent-cyan" />
+              <span className="text-ink-100">{t.name}</span>
+              <span className="text-ink-400">PTS · REB · AST</span>
+              <span className="text-accent-cyan">{t.stat}</span>
+            </div>
+          ))}
+        </Marquee>
+      </section>
+
+      <section className="relative py-16 sm:py-24">
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-grid-fade opacity-40"
+        />
+        <div className="grid items-center gap-10 md:grid-cols-[1fr_1.1fr] md:gap-14">
+          <FadeIn>
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand-200 sm:text-xs">
+              01 / Normalize
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
+              League averages,{" "}
+              <span className="text-gradient-brand">one scale.</span>
+            </h2>
+            <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
+              The NBA plays 82 games, the EuroLeague plays 34, the ACB plays
+              38. We strip pace and possession bias so a 28-point EuroLeague
+              scorer reads the same as a 28-point NBA one.
+            </p>
+            <p className="mt-3 text-sm text-ink-400">
+              Scroll to watch the chart build itself.
+            </p>
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/40 p-3 sm:p-4">
+              <div className="aspect-[5/3.4] w-full">
+                <AnimatedBars />
+              </div>
+              <div className="pointer-events-none absolute right-4 top-4 font-mono text-[10px] uppercase tracking-widest text-ink-400">
+                chart @scroll
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      <section className="relative border-t border-white/5 py-16 sm:py-24">
+        <div className="grid items-center gap-10 md:grid-cols-[1.1fr_1fr] md:gap-14">
+          <FadeIn className="order-2 md:order-1">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/40 p-3 sm:p-6">
+              <div className="aspect-square w-full">
+                <AnimatedRadar aLabel="Jokić" bLabel="Dončić" />
+              </div>
+              <div className="pointer-events-none absolute left-4 top-4 font-mono text-[10px] uppercase tracking-widest text-ink-400">
+                radar @scroll
+              </div>
+            </div>
+          </FadeIn>
+          <FadeIn className="order-1 md:order-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-cyan sm:text-xs">
+              02 / Compare
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
+              Two players,{" "}
+              <span className="text-gradient-brand">one screen.</span>
+            </h2>
+            <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
+              Drop two names. The radar fills itself, the per-game bars
+              highlight the leader in green, advanced metrics stack
+              side-by-side. No spreadsheets, no film sessions at 3am.
+            </p>
+            <Link
+              href="/compare"
+              className="mt-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200 sm:text-base"
+            >
+              Try the side-by-side
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M5 12h14M13 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </FadeIn>
+        </div>
+      </section>
+
+      <section
+        id="product"
+        className="relative border-t border-white/5 py-16 sm:py-24"
+      >
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
-            <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Built for front offices
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent-magenta/30 bg-accent-magenta/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-magenta sm:text-xs">
+              03 / Pipeline
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
+              From tip-off to terminal.
             </h2>
-            <p className="mt-4 text-ink-200">
-              Three pillars, designed to compress scouting time from days to
-              minutes.
+            <p className="mt-3 text-sm text-ink-200 sm:mt-4 sm:text-base">
+              Three stages, fully automated. Every match feeds the same model
+              so the numbers stay sharp and the rankings stay honest.
             </p>
           </FadeIn>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3">
           {PILLARS.map((pillar, i) => (
-            <FadeIn key={pillar.title} delay={0.05 * i}>
-              <article className="group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-brand-400/50 hover:bg-white/[0.05]">
-                <span className="absolute right-4 top-4 font-mono text-xs text-ink-400">
-                  0{i + 1}
-                </span>
-                <h3 className="font-display text-xl font-semibold text-ink-50">
+            <FadeIn key={pillar.n} delay={0.05 * i}>
+              <article className="group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-brand-400/50 hover:bg-white/[0.05] sm:p-6">
+                <div className="flex items-baseline justify-between">
+                  <span className="font-mono text-xs uppercase tracking-widest text-brand-300">
+                    {pillar.n}
+                  </span>
+                  <span className="font-display text-2xl font-bold text-ink-700 transition group-hover:text-ink-500">
+                    {pillar.title}
+                  </span>
+                </div>
+                <h3 className="mt-4 font-display text-lg font-semibold text-ink-50 sm:text-xl">
                   {pillar.title}
                 </h3>
-                <p className="mt-3 text-sm text-ink-200">{pillar.body}</p>
+                <p className="mt-2 text-sm text-ink-200 sm:mt-3">{pillar.body}</p>
                 <div
                   aria-hidden
                   className="pointer-events-none absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-brand-500/0 blur-2xl transition group-hover:bg-brand-500/30"
@@ -164,75 +336,68 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-white/5 py-24">
-        <div className="grid gap-12 md:grid-cols-[1fr_1.2fr]">
-          <FadeIn>
-            <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Roadmap
-            </h2>
-            <p className="mt-4 text-ink-200">
-              A controlled rollout. The MVP focuses on the three most-watched
-              leagues; additional federations unlock progressively.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <ol className="relative space-y-4 border-l border-white/10 pl-6">
-              {ROADMAP.map((step) => (
-                <li key={step.label} className="relative">
-                  <span className="absolute -left-[31px] top-1 h-3 w-3 rounded-full border border-brand-400 bg-ink-950" />
-                  <p className="font-mono text-xs uppercase tracking-wider text-brand-300">
-                    {step.tag}
-                  </p>
-                  <p className="mt-1 text-ink-100">{step.label}</p>
-                </li>
-              ))}
-            </ol>
-          </FadeIn>
-        </div>
-      </section>
-
-      <section
-        id="waitlist"
-        className="relative isolate my-24 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-court-800/80 to-ink-900/90 p-10 md:p-16"
-      >
+      <section className="relative my-12 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-court-800/80 via-ink-900/90 to-ink-950 p-6 sm:my-20 sm:p-10 md:p-14">
         <div
           aria-hidden
-          className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand-500/30 blur-3xl"
+          className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-500/30 blur-3xl"
         />
-        <div className="relative grid items-center gap-8 md:grid-cols-[1.2fr_1fr]">
+        <div
+          aria-hidden
+          className="absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-accent-cyan/20 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-0 opacity-50"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px), linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage:
+              "radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%)",
+          }}
+        />
+        <div className="relative grid items-center gap-8 md:grid-cols-[1.1fr_1fr]">
           <div>
-            <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-              Request team access
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand-200 sm:text-xs">
+              Open to everyone
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
+              The data is live.{" "}
+              <span className="text-gradient-brand">No invite needed.</span>
             </h2>
-            <p className="mt-4 max-w-md text-ink-200">
-              Free during the MVP. Limited seats while we onboard the first
-              wave of clubs.
+            <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
+              Every player, every stat, every highlight — free during the
+              public beta. Open the console, drop two names, run the math.
             </p>
           </div>
-          <form
-            className="flex flex-col gap-3 sm:flex-row"
-            action="mailto:Hrvaldes22@gmail.com"
-            method="post"
-            encType="text/plain"
-          >
-            <label htmlFor="email" className="sr-only">
-              Work email
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              required
-              placeholder="you@club.com"
-              className="w-full rounded-md border border-white/10 bg-ink-950/60 px-4 py-3 text-ink-50 placeholder:text-ink-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-            />
-            <button
-              type="submit"
-              className="rounded-md bg-brand-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
+          <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
+            <Link
+              href="/compare"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
             >
-              Request invite
-            </button>
-          </form>
+              Open the console
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M5 12h14M13 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link
+              href="/players"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 bg-white/5 px-6 py-3.5 text-base font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200"
+            >
+              Browse players
+            </Link>
+          </div>
         </div>
       </section>
     </div>

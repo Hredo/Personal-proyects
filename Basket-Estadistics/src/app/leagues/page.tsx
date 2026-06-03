@@ -12,37 +12,37 @@ export const metadata: Metadata = {
 export default async function LeaguesPage() {
   const leagues = await listLeagues()
   return (
-    <div className="py-10">
+    <div className="py-8 sm:py-10">
       <FadeIn>
-        <header className="mb-8">
-          <p className="text-sm uppercase tracking-widest text-brand-300">
+        <header className="mb-6 sm:mb-8">
+          <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
             Coverage
           </p>
-          <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl">
+          <h1 className="mt-2 font-display text-3xl font-bold text-ink-50 sm:text-4xl md:text-5xl">
             Leagues
           </h1>
-          <p className="mt-3 max-w-2xl text-ink-300">
+          <p className="mt-3 max-w-2xl text-sm text-ink-300 sm:text-base">
             Three professional leagues. Click any league to filter the player
             directory.
           </p>
         </header>
       </FadeIn>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {leagues.map((lg) => (
           <FadeIn key={lg.id}>
             <Link
               href={`/players?league=${lg.slug}`}
-              className="group block rounded-2xl border border-white/5 bg-white/[0.02] p-6 transition hover:border-brand-500/40 hover:bg-white/[0.05]"
+              className="group block rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition hover:border-brand-500/40 hover:bg-white/[0.05] sm:p-6"
             >
               <p className="text-xs uppercase tracking-widest text-ink-300">
                 {lg.country}
               </p>
-              <h2 className="mt-2 font-display text-2xl font-bold text-ink-50 group-hover:text-brand-300">
+              <h2 className="mt-2 font-display text-xl font-bold text-ink-50 group-hover:text-brand-300 sm:text-2xl">
                 {lg.name}
               </h2>
               <div className="mt-4 flex gap-6 text-sm text-ink-300">
                 <div>
-                  <p className="font-mono text-2xl font-bold text-ink-50">
+                  <p className="font-mono text-xl font-bold text-ink-50 sm:text-2xl">
                     {lg.teamCount}
                   </p>
                   <p className="text-[10px] uppercase tracking-widest text-ink-400">
@@ -50,7 +50,7 @@ export default async function LeaguesPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-2xl font-bold text-ink-50">
+                  <p className="font-mono text-xl font-bold text-ink-50 sm:text-2xl">
                     {lg.playerCount}
                   </p>
                   <p className="text-[10px] uppercase tracking-widest text-ink-400">

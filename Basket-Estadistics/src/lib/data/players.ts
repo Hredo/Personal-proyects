@@ -14,16 +14,31 @@ export type PlayerListItem = {
   slug: string
   nationality: string | null
   position: string | null
+  birthdate: string | null
+  heightCm: number | null
+  weightKg: number | null
   photoUrl: string | null
+  source: string
   league: { id: string; name: string; slug: string; country: string }
   team: { id: string; name: string; slug: string; logoUrl: string | null } | null
   stats: {
+    seasonId: string
+    seasonName: string
+    year: number
     gamesPlayed: number
+    minutesPerGame: number | null
     points: number | null
     rebounds: number | null
     assists: number | null
     steals: number | null
     blocks: number | null
+    turnovers: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
+    offRtg: number | null
+    defRtg: number | null
+    per: number | null
   } | null
 }
 
@@ -33,121 +48,343 @@ export type ListPlayersInput = {
   team?: string
   sort?: "points" | "rebounds" | "assists" | "name"
   order?: "asc" | "desc"
-  limit?: number
+  page?: number
+  pageSize?: number
+}
+
+export type ListPlayersResult = {
+  items: PlayerListItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
 export async function listPlayers(
   input: ListPlayersInput = {},
-): Promise<PlayerListItem[]> {
+): Promise<ListPlayersResult> {
   const db = getDb()
-  const limit = input.limit ?? 60
+  const page = Math.max(1, input.page ?? 1)
+  const pageSize = Math.max(1, Math.min(input.pageSize ?? 24, 200))
   const order = input.order ?? "desc"
   const sort = input.sort ?? "points"
+  const offset = (page - 1) * pageSize
 
-  const conditions = []
-  if (input.league) conditions.push(eq(leagues.slug, input.league))
-  if (input.team) {
-    const tq = `%${input.team.toLowerCase()}%`
-    conditions.push(like(sql`lower(${teams.name})`, tq))
-  }
-  if (input.query) {
-    const q = `%${input.query.toLowerCase()}%`
-    conditions.push(like(sql`lower(${players.fullName})`, q))
-  }
-  const where = conditions.length ? and(...conditions) : undefined
-
-  const orderExpr = (() => {
-    const dir = order === "asc" ? asc : desc
-    if (sort === "name") return dir(players.fullName)
-    const col = (() => {
-      switch (sort) {
-        case "rebounds":
-          return playerStats.rebounds
-        case "assists":
-          return playerStats.assists
-        case "points":
-        default:
-          return playerStats.points
-      }
-    })()
-    return dir(sql`coalesce(${col}, 0)`)
+  const sortColumn = (() => {
+    switch (sort) {
+      case "rebounds":
+        return sql`coalesce(rebounds, 0)`
+      case "assists":
+        return sql`coalesce(assists, 0)`
+      case "name":
+        return sql`lower(p_full_name)`
+      case "points":
+      default:
+        return sql`coalesce(points, 0)`
+    }
   })()
+  const orderDir = order === "asc" ? sql`asc` : sql`desc`
 
-  const rows = await db
-    .select({
-      playerId: players.id,
-      fullName: players.fullName,
-      slug: players.slug,
-      nationality: players.nationality,
-      position: players.position,
-      photoUrl: players.photoUrl,
-      source: players.source,
-      leagueId: leagues.id,
-      leagueName: leagues.name,
-      leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
-      teamId: teams.id,
-      teamName: teams.name,
-      teamSlug: teams.slug,
-      teamLogo: teams.logoUrl,
-      gamesPlayed: playerStats.gamesPlayed,
-      points: playerStats.points,
-      rebounds: playerStats.rebounds,
-      assists: playerStats.assists,
-      steals: playerStats.steals,
-      blocks: playerStats.blocks,
-    })
-    .from(players)
-    .innerJoin(leagues, eq(players.source, leagues.source))
-    .leftJoin(teams, eq(players.currentTeamId, teams.id))
-    .leftJoin(
-      playerStats,
-      and(
-        eq(playerStats.playerId, players.id),
-        eq(
-          playerStats.seasonId,
-          sql`(select s.id from seasons s where s.league_id = ${leagues.id} order by s.year desc limit 1)`,
-        ),
-      ),
+  const teamFilter = input.team
+    ? sql`lower(coalesce(t.name, '')) like ${`%${input.team.toLowerCase()}%`}`
+    : sql`1=1`
+  const queryFilter = input.query
+    ? sql`lower(p.full_name) like ${`%${input.query.toLowerCase()}%`}`
+    : sql`1=1`
+  const leagueFilter = input.league
+    ? sql`l.slug = ${input.league}`
+    : sql`1=1`
+
+  const fullSql = sql`
+    with memberships as (
+      select
+        ps.player_id,
+        s.league_id,
+        ps.season_id,
+        s.year as season_year,
+        s.name as season_name,
+        ps.team_id,
+        ps.games_played,
+        ps.minutes_per_game,
+        ps.points,
+        ps.rebounds,
+        ps.assists,
+        ps.steals,
+        ps.blocks,
+        ps.turnovers,
+        ps.fg_pct,
+        ps.three_pct,
+        ps.ft_pct,
+        ps.off_rtg,
+        ps.def_rtg,
+        ps.per
+      from ${playerStats} ps
+      inner join ${seasons} s on s.id = ps.season_id
+
+      union all
+
+      select
+        p.id as player_id,
+        l_src.id as league_id,
+        cast(null as text) as season_id,
+        cast(null as integer) as season_year,
+        cast(null as text) as season_name,
+        p.current_team_id as team_id,
+        cast(null as integer) as games_played,
+        cast(null as real) as minutes_per_game,
+        cast(null as real) as points,
+        cast(null as real) as rebounds,
+        cast(null as real) as assists,
+        cast(null as real) as steals,
+        cast(null as real) as blocks,
+        cast(null as real) as turnovers,
+        cast(null as real) as fg_pct,
+        cast(null as real) as three_pct,
+        cast(null as real) as ft_pct,
+        cast(null as real) as off_rtg,
+        cast(null as real) as def_rtg,
+        cast(null as real) as per
+      from ${players} p
+      inner join ${leagues} l_src on l_src.source = p.source
+      where not exists (
+        select 1 from ${playerStats} ps2 where ps2.player_id = p.id
+      )
+    ),
+    ranked as (
+      select
+        m.*,
+        p.id as p_id,
+        p.full_name as p_full_name,
+        p.slug as p_slug,
+        p.nationality as p_nationality,
+        p.position as p_position,
+        p.birthdate as p_birthdate,
+        p.height_cm as p_height_cm,
+        p.weight_kg as p_weight_kg,
+        p.photo_url as p_photo_url,
+        p.source as p_source,
+        p.updated_at as p_updated_at,
+        l.id as l_id,
+        l.name as l_name,
+        l.slug as l_slug,
+        l.country as l_country,
+        t.id as t_id,
+        t.name as t_name,
+        t.slug as t_slug,
+        t.logo_url as t_logo_url,
+        row_number() over (
+          partition by lower(p.full_name)
+          order by
+            coalesce(m.games_played, 0) desc,
+            case when p.photo_url is not null then 0 else 1 end,
+            case when p.nationality is not null then 0 else 1 end,
+            case when p.position is not null then 0 else 1 end,
+            p.updated_at desc
+        ) as rn
+      from memberships m
+      inner join ${players} p on p.id = m.player_id
+      inner join ${leagues} l on l.id = m.league_id
+      left join ${teams} t on t.id = m.team_id
+      where
+        ${leagueFilter}
+        and ${teamFilter}
+        and ${queryFilter}
     )
-    .where(where)
-    .orderBy(orderExpr)
-    .limit(limit)
+    select
+      p_id as player_id,
+      p_full_name as full_name,
+      p_slug as slug,
+      p_nationality as nationality,
+      p_position as position,
+      p_birthdate as birthdate,
+      p_height_cm as height_cm,
+      p_weight_kg as weight_kg,
+      p_photo_url as photo_url,
+      p_source as source,
+      l_id as league_id,
+      l_name as league_name,
+      l_slug as league_slug,
+      l_country as league_country,
+      t_id as team_id,
+      t_name as team_name,
+      t_slug as team_slug,
+      t_logo_url as team_logo,
+      season_id,
+      season_year,
+      season_name,
+      games_played,
+      minutes_per_game,
+      points,
+      rebounds,
+      assists,
+      steals,
+      blocks,
+      turnovers,
+      fg_pct,
+      three_pct,
+      ft_pct,
+      off_rtg,
+      def_rtg,
+      per
+    from ranked
+    where ${input.league ? sql`rn = 1` : sql`rn = 1`}
+    order by ${sortColumn} ${orderDir}, p_full_name ${orderDir}
+    limit ${pageSize} offset ${offset}
+  `
 
-  return rows.map((r) => ({
-    id: r.playerId,
-    fullName: r.fullName,
-    slug: r.slug,
-    nationality: r.nationality,
-    position: r.position,
-    photoUrl: r.photoUrl,
-    league: {
-      id: r.leagueId,
-      name: r.leagueName,
-      slug: r.leagueSlug,
-      country: r.leagueCountry,
-    },
-    team:
-      r.teamId && r.teamName && r.teamSlug
-        ? {
-            id: r.teamId,
-            name: r.teamName,
-            slug: r.teamSlug,
-            logoUrl: r.teamLogo,
-          }
-        : null,
-    stats:
-      r.gamesPlayed == null
-        ? null
-        : {
-            gamesPlayed: r.gamesPlayed,
-            points: r.points,
-            rebounds: r.rebounds,
-            assists: r.assists,
-            steals: r.steals,
-            blocks: r.blocks,
-          },
-  }))
+  const countSql = sql`
+    with memberships as (
+      select
+        ps.player_id,
+        s.league_id,
+        ps.season_id,
+        ps.team_id,
+        ps.games_played
+      from ${playerStats} ps
+      inner join ${seasons} s on s.id = ps.season_id
+
+      union all
+
+      select
+        p.id as player_id,
+        l_src.id as league_id,
+        cast(null as text) as season_id,
+        p.current_team_id as team_id,
+        cast(null as integer) as games_played
+      from ${players} p
+      inner join ${leagues} l_src on l_src.source = p.source
+      where not exists (
+        select 1 from ${playerStats} ps2 where ps2.player_id = p.id
+      )
+    ),
+    ranked as (
+      select
+        p.id as p_id,
+        p.full_name as p_full_name,
+        p.photo_url as p_photo_url,
+        p.nationality as p_nationality,
+        p.position as p_position,
+        p.updated_at as p_updated_at,
+        m.games_played as m_games_played,
+        row_number() over (
+          partition by lower(p.full_name)
+          order by
+            coalesce(m.games_played, 0) desc,
+            case when p.photo_url is not null then 0 else 1 end,
+            case when p.nationality is not null then 0 else 1 end,
+            case when p.position is not null then 0 else 1 end,
+            p.updated_at desc
+        ) as rn
+      from memberships m
+      inner join ${players} p on p.id = m.player_id
+      inner join ${leagues} l on l.id = m.league_id
+      left join ${teams} t on t.id = m.team_id
+      where
+        ${leagueFilter}
+        and ${teamFilter}
+        and ${queryFilter}
+    )
+    select count(*) as c from ranked where rn = 1
+  `
+
+  const [countRow] = (await db.all(countSql)) as Array<{ c: number | string }>
+  const total = Number(countRow?.c ?? 0)
+
+  const rawRows = (await db.all(fullSql)) as Array<{
+    player_id: string
+    full_name: string
+    slug: string
+    nationality: string | null
+    position: string | null
+    birthdate: string | null
+    height_cm: number | null
+    weight_kg: number | null
+    photo_url: string | null
+    source: string
+    league_id: string
+    league_name: string
+    league_slug: string
+    league_country: string
+    team_id: string | null
+    team_name: string | null
+    team_slug: string | null
+    team_logo: string | null
+    season_id: string | null
+    season_year: number | null
+    season_name: string | null
+    games_played: number | null
+    minutes_per_game: number | null
+    points: number | null
+    rebounds: number | null
+    assists: number | null
+    steals: number | null
+    blocks: number | null
+    turnovers: number | null
+    fg_pct: number | null
+    three_pct: number | null
+    ft_pct: number | null
+    off_rtg: number | null
+    def_rtg: number | null
+    per: number | null
+  }>
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
+  return {
+    items: rawRows.map((r) => ({
+      id: r.player_id,
+      fullName: r.full_name,
+      slug: r.slug,
+      nationality: r.nationality,
+      position: r.position,
+      birthdate: r.birthdate,
+      heightCm: r.height_cm,
+      weightKg: r.weight_kg,
+      photoUrl: r.photo_url,
+      source: r.source,
+      league: {
+        id: r.league_id,
+        name: r.league_name,
+        slug: r.league_slug,
+        country: r.league_country,
+      },
+      team:
+        r.team_id && r.team_name && r.team_slug
+          ? {
+              id: r.team_id,
+              name: r.team_name,
+              slug: r.team_slug,
+              logoUrl: r.team_logo,
+            }
+          : null,
+      stats:
+        r.games_played == null
+          ? null
+          : {
+              seasonId: r.season_id!,
+              seasonName: r.season_name ?? "",
+              year: r.season_year ?? 0,
+              gamesPlayed: r.games_played,
+              minutesPerGame: r.minutes_per_game,
+              points: r.points,
+              rebounds: r.rebounds,
+              assists: r.assists,
+              steals: r.steals,
+              blocks: r.blocks,
+              turnovers: r.turnovers,
+              fgPct: r.fg_pct,
+              threePct: r.three_pct,
+              ftPct: r.ft_pct,
+              offRtg: r.off_rtg,
+              defRtg: r.def_rtg,
+              per: r.per,
+            },
+    })),
+    total,
+    page,
+    pageSize,
+    totalPages,
+  }
 }
 
 export type PlayerProfile = {

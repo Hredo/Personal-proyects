@@ -1,0 +1,119 @@
+import { NextResponse } from "next/server"
+import { and, asc, eq, like, sql } from "drizzle-orm"
+import { getDb } from "@/lib/db/client"
+import { leagues, players, teams } from "@/lib/db/schema"
+
+export const dynamic = "force-dynamic"
+
+const LEAGUES = new Set(["nba", "euroleague", "acb"])
+
+type Row = {
+  id: string
+  slug: string
+  fullName: string
+  source: string
+  photoUrl: string | null
+  position: string | null
+  nationality: string | null
+  teamId: string | null
+  teamName: string | null
+  teamSlug: string | null
+  teamLogo: string | null
+  leagueId: string
+  leagueName: string
+  leagueSlug: string
+  leagueCountry: string
+}
+
+export async function GET(req: Request) {
+  const url = new URL(req.url)
+  const q = url.searchParams.get("q")?.trim() ?? ""
+  const league = url.searchParams.get("league")?.trim() ?? ""
+  const rawLimit = Number(url.searchParams.get("limit") ?? 12)
+  const limit = Math.min(
+    Math.max(Number.isFinite(rawLimit) ? rawLimit : 12, 1),
+    30,
+  )
+
+  const db = getDb()
+  const conditions = []
+  if (q) {
+    conditions.push(like(sql`lower(${players.fullName})`, `%${q.toLowerCase()}%`))
+  }
+  if (LEAGUES.has(league)) {
+    conditions.push(eq(leagues.slug, league))
+  }
+  const where = conditions.length ? and(...conditions) : undefined
+
+  const rows: Row[] = await db
+    .select({
+      id: players.id,
+      slug: players.slug,
+      fullName: players.fullName,
+      source: players.source,
+      photoUrl: players.photoUrl,
+      position: players.position,
+      nationality: players.nationality,
+      teamId: teams.id,
+      teamName: teams.name,
+      teamSlug: teams.slug,
+      teamLogo: teams.logoUrl,
+      leagueId: leagues.id,
+      leagueName: leagues.name,
+      leagueSlug: leagues.slug,
+      leagueCountry: leagues.country,
+    })
+    .from(players)
+    .innerJoin(leagues, eq(players.source, leagues.source))
+    .leftJoin(teams, eq(players.currentTeamId, teams.id))
+    .where(where)
+    .orderBy(asc(players.fullName))
+    .limit(limit)
+
+  const ranked = q
+    ? rankByQuery(rows, q.toLowerCase())
+    : rows
+
+  return NextResponse.json({
+    results: ranked.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      fullName: r.fullName,
+      source: r.source,
+      photoUrl: r.photoUrl,
+      position: r.position,
+      nationality: r.nationality,
+      team:
+        r.teamId && r.teamName && r.teamSlug
+          ? {
+              id: r.teamId,
+              name: r.teamName,
+              slug: r.teamSlug,
+              logoUrl: r.teamLogo,
+            }
+          : null,
+      league: {
+        id: r.leagueId,
+        name: r.leagueName,
+        slug: r.leagueSlug,
+        country: r.leagueCountry,
+      },
+    })),
+    q,
+    league: LEAGUES.has(league) ? league : null,
+  })
+}
+
+function rankByQuery(rows: Row[], q: string) {
+  const score = (r: Row) => {
+    const name = r.fullName.toLowerCase()
+    if (name === q) return 0
+    if (name.startsWith(q)) return 1
+    const lastName = name.split(" ").slice(-1)[0] ?? name
+    if (lastName.startsWith(q)) return 2
+    if (name.includes(" " + q)) return 3
+    if (name.includes(q)) return 4
+    return 5
+  }
+  return [...rows].sort((a, b) => score(a) - score(b))
+}

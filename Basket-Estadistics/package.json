@@ -16,13 +16,15 @@
     "sync": "tsx scripts/sync.ts",
     "sync:nba": "tsx scripts/sync.ts nba",
     "sync:euroleague": "tsx scripts/sync.ts euroleague",
-    "sync:acb": "tsx scripts/sync.ts acb"
+    "sync:acb": "tsx scripts/sync.ts acb",
+    "backfill:colors": "tsx scripts/backfill-team-colors.ts",
+    "backfill:players": "tsx scripts/backfill-players.ts",
+    "db:dedupe-players": "tsx scripts/dedupe-players.ts"
   },
   "dependencies": {
     "better-sqlite3": "^12.10.0",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.40.0",
-    "lottie-react": "^2.4.1",
     "next": "^15.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -127,9 +127,46 @@ export const nbaAdapter: SourceAdapter = {
         sourceId: String(id),
         name: `${city} ${name}`.trim(),
         country: "USA",
+        city,
         logoUrl: teamLogoUrl(id),
       })
     }
+    const teamIds = out.map((t) => t.sourceId)
+    const detailMap = await this.fetchTeamDetails(teamIds)
+    for (const t of out) {
+      const d = detailMap.get(t.sourceId)
+      if (!d) continue
+      if (d.arena) t.arena = d.arena
+      if (d.arenaCapacity) t.arenaCapacity = d.arenaCapacity
+      if (d.foundedYear) t.foundedYear = d.foundedYear
+      if (d.websiteUrl) t.websiteUrl = d.websiteUrl
+    }
+    return out
+  },
+
+  async fetchTeamDetails(teamIds: string[]): Promise<Map<string, { arena?: string; arenaCapacity?: number; foundedYear?: number; websiteUrl?: string }>> {
+    const out = new Map<string, { arena?: string; arenaCapacity?: number; foundedYear?: number; websiteUrl?: string }>()
+    await Promise.all(
+      teamIds.map(async (id) => {
+        try {
+          const url = `${BASE_URL}/teamdetails?LeagueID=00&TeamID=${id}`
+          const payload = await fetchJson<NbaEnvelope>(url, { headers: NBA_HEADERS })
+          const set = payload.resultSets.find((rs) => rs.name === "TeamBackground")
+          if (!set) return
+          const row = set.rowSet[0]
+          if (!row) return
+          const obj: NbaRow = {}
+          for (let i = 0; i < set.headers.length; i++) obj[set.headers[i]!] = row[i] ?? null
+          out.set(id, {
+            arena: obj.ARENA ? String(obj.ARENA) : undefined,
+            arenaCapacity: obj.ARENACAPACITY ? Number(obj.ARENACAPACITY) : undefined,
+            foundedYear: obj.YEARFOUNDED ? Number(obj.YEARFOUNDED) : undefined,
+          })
+        } catch {
+          // ignore — keep default values
+        }
+      }),
+    )
     return out
   },
 
@@ -294,8 +331,32 @@ export const nbaAdapter: SourceAdapter = {
   async fetchTeamStats(): Promise<SourceTeamStats[]> {
     const url = `${BR_BASE}/leagues/NBA_${SEASON_END_YEAR}.html`
     const html = await fetchHtml(url)
+
+    const advancedHtml = extractTableById(html, "advanced-team")
+    const advancedByCode = new Map<
+      string,
+      { offRtg?: number; defRtg?: number; netRtg?: number; pace?: number; sos?: number }
+    >()
+    for (const row of rowsFromTable(advancedHtml)) {
+      const teamHref =
+        row.match(
+          /<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/,
+        )?.[1] ?? undefined
+      const teamCode = teamHref?.match(/\/teams\/([^/]+)\//)?.[1]
+      if (!teamCode) continue
+      const cells = getRowCells(row)
+      advancedByCode.set(teamCode, {
+        offRtg: toNumberOrNull(cells.get("off_rtg")),
+        defRtg: toNumberOrNull(cells.get("def_rtg")),
+        netRtg: toNumberOrNull(cells.get("net_rtg")),
+        pace: toNumberOrNull(cells.get("pace")),
+        sos: toNumberOrNull(cells.get("sos")),
+      })
+    }
+
     const out: SourceTeamStats[] = []
     const seen = new Set<string>()
+    let position = 0
     for (const id of ["divs_standings_E", "divs_standings_W"]) {
       const tableHtml = extractTableById(html, id)
       const rows = rowsFromTable(tableHtml)
@@ -310,16 +371,16 @@ export const nbaAdapter: SourceAdapter = {
         const cells = getRowCells(row)
         const teamName = cells.get("team_name")
         if (!teamName) continue
-        const g =
-          (toNumberOrNull(cells.get("wins")) ?? 0) +
-          (toNumberOrNull(cells.get("losses")) ?? 0)
         const w = toNumberOrNull(cells.get("wins")) ?? 0
         const l = toNumberOrNull(cells.get("losses")) ?? 0
+        const g = w + l
         const pts = toNumberOrNull(cells.get("pts_per_g"))
         const oppPts = toNumberOrNull(cells.get("opp_pts_per_g"))
         const teamId = nbaCodeToId(teamCode)
         if (!teamId) continue
         seen.add(teamCode)
+        position++
+        const adv = advancedByCode.get(teamCode)
         out.push({
           teamSourceId: teamId,
           season: SOURCE_META.nba.season,
@@ -329,6 +390,12 @@ export const nbaAdapter: SourceAdapter = {
           winPct: g > 0 ? Number((w / g).toFixed(3)) : undefined,
           pointsFor: pts,
           pointsAgainst: oppPts,
+          position,
+          pace: adv?.pace,
+          offRtg: adv?.offRtg,
+          defRtg: adv?.defRtg,
+          netRtg: adv?.netRtg,
+          sos: adv?.sos,
         })
       }
     }

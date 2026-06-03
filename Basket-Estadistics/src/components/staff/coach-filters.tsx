@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, useTransition } from "react"
+import { useTransition } from "react"
 
 const LEAGUES = [
   { slug: "nba", name: "NBA" },
@@ -21,15 +21,8 @@ export function CoachFilters() {
   const search = useSearchParams()
   const [isPending, startTransition] = useTransition()
 
-  const [q, setQ] = useState(search.get("q") ?? "")
-  const [team, setTeam] = useState(search.get("team") ?? "")
   const league = search.get("league") ?? ""
   const role = search.get("role") ?? ""
-
-  useEffect(() => {
-    setQ(search.get("q") ?? "")
-    setTeam(search.get("team") ?? "")
-  }, [search])
 
   function apply(updates: Record<string, string | null>) {
     const params = new URLSearchParams(search.toString())
@@ -37,59 +30,27 @@ export function CoachFilters() {
       if (v === null || v === "") params.delete(k)
       else params.set(k, v)
     }
+    params.delete("page")
     startTransition(() => {
       router.replace(`/coaches?${params.toString()}`)
     })
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <input
-            type="search"
-            placeholder="Search by name…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") apply({ q: q.trim() || null })
-            }}
-            onBlur={() => apply({ q: q.trim() || null })}
-            className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 pl-9 text-sm text-ink-50 outline-none ring-brand-500/50 transition focus:border-brand-400 focus:ring-2"
-          />
-          <svg
-            aria-hidden
-            className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-ink-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="2"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m21 21-4.3-4.3M16.65 10.65a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z"
-            />
-          </svg>
-        </div>
-        <div className="relative flex-1">
-          <input
-            type="search"
-            placeholder="Filter by team name…"
-            value={team}
-            onChange={(e) => setTeam(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") apply({ team: team.trim() || null })
-            }}
-            onBlur={() => apply({ team: team.trim() || null })}
-            className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-ink-50 outline-none ring-brand-500/50 transition focus:border-brand-400 focus:ring-2"
-          />
-        </div>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <label
+          htmlFor="coach-role"
+          className="text-[11px] uppercase tracking-widest text-ink-400 sm:text-xs"
+        >
+          Role
+        </label>
         <select
+          id="coach-role"
           aria-label="Filter by role"
           value={role}
           onChange={(e) => apply({ role: e.target.value || null })}
-          className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-ink-100 outline-none focus:border-brand-400"
+          className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-ink-100 outline-none focus:border-brand-400 sm:text-xs"
         >
           {ROLES.map((r) => (
             <option key={r.value} value={r.value}>
@@ -98,11 +59,11 @@ export function CoachFilters() {
           ))}
         </select>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:px-0">
         <button
           type="button"
           onClick={() => apply({ league: null })}
-          className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
             !league
               ? "border-brand-400 bg-brand-500/10 text-brand-200"
               : "border-white/10 bg-white/5 text-ink-200 hover:border-white/20"
@@ -115,7 +76,7 @@ export function CoachFilters() {
             key={l.slug}
             type="button"
             onClick={() => apply({ league: league === l.slug ? null : l.slug })}
-            className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+            className={`shrink-0 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
               league === l.slug
                 ? "border-brand-400 bg-brand-500/10 text-brand-200"
                 : "border-white/10 bg-white/5 text-ink-200 hover:border-white/20"
@@ -126,7 +87,7 @@ export function CoachFilters() {
         ))}
       </div>
       {isPending ? (
-        <span className="text-xs text-ink-400">Updating…</span>
+        <span className="block text-[11px] text-ink-400 sm:text-xs">Updating…</span>
       ) : null}
     </div>
   )

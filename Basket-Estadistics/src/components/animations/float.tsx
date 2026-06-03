@@ -1,24 +1,22 @@
-"use client"
+import type { CSSProperties, ReactNode } from "react"
 
-import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion"
-import type { ReactNode } from "react"
-
-type FloatProps = Omit<HTMLMotionProps<"div">, "children" | "animate"> & {
+type FloatProps = {
   children: ReactNode
   duration?: number
   y?: number
+  className?: string
+  delay?: number
 }
 
-export function Float({ children, duration = 6, y = 12, ...rest }: FloatProps) {
-  const reduce = useReducedMotion()
+export function Float({ children, duration = 6, y = 12, delay = 0, className }: FloatProps) {
+  const style: CSSProperties = {
+    animation: `float ${duration}s ease-in-out ${delay}s infinite`,
+    ["--float-amplitude" as string]: `${y}px`,
+  }
   return (
-    <motion.div
-      animate={reduce ? undefined : { y: [-y, y, -y] }}
-      transition={{ duration, repeat: Infinity, ease: "easeInOut" }}
-      {...rest}
-    >
+    <div className={className} style={style}>
       {children}
-    </motion.div>
+    </div>
   )
 }
 

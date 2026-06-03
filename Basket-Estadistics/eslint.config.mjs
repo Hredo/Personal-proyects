@@ -19,6 +19,8 @@ const eslintConfig = [
       "data/**",
       "drizzle.config.ts",
       "next-env.d.ts",
+      "scripts/debug-*.ts",
+      "scripts/_dbcheck.cjs",
     ],
   },
   {
