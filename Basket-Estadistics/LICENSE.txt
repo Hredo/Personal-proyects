@@ -1,0 +1,11 @@
+Copyright (c) 2026 Hugo Redondo Valdés
+
+All rights reserved. This repository and its contents are proprietary.
+
+Permission to use, copy, modify, and distribute the contents of this repository
+for personal or internal evaluation is granted, provided that the author and
+copyright notice are preserved. Any other use, including commercial use,
+redistribution, or inclusion in derived works, requires explicit written
+permission from the copyright holder.
+
+Contact: Hrvaldes22@gmail.com
