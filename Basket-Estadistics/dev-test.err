@@ -1,0 +1,10 @@
+$ next dev
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\Hrval\OneDrive\Escritorio\Personal-proyects\Personal-proyects\Basket-Estadistics\.next\server\app\page.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\Hrval\\OneDrive\\Escritorio\\Personal-proyects\\Personal-proyects\\Basket-Estadistics\\.next\\server\\app\\page.js',
+  page: '/'
+}
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...

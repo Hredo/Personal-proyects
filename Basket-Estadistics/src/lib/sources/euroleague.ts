@@ -67,8 +67,9 @@ function toNumberOrNull(s: string | undefined): number | undefined {
 function percentileToDecimal(s: string | undefined): number | undefined {
   if (s === undefined || s === "") return undefined
   const n = Number(s)
-  return Number.isFinite(n) ? Number((n / 100).toFixed(3)) : undefined
+  return Number.isFinite(n) ? Number(n.toFixed(3)) : undefined
 }
+
 
 function extractTableById(html: string, id: string): string {
   const re = new RegExp(`<table[^>]*\\bid="${id}"[\\s\\S]*?<\\/table>`, "i")

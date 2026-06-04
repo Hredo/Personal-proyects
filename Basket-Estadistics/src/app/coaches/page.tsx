@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
-import { CoachCard } from "@/components/staff/coach-card"
-import { CoachFilters } from "@/components/staff/coach-filters"
-import { Pagination } from "@/components/ui/pagination"
+import { DirectoryControls } from "@/components/ui/directory-controls"
+import { CoachesInfiniteView } from "@/components/staff/coaches-infinite-view"
 import { listCoaches, type ListCoachesInput } from "@/lib/data/staff"
 
 type SearchParams = Partial<
@@ -16,7 +15,7 @@ export const metadata: Metadata = {
 
 const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
 const ROLE_VALUES = new Set(["head_coach", "assistant_coach", "staff"])
-const PAGE_SIZE = 24
+const PAGE_SIZE = 48
 
 function parseInput(sp: SearchParams): ListCoachesInput {
   const league = sp.league
@@ -43,68 +42,41 @@ export default async function CoachesPage(props: {
   const sp = await props.searchParams
   const input = parseInput(sp)
   const result = await listCoaches(input)
-  const { items, total, page, totalPages, pageSize } = result
-
-  const filterSearchParams: Record<string, string | undefined> = {
-    league: sp.league,
-    team: sp.team,
-    role: sp.role,
-    q: sp.q,
-  }
 
   return (
-    <div className="py-8 sm:py-12">
-      <header className="mb-6 sm:mb-8">
+    <div className="py-10 sm:py-14">
+      <header className="mb-8 sm:mb-10">
         <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
           Directory
         </p>
-        <h1 className="mt-2 font-display text-3xl font-bold text-ink-50 sm:text-4xl md:text-5xl">
-          Coaches &amp; <span className="text-gradient-brand">staff</span>
+        <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl md:text-6xl">
+          Coaches
         </h1>
-        <p className="mt-3 max-w-2xl text-sm text-ink-300 sm:text-base">
+        <p className="mt-3 max-w-xl text-sm text-ink-300 sm:text-base">
           <span className="font-mono font-semibold text-ink-100">
-            {total.toLocaleString("en-US")}
+            {result.total.toLocaleString("en-US")}
           </span>{" "}
-          staff member{total === 1 ? "" : "s"} across the NBA, EuroLeague and
-          Liga ACB. Filter by league, team or role.
+          staff member{result.total === 1 ? "" : "s"} across the NBA,
+          EuroLeague and Liga ACB.
         </p>
       </header>
 
-      <div className="mb-6">
-        <CoachFilters />
+      <div className="mb-8">
+        <DirectoryControls
+          basePath="/coaches"
+          kind="coaches"
+          total={result.total}
+          showing={result.items.length}
+        />
       </div>
 
-      {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center sm:p-12">
-          <p className="text-sm text-ink-200 sm:text-base">
-            No staff match your filters.
-          </p>
-          <p className="mt-1 text-xs text-ink-400 sm:text-sm">
-            Try a different league, role or partial name.
-          </p>
-        </div>
-      ) : (
-        <>
-          <ul className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-            {items.map((c, idx) => (
-              <li key={c.id}>
-                <CoachCard coach={c} index={idx} />
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-6 sm:mt-8">
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              total={total}
-              pageSize={pageSize}
-              basePath="/coaches"
-              searchParams={filterSearchParams}
-            />
-          </div>
-        </>
-      )}
+      <CoachesInfiniteView
+        key={`${input.query ?? ""}|${input.league ?? ""}|${input.role ?? ""}`}
+        initial={result}
+        query={input.query ?? ""}
+        league={input.league ?? ""}
+        role={input.role ?? ""}
+      />
     </div>
   )
 }

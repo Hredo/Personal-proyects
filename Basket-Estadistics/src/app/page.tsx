@@ -1,11 +1,18 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
 import { Float } from "@/components/animations/float"
 import { CourtPerspective } from "@/components/svg/court-perspective"
-import { AnimatedBars } from "@/components/svg/animated-bars"
-import { AnimatedRadar } from "@/components/svg/animated-radar"
 import { CountUp } from "@/components/marketing/count-up"
 import { Marquee } from "@/components/marketing/marquee"
+import { JsonLd } from "@/components/marketing/json-ld"
+import { TrustedBy } from "@/components/marketing/trusted-by"
+import { FeatureShowcase } from "@/components/marketing/feature-showcase"
+import { Testimonials } from "@/components/marketing/testimonials"
+import { Faq } from "@/components/marketing/faq"
+import { FAQ_DATA } from "@/components/marketing/faq-data"
+import { PricingCta } from "@/components/marketing/pricing-cta"
+import { SITE } from "@/lib/site"
 
 const TICKER_LEFT = [
   { name: "Luka Dončić", team: "DAL · NBA", stat: "32.4 PPG" },
@@ -29,6 +36,13 @@ const TICKER_RIGHT = [
   { name: "Núñez", stat: "8.1 / 2.6 / 4.9" },
 ]
 
+const STATS = [
+  { v: 3, suffix: "", label: "Leagues live" },
+  { v: 2400, suffix: "+", label: "Players indexed" },
+  { v: 24, suffix: "", label: "Advanced metrics" },
+  { v: 2, suffix: "s", label: "To compare any two", decimals: 0 },
+]
+
 const PILLARS = [
   {
     n: "01",
@@ -47,16 +61,69 @@ const PILLARS = [
   },
 ]
 
-const STATS = [
-  { v: 3, suffix: "", label: "Leagues live" },
-  { v: 2400, suffix: "+", label: "Players indexed" },
-  { v: 24, suffix: "", label: "Advanced metrics" },
-  { v: 2, suffix: "s", label: "To compare any two", decimals: 0 },
-]
+export const metadata: Metadata = {
+  title: `${SITE.tagline} — NBA, EuroLeague & ACB scouting intelligence`,
+  description: SITE.description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    url: SITE.url,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+  },
+}
 
 export default function Home() {
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_DATA.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: q.answer,
+      },
+    })),
+  }
+
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: SITE.name,
+    url: SITE.url,
+    applicationCategory: "SportsApplication",
+    applicationSubCategory: "Basketball Analytics",
+    operatingSystem: "Web",
+    description: SITE.description,
+    offers: [
+      {
+        "@type": "Offer",
+        name: "Public beta",
+        price: "0",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+      },
+    ],
+    featureList: [
+      "Cross-league player comparison",
+      "Pace and possession normalization",
+      "Advanced metrics (PER, ORtg, DRtg, NetRtg, TS%)",
+      "League hubs with leaders",
+      "AI advisor for scouting queries",
+      "Exports to PDF, Excel and Word",
+    ],
+  }
+
   return (
     <div className="relative">
+      <JsonLd data={[faqJsonLd, softwareJsonLd]} />
+
       <section className="relative isolate overflow-hidden pb-12 pt-8 sm:pb-20 sm:pt-14 md:pt-20">
         <div
           aria-hidden
@@ -209,85 +276,27 @@ export default function Home() {
         </Marquee>
       </section>
 
-      <section className="relative py-16 sm:py-24">
+      <TrustedBy />
+
+      <section className="relative border-t border-white/5 py-16 sm:py-24">
         <div
           aria-hidden
           className="absolute inset-0 -z-10 bg-grid-fade opacity-40"
         />
-        <div className="grid items-center gap-10 md:grid-cols-[1fr_1.1fr] md:gap-14">
+        <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand-200 sm:text-xs">
-              01 / Normalize
+              How it works
             </span>
             <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              League averages,{" "}
-              <span className="text-gradient-brand">one scale.</span>
+              Three leagues,{" "}
+              <span className="text-gradient-brand">one engine.</span>
             </h2>
-            <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
-              The NBA plays 82 games, the EuroLeague plays 34, the ACB plays
-              38. We strip pace and possession bias so a 28-point EuroLeague
-              scorer reads the same as a 28-point NBA one.
+            <p className="mt-4 text-base text-ink-200 sm:text-lg">
+              We ingest box scores from the NBA, ACB and EuroLeague, normalize
+              pace and possessions, then surface side-by-side comparisons in
+              seconds. No spreadsheets, no film sessions at 3am.
             </p>
-            <p className="mt-3 text-sm text-ink-400">
-              Scroll to watch the chart build itself.
-            </p>
-          </FadeIn>
-          <FadeIn delay={0.1}>
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/40 p-3 sm:p-4">
-              <div className="aspect-[5/3.4] w-full">
-                <AnimatedBars />
-              </div>
-              <div className="pointer-events-none absolute right-4 top-4 font-mono text-[10px] uppercase tracking-widest text-ink-400">
-                chart @scroll
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      <section className="relative border-t border-white/5 py-16 sm:py-24">
-        <div className="grid items-center gap-10 md:grid-cols-[1.1fr_1fr] md:gap-14">
-          <FadeIn className="order-2 md:order-1">
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink-900/40 p-3 sm:p-6">
-              <div className="aspect-square w-full">
-                <AnimatedRadar aLabel="Jokić" bLabel="Dončić" />
-              </div>
-              <div className="pointer-events-none absolute left-4 top-4 font-mono text-[10px] uppercase tracking-widest text-ink-400">
-                radar @scroll
-              </div>
-            </div>
-          </FadeIn>
-          <FadeIn className="order-1 md:order-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-cyan sm:text-xs">
-              02 / Compare
-            </span>
-            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              Two players,{" "}
-              <span className="text-gradient-brand">one screen.</span>
-            </h2>
-            <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
-              Drop two names. The radar fills itself, the per-game bars
-              highlight the leader in green, advanced metrics stack
-              side-by-side. No spreadsheets, no film sessions at 3am.
-            </p>
-            <Link
-              href="/compare"
-              className="mt-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200 sm:text-base"
-            >
-              Try the side-by-side
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M5 12h14M13 5l7 7-7 7" />
-              </svg>
-            </Link>
           </FadeIn>
         </div>
       </section>
@@ -299,7 +308,7 @@ export default function Home() {
         <div className="mx-auto max-w-2xl text-center">
           <FadeIn>
             <span className="inline-flex items-center gap-2 rounded-full border border-accent-magenta/30 bg-accent-magenta/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-magenta sm:text-xs">
-              03 / Pipeline
+              Pipeline
             </span>
             <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
               From tip-off to terminal.
@@ -335,6 +344,38 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <FeatureShowcase />
+
+      <Testimonials />
+
+      <section
+        aria-labelledby="faq-heading"
+        className="relative border-t border-white/5 py-16 sm:py-24"
+      >
+        <div className="mx-auto max-w-2xl text-center">
+          <FadeIn>
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent-lime/30 bg-accent-lime/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-lime sm:text-xs">
+              FAQ
+            </span>
+            <h2
+              id="faq-heading"
+              className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl"
+            >
+              The questions scouts ask first.
+            </h2>
+            <p className="mt-4 text-sm text-ink-200 sm:text-base">
+              Data sources, freshness, what&apos;s free, what isn&apos;t. If
+              something&apos;s missing, ping us.
+            </p>
+          </FadeIn>
+        </div>
+        <div className="mt-10">
+          <Faq />
+        </div>
+      </section>
+
+      <PricingCta />
 
       <section className="relative my-12 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-court-800/80 via-ink-900/90 to-ink-950 p-6 sm:my-20 sm:p-10 md:p-14">
         <div

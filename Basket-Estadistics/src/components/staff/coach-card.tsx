@@ -39,7 +39,7 @@ type Props = {
 export function CoachCard({ coach, index = 0 }: Props) {
   return (
     <div
-      className="group relative block overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-3 transition hover:border-brand-500/40 hover:bg-white/[0.05] sm:p-4"
+      className="group relative block overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-3 ring-1 ring-transparent transition duration-150 hover:ring-brand-500/50 sm:p-4"
       style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}
     >
       <div className="flex items-start gap-3">
@@ -48,7 +48,7 @@ export function CoachCard({ coach, index = 0 }: Props) {
             src={coach.photoUrl}
             alt={coach.fullName}
             fit="cover"
-            className="transition duration-300 group-hover:scale-105"
+            className="transition-transform duration-500 ease-out group-hover:scale-105"
             fallbackClassName="bg-gradient-to-br from-court-800 to-ink-900 text-xs font-bold text-brand-300 sm:text-sm"
             fallback={getInitials(coach.fullName)}
           />

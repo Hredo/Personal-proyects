@@ -1,5 +1,6 @@
 import type { TeamProfile } from "@/lib/data/teams";
-import type { PlayerListItem } from "@/lib/data/players";
+import type { PlayerListItem, PlayerProfile } from "@/lib/data/players";
+import { getPlayerBySlug, searchPlayersByName } from "@/lib/data/players";
 
 export type Intent =
   | "defender"
@@ -174,7 +175,15 @@ function getLeagueBadge(league: string): string {
   return "EuroLeague";
 }
 
-export function buildLocalAdvice(team: TeamProfile, userMessage: string): AdvisorOutput {
+export async function buildLocalAdvice(
+  team: TeamProfile,
+  userMessage: string,
+): Promise<AdvisorOutput> {
+  const specific = await findPlayerInQuery(userMessage);
+  if (specific) {
+    return buildPlayerSpecificAdvice(team, specific);
+  }
+
   const intent = detectIntent(userMessage);
   const meta = INTENT_META[intent];
   const recs = pickRecommendations(intent, 3, team.league.name);
@@ -211,6 +220,185 @@ export function buildLocalAdvice(team: TeamProfile, userMessage: string): Adviso
       "Prioriza perfiles que complementen (no dupliquen) a jugadores clave",
       "El mercado cambia rápido — los valores son estimaciones actuales",
       "Considera la cláusula de rescisión si el jugador está bajo contrato",
+    ],
+  };
+}
+
+const QUERY_STOPWORDS = new Set([
+  "que", "tal", "como", "es", "el", "la", "los", "las", "un", "una", "de", "del", "en",
+  "por", "para", "con", "sin", "y", "o", "u", "a", "fit", "encaja", "encajaria",
+  "ficharia", "fichaje", "jugador", "seria", "buena", "buen", "opcion", "opinion",
+  "sobre", "tipo", "cual", "cuando", "donde", "este", "esta", "estos", "estas", "eso",
+  "esa", "ese", "muy", "mas", "poco", "algo", "algun", "alguna", "alguno", "nada",
+  "nadie", "nunca", "siempre", "puede", "podria", "deberia", "haria", "hace", "hacer",
+  "tener", "tiene", "tenia", "habia", "ha", "han", "he", "hay", "del", "al", "lo",
+]);
+
+function tokenizeQuery(query: string): string[] {
+  return query
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 3 && !QUERY_STOPWORDS.has(t));
+}
+
+async function findPlayerInQuery(query: string): Promise<PlayerProfile | null> {
+  const tokens = tokenizeQuery(query);
+  if (tokens.length === 0) return null;
+
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const candidate = `${tokens[i]} ${tokens[i + 1]}`;
+    const results = await searchPlayersByName(candidate, 1);
+    if (results.length > 0) {
+      const profile = await getPlayerBySlug(results[0].slug);
+      if (profile) return profile;
+    }
+  }
+
+  for (const token of tokens) {
+    const results = await searchPlayersByName(token, 1);
+    if (results.length > 0) {
+      const profile = await getPlayerBySlug(results[0].slug);
+      if (profile) return profile;
+    }
+  }
+
+  return null;
+}
+
+export { findPlayerInQuery, formatStat, estimateContractValue, getLeagueBadge };
+
+function formatStat(value: number | null | undefined, decimals = 1, suffix = ""): string {
+  if (value === null || value === undefined) return "—";
+  return `${value.toFixed(decimals)}${suffix}`;
+}
+
+function estimateContractValue(profile: PlayerProfile): string {
+  const latest = profile.seasons[0];
+  if (!latest || latest.points === null) return "N/D";
+  const ppg = latest.points;
+  if (ppg >= 25) return "Max / $50M+";
+  if (ppg >= 20) return "All-Star / $30-50M";
+  if (ppg >= 15) return "Titular / $15-25M";
+  if (ppg >= 10) return "Rotación / $5-12M";
+  if (ppg >= 5) return "Rol / $1-4M";
+  return "Mínimo / <€1M";
+}
+
+function buildPlayerSpecificAdvice(
+  team: TeamProfile,
+  profile: PlayerProfile,
+): AdvisorOutput {
+  const latest = profile.seasons[0];
+  const record = team.seasonStats ? `${team.seasonStats.wins}-${team.seasonStats.losses}` : "N/A";
+  const age = profile.birthdate
+    ? Math.floor((Date.now() - new Date(profile.birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+    : null;
+
+  const stats = latest
+    ? [
+        latest.points !== null ? `${formatStat(latest.points)} PPG` : null,
+        latest.rebounds !== null ? `${formatStat(latest.rebounds)} RPG` : null,
+        latest.assists !== null ? `${formatStat(latest.assists)} APG` : null,
+        latest.steals !== null ? `${formatStat(latest.steals)} SPG` : null,
+        latest.blocks !== null ? `${formatStat(latest.blocks)} BPG` : null,
+        latest.threePct !== null ? `${formatStat(latest.threePct, 1, "%")} 3P` : null,
+        latest.fgPct !== null ? `${formatStat(latest.fgPct, 1, "%")} FG` : null,
+      ].filter(Boolean)
+    : [];
+
+  const statsLine = stats.length > 0 ? stats.join(" · ") : "Sin estadísticas de temporada";
+  const currentTeam = profile.team?.name ?? "Agente libre / sin equipo";
+  const leagueLine = `${profile.league.name}${profile.nationality ? ` · ${profile.nationality}` : ""}`;
+
+  const intent: Intent = "scorer";
+
+  const strengths: string[] = [];
+  if (latest?.points !== null && latest?.points !== undefined && latest.points >= 15) {
+    strengths.push("Anotador probado");
+  }
+  if (latest?.assists !== null && latest?.assists !== undefined && latest.assists >= 5) {
+    strengths.push("Generador de juego");
+  }
+  if (latest?.threePct !== null && latest?.threePct !== undefined && latest.threePct >= 36) {
+    strengths.push("Tiro exterior fiable");
+  }
+  if (latest?.rebounds !== null && latest?.rebounds !== undefined && latest.rebounds >= 7) {
+    strengths.push("Reboteador sólido");
+  }
+  if (latest?.steals !== null && latest?.steals !== undefined && latest.steals >= 1.5) {
+    strengths.push("Generador de robos");
+  }
+  if (latest?.blocks !== null && latest?.blocks !== undefined && latest.blocks >= 1) {
+    strengths.push("Protección de aro");
+  }
+  if (strengths.length === 0) strengths.push("Perfil complementario", "Disponible para traspaso");
+
+  const sameLeague = profile.league.slug === team.league.slug;
+
+  const fitParts: string[] = [];
+  if (sameLeague) {
+    fitParts.push(`Ya juega en ${profile.league.name} por lo que la adaptación sería inmediata.`);
+  } else {
+    fitParts.push(`Proviene de ${profile.league.name} — requiere periodo de adaptación al sistema de ${team.league.name}.`);
+  }
+  if (age !== null) {
+    if (age <= 25) fitParts.push(`Con ${age} años entra en su ventana de mayor upside.`);
+    else if (age <= 30) fitParts.push(`A los ${age} años está en su prime.`);
+    else fitParts.push(`A los ${age} años aporta veteranía y experiencia competitiva.`);
+  }
+  if (latest?.points !== null && latest?.points !== undefined && latest.points >= 18) {
+    fitParts.push("Marcador diferencial — asumirá posesiones clave en clutch.");
+  }
+
+  const alternativeRecs = pickRecommendations(intent, 2, team.league.name);
+
+  const alternative = (r: Recruit) => ({
+    ...r,
+    priority: "Opción alternativa",
+    priorityColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
+  });
+
+  return {
+    intent,
+    intentLabel: `Análisis de ${profile.fullName}`,
+    intentEmoji: "🔍",
+    team: {
+      name: team.name,
+      league: team.league.name,
+      leagueBadge: getLeagueBadge(team.league.name),
+      record,
+      rosterSize: team.roster.length,
+      topPlayers: team.roster.slice(0, 4).map((p) => p.fullName),
+    },
+    analysis: `**${profile.fullName}** (${profile.position ?? "Posición N/D"}${age ? `, ${age} años` : ""}) actualmente en **${currentTeam}** (${leagueLine}). ${statsLine}. ${fitParts.join(" ")}`,
+    gap: sameLeague
+      ? `Encaje directo con la plantilla de ${team.league.name}`
+      : `Encaje cross-league: requiere estudio de salario y adaptación al sistema ${team.league.name}`,
+    recommendations: [
+      {
+        name: profile.fullName,
+        position: profile.position ?? "N/D",
+        league: (getLeagueBadge(profile.league.name) as "NBA" | "EuroLeague" | "ACB"),
+        age: age ?? 0,
+        contractValue: estimateContractValue(profile),
+        strengths,
+        fit: fitParts.join(" "),
+        market: "Evaluación personalizada",
+        priority: "Candidato solicitado",
+        priorityColor: "bg-brand-500/20 text-brand-300 border-brand-500/30",
+      },
+      ...alternativeRecs.map(alternative),
+    ],
+    considerations: [
+      `Verifica la situación contractual actual de ${profile.fullName} con ${currentTeam}`,
+      sameLeague
+        ? "Al estar en la misma liga, el ajuste salarial y la compra son más predecibles"
+        : "Una operación cross-league implica cláusulas de rescisión y periodos de adaptación",
+      "Compara su perfil estadístico con el núcleo actual antes de iniciar negociaciones",
+      "Considera el impacto en el límite salarial y en el chemistry del vestuario",
     ],
   };
 }

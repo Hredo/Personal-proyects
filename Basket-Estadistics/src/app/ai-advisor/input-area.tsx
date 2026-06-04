@@ -1,46 +1,70 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react"
+import { DownloadMenu } from "./download-menu"
+import type { ChatMessage, TeamContext } from "@/lib/ai/export"
 
 type Props = {
-  onSend: (content: string) => Promise<void>;
-  disabled?: boolean;
-  loading?: boolean;
-  placeholder?: string;
-};
+  onSend: (content: string) => Promise<void>
+  disabled?: boolean
+  loading?: boolean
+  placeholder?: string
+  team: TeamContext | null
+  messages: ChatMessage[]
+}
 
-export function InputArea({ onSend, disabled = false, loading = false, placeholder = "Escribe tu mensaje..." }: Props) {
-  const [input, setInput] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+export function InputArea({
+  onSend,
+  disabled = false,
+  loading = false,
+  placeholder = "Escribe tu mensaje...",
+  team,
+  messages,
+}: Props) {
+  const [input, setInput] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!loading && !disabled) {
-      inputRef.current?.focus();
+      inputRef.current?.focus()
     }
-  }, [loading, disabled]);
+  }, [loading, disabled])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || disabled || loading) return;
-    await onSend(input);
-    setInput("");
-  };
+    e.preventDefault()
+    const trimmed = input.trim().slice(0, 2000)
+    if (!trimmed || disabled || loading) return
+    await onSend(trimmed)
+    setInput("")
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-white/5 bg-ink-950/40 backdrop-blur-sm px-4 py-3">
+    <form
+      onSubmit={handleSubmit}
+      className="border-t border-white/5 bg-ink-950/40 px-4 py-3 backdrop-blur-sm"
+    >
       <div className="flex items-center gap-2">
         <input
           ref={inputRef}
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value.slice(0, 2000))}
           placeholder={placeholder}
           disabled={disabled || loading}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          maxLength={2000}
+          aria-label="Mensaje para el asesor"
           className="flex-1 rounded-xl border border-ink-700 bg-ink-800/60 px-4 py-2.5 text-sm text-ink-50 placeholder-ink-400 outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-40"
         />
+        <DownloadMenu team={team} messages={messages} disabled={disabled} />
         <button
           type="submit"
           disabled={disabled || loading || !input.trim()}
+          aria-label="Enviar"
+          title="Enviar"
           className="shrink-0 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-950 transition hover:bg-brand-400 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
         >
           {loading ? (
@@ -56,5 +80,5 @@ export function InputArea({ onSend, disabled = false, loading = false, placehold
         </button>
       </div>
     </form>
-  );
+  )
 }

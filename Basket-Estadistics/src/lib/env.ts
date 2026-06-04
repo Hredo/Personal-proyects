@@ -9,7 +9,11 @@ const serverSchema = z.object({
     emptyToUndefined,
     z.string().min(1).default("file:./data/basket.db")
   ),
-  YOUTUBE_API_KEY: z.preprocess(
+  HUGGINGFACE_API_KEY: z.preprocess(
+    emptyToUndefined,
+    z.string().min(1).optional()
+  ),
+  HUGGINGFACE_RERANK_MODEL: z.preprocess(
     emptyToUndefined,
     z.string().min(1).optional()
   ),

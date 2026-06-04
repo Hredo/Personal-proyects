@@ -1,0 +1,7 @@
+﻿git : fatal: path 'src/lib/highlights/rerank.ts' does not exist in 'HEAD'
+En línea: 1 Carácter: 1
++ git show HEAD:src/lib/highlights/rerank.ts 2>&1 | Out-File -FilePath  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (fatal: path 'sr...exist in 'HEAD':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

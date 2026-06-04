@@ -3,6 +3,9 @@ import type { Metadata } from "next"
 import { getPlayerForCompare } from "@/lib/data/compare"
 import { CompareSearch } from "@/components/players/compare-search"
 import { CompareBar } from "@/components/players/compare-bar"
+import { CompareRadar } from "@/components/players/compare-radar"
+import { CompareShootingSplits } from "@/components/players/compare-shooting-splits"
+import { CompareAi } from "@/components/players/compare-ai"
 import { FadeIn } from "@/components/animations/fade-in"
 import { SmartImage } from "@/components/ui/smart-image"
 
@@ -80,6 +83,98 @@ export default async function ComparePage(props: {
 
       {playerA && playerB ? (
         <FadeIn>
+          <section className="mt-6 rounded-2xl border border-accent-cyan/20 bg-gradient-to-br from-accent-cyan/5 via-white/[0.02] to-brand-500/5 p-4 sm:mt-8 sm:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl">
+                <span className="inline-flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-cyan sm:text-xs">
+                  02 / Compare
+                </span>
+                <h2 className="mt-3 font-display text-2xl font-bold leading-[1.1] tracking-tight sm:text-3xl">
+                  Two players,{" "}
+                  <span className="text-gradient-brand">one screen.</span>
+                </h2>
+                <p className="mt-2 text-sm text-ink-200 sm:text-base">
+                  El radar se rellena solo, las barras destacan al líder en
+                  verde y los splits de tiro entran en formato donut. Y si
+                  quieres una segunda opinión, la IA del scout te firma el
+                  veredicto.
+                </p>
+              </div>
+              <Link
+                href="#ai-analysis"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-brand-500/40 bg-brand-500/10 px-4 py-2.5 text-sm font-semibold text-brand-200 transition hover:border-brand-500/60 hover:bg-brand-500/20"
+              >
+                Ir al análisis IA
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M5 12h14M13 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </section>
+        </FadeIn>
+      ) : null}
+
+      {playerA && playerB ? (
+        <FadeIn>
+          <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-[1.05fr_1fr]">
+            <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5">
+              <h2 className="mb-3 font-display text-sm uppercase tracking-widest text-ink-300">
+                Multi-stat radar
+              </h2>
+              <div className="aspect-square w-full">
+                <CompareRadar a={playerA} b={playerB} />
+              </div>
+              <p className="mt-3 text-xs text-ink-400">
+                Cada eje se escala contra un máximo de élite — más superficie
+                cubierta = perfil más completo.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5">
+              <h2 className="mb-3 font-display text-sm uppercase tracking-widest text-ink-300">
+                Shooting splits
+              </h2>
+              <CompareShootingSplits
+                aName={playerA.fullName}
+                bName={playerB.fullName}
+                splits={[
+                  {
+                    label: "FG%",
+                    a: playerA.stats?.fgPct ?? null,
+                    b: playerB.stats?.fgPct ?? null,
+                  },
+                  {
+                    label: "3P%",
+                    a: playerA.stats?.threePct ?? null,
+                    b: playerB.stats?.threePct ?? null,
+                  },
+                  {
+                    label: "FT%",
+                    a: playerA.stats?.ftPct ?? null,
+                    b: playerB.stats?.ftPct ?? null,
+                  },
+                ]}
+              />
+              <p className="mt-3 text-xs text-ink-400">
+                Anillo exterior {playerA.fullName} (naranja), interior{" "}
+                {playerB.fullName} (cyan). El número grande es el de{" "}
+                {playerA.fullName}.
+              </p>
+            </div>
+          </section>
+        </FadeIn>
+      ) : null}
+
+      {playerA && playerB ? (
+        <FadeIn>
           <section className="mt-6 rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:mt-8 sm:p-6">
             <h2 className="mb-4 font-display text-sm uppercase tracking-widest text-ink-300">
               Per-game production
@@ -106,6 +201,19 @@ export default async function ComparePage(props: {
               })}
             </div>
           </section>
+        </FadeIn>
+      ) : null}
+
+      {playerA && playerB ? (
+        <FadeIn>
+          <div id="ai-analysis" className="mt-6 scroll-mt-20 sm:mt-8">
+            <CompareAi
+              aSlug={playerA.slug}
+              bSlug={playerB.slug}
+              aName={playerA.fullName}
+              bName={playerB.fullName}
+            />
+          </div>
         </FadeIn>
       ) : null}
     </div>

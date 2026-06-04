@@ -519,13 +519,13 @@ export const acbAdapter: SourceAdapter = {
         blocks: Number(cells.get("blk_per_g")) || undefined,
         turnovers: Number(cells.get("tov_per_g")) || undefined,
         fgPct: cells.get("fg_pct")
-          ? Number((Number(cells.get("fg_pct")) / 100).toFixed(3))
+          ? Number(Number(cells.get("fg_pct")).toFixed(3))
           : undefined,
         threePct: cells.get("fg3_pct")
-          ? Number((Number(cells.get("fg3_pct")) / 100).toFixed(3))
+          ? Number(Number(cells.get("fg3_pct")).toFixed(3))
           : undefined,
         ftPct: cells.get("ft_pct")
-          ? Number((Number(cells.get("ft_pct")) / 100).toFixed(3))
+          ? Number(Number(cells.get("ft_pct")).toFixed(3))
           : undefined,
       })
     }

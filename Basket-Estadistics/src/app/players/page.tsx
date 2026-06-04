@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
 import { listPlayers, type ListPlayersInput } from "@/lib/data/players"
-import { PlayerCard } from "@/components/players/player-card"
-import { PlayerFilters } from "@/components/players/player-filters"
-import { Pagination } from "@/components/ui/pagination"
+import { DirectoryControls } from "@/components/ui/directory-controls"
+import { PlayersInfiniteView } from "@/components/players/players-infinite-view"
 
 type SearchParams = Partial<Record<keyof ListPlayersInput | "q" | "page", string>>
 
@@ -15,7 +14,7 @@ export const metadata: Metadata = {
 const SORT_VALUES = new Set(["points", "rebounds", "assists", "name"])
 const ORDER_VALUES = new Set(["asc", "desc"])
 const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
-const PAGE_SIZE = 24
+const PAGE_SIZE = 30
 
 function parseInput(sp: SearchParams): ListPlayersInput {
   const sort = sp.sort
@@ -41,71 +40,42 @@ export default async function PlayersPage(props: {
   const sp = await props.searchParams
   const input = parseInput(sp)
   const result = await listPlayers(input)
-  const { items, total, page, totalPages, pageSize } = result
-
-  const filterSearchParams: Record<string, string | undefined> = {
-    sort: sp.sort,
-    order: sp.order,
-    league: sp.league,
-    team: sp.team,
-    q: sp.q,
-  }
 
   return (
-    <div className="py-8 sm:py-12">
-      <header className="mb-6 sm:mb-8">
+    <div className="py-10 sm:py-14">
+      <header className="mb-8 sm:mb-10">
         <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
           Directory
         </p>
-        <h1 className="mt-2 font-display text-3xl font-bold text-ink-50 sm:text-4xl md:text-5xl">
-          Player <span className="text-gradient-brand">intelligence</span>
+        <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl md:text-6xl">
+          Players
         </h1>
-        <p className="mt-3 max-w-2xl text-sm text-ink-300 sm:text-base">
+        <p className="mt-3 max-w-xl text-sm text-ink-300 sm:text-base">
           <span className="font-mono font-semibold text-ink-100">
-            {total.toLocaleString("en-US")}
+            {result.total.toLocaleString("en-US")}
           </span>{" "}
-          player{total === 1 ? "" : "s"} across the NBA, EuroLeague and Liga ACB.
-          Filter by league, sort by stat and click any player to open a full
-          profile with shot splits, advanced analytics and personalised highlight
-          reels.
+          player{result.total === 1 ? "" : "s"} across the NBA, EuroLeague and
+          Liga ACB.
         </p>
       </header>
 
-      <div className="mb-6">
-        <PlayerFilters />
+      <div className="mb-8">
+        <DirectoryControls
+          basePath="/players"
+          kind="players"
+          total={result.total}
+          showing={result.items.length}
+        />
       </div>
 
-      {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center sm:p-12">
-          <p className="text-sm text-ink-200 sm:text-base">
-            No players match your filters.
-          </p>
-          <p className="mt-1 text-xs text-ink-400 sm:text-sm">
-            Try a different league or a partial name.
-          </p>
-        </div>
-      ) : (
-        <>
-          <ul className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-            {items.map((p, idx) => (
-              <li key={p.id}>
-                <PlayerCard player={p} index={idx} />
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-6 sm:mt-8">
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              total={total}
-              pageSize={pageSize}
-              basePath="/players"
-              searchParams={filterSearchParams}
-            />
-          </div>
-        </>
-      )}
+      <PlayersInfiniteView
+        key={`${input.query ?? ""}|${input.league ?? ""}|${input.sort ?? "points"}|${input.order ?? "desc"}`}
+        initial={result}
+        query={input.query ?? ""}
+        league={input.league ?? ""}
+        sort={input.sort ?? "points"}
+        order={input.order ?? "desc"}
+      />
     </div>
   )
 }

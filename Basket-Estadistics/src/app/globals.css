@@ -46,6 +46,31 @@
   --color-accent-magenta: oklch(0.7 0.22 340);
   --color-accent-lime: oklch(0.88 0.2 130);
 
+  --color-league-nba-50: oklch(0.97 0.02 55);
+  --color-league-nba-100: oklch(0.92 0.06 55);
+  --color-league-nba-300: oklch(0.78 0.14 50);
+  --color-league-nba-500: oklch(0.72 0.18 50);
+  --color-league-nba-600: oklch(0.64 0.2 48);
+  --color-league-nba-900: oklch(0.32 0.1 45);
+
+  --color-league-euro-50: oklch(0.97 0.02 260);
+  --color-league-euro-100: oklch(0.9 0.06 260);
+  --color-league-euro-300: oklch(0.7 0.14 260);
+  --color-league-euro-500: oklch(0.52 0.2 260);
+  --color-league-euro-600: oklch(0.44 0.2 260);
+  --color-league-euro-900: oklch(0.22 0.08 260);
+
+  --color-league-acb-50: oklch(0.97 0.02 25);
+  --color-league-acb-100: oklch(0.9 0.06 25);
+  --color-league-acb-300: oklch(0.7 0.17 25);
+  --color-league-acb-500: oklch(0.58 0.22 25);
+  --color-league-acb-600: oklch(0.5 0.22 25);
+  --color-league-acb-900: oklch(0.26 0.1 25);
+
+  --shadow-league-nba: 0 0 40px -8px oklch(0.72 0.18 50 / 0.55);
+  --shadow-league-euro: 0 0 40px -8px oklch(0.52 0.2 260 / 0.55);
+  --shadow-league-acb: 0 0 40px -8px oklch(0.58 0.22 25 / 0.55);
+
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;

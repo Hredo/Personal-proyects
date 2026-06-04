@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
@@ -8,6 +9,7 @@ import { getPlayerBySlug } from "@/lib/data/players"
 import { FadeIn } from "@/components/animations/fade-in"
 import { StatBar } from "@/components/players/stat-bar"
 import { SmartImage } from "@/components/ui/smart-image"
+import { HighlightsSection } from "./highlights"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -292,7 +294,14 @@ export default async function PlayerPage({ params }: Props) {
               <h2 className="mb-3 font-display text-xs uppercase tracking-widest text-ink-300">
                 Highlights
               </h2>
-              <VideoPlaceholder name={profile.fullName} />
+              <Suspense fallback={<HighlightsSkeleton />}>
+                <HighlightsSection
+                  playerId={profile.id}
+                  playerName={profile.fullName}
+                  teamName={profile.team?.name ?? null}
+                  leagueName={profile.league.name}
+                />
+              </Suspense>
             </section>
           </FadeIn>
         </div>
@@ -344,17 +353,8 @@ function StatTile({
   )
 }
 
-function VideoPlaceholder({ name }: { name: string }) {
+function HighlightsSkeleton() {
   return (
-    <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6">
-      <p className="text-sm text-ink-200">
-        Personalised highlight reels for <strong>{name}</strong> will appear here
-        once YouTube integration is enabled.
-      </p>
-      <p className="mt-2 text-xs text-ink-400">
-        Set the <code>YOUTUBE_API_KEY</code> environment variable and trigger
-        <code className="ml-1">pnpm sync:videos</code> to populate.
-      </p>
-    </div>
+    <div className="aspect-video w-full animate-pulse rounded-xl border border-white/5 bg-white/[0.02]" />
   )
 }

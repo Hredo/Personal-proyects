@@ -58,7 +58,7 @@ export function PlayerCard({ player, index = 0 }: Props) {
   return (
     <Link
       href={`/players/${player.slug}`}
-      className="group relative block overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-3 transition hover:border-brand-500/40 hover:bg-white/[0.05] sm:p-4"
+      className="group relative block overflow-hidden rounded-xl border border-white/5 bg-white/[0.02] p-3 ring-1 ring-transparent transition duration-150 hover:ring-brand-500/50 sm:p-4"
       style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}
     >
       <div className="flex items-start gap-3">
@@ -67,7 +67,7 @@ export function PlayerCard({ player, index = 0 }: Props) {
             src={player.photoUrl}
             alt={player.fullName}
             fit="cover"
-            className="transition duration-300 group-hover:scale-105"
+            className="transition duration-500 ease-out group-hover:scale-105"
             fallbackClassName="bg-gradient-to-br from-court-800 to-ink-900 text-sm font-bold text-brand-300 sm:text-base"
             fallback={initials}
           />
