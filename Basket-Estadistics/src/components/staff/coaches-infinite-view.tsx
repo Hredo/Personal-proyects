@@ -22,12 +22,7 @@ type Props = {
   role: string
 }
 
-export function CoachesInfiniteView({
-  initial,
-  query,
-  league,
-  role,
-}: Props) {
+export function CoachesInfiniteView({ initial, query, league, role }: Props) {
   const [pages, setPages] = useState<PageResult[]>([initial])
   const [loading, setLoading] = useState(false)
   const isFirstRender = useRef(true)
@@ -144,7 +139,8 @@ export function CoachesInfiniteView({
           </button>
         ) : (
           <p className="font-mono text-[10px] uppercase tracking-widest text-ink-500">
-            End · {current.total.toLocaleString("en-US")} {current.total === 1 ? "result" : "results"}
+            End · {current.total.toLocaleString("en-US")}{" "}
+            {current.total === 1 ? "result" : "results"}
           </p>
         )}
       </div>

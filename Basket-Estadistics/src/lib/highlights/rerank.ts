@@ -67,9 +67,7 @@ function buildRerankPrompt(
   playerName: string,
   candidates: YouTubeCandidate[],
 ): string {
-  const list = candidates
-    .map((c, i) => `${i + 1}. ${c.title}`)
-    .join("\n")
+  const list = candidates.map((c, i) => `${i + 1}. ${c.title}`).join("\n")
   return (
     `<s>[INST] You are ranking YouTube search results. ` +
     `Pick the single best highlight reel for the basketball player "${playerName}". ` +

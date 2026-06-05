@@ -12,9 +12,7 @@ const uuid = () => crypto.randomUUID()
 const now = () => new Date()
 
 export const leagues = sqliteTable("leagues", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(uuid),
+  id: text("id").primaryKey().$defaultFn(uuid),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   country: text("country").notNull(),
@@ -28,9 +26,7 @@ export const leagues = sqliteTable("leagues", {
 export const seasons = sqliteTable(
   "seasons",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     leagueId: text("league_id")
       .notNull()
       .references(() => leagues.id, { onDelete: "cascade" }),
@@ -43,9 +39,7 @@ export const seasons = sqliteTable(
 export const teams = sqliteTable(
   "teams",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     leagueId: text("league_id")
       .notNull()
       .references(() => leagues.id, { onDelete: "cascade" }),
@@ -65,15 +59,14 @@ export const teams = sqliteTable(
   (t) => [
     uniqueIndex("teams_league_source_idx").on(t.leagueId, t.sourceId),
     uniqueIndex("teams_league_slug_idx").on(t.leagueId, t.slug),
+    index("teams_league_name_idx").on(t.leagueId, t.name),
   ],
 )
 
 export const coaches = sqliteTable(
   "coaches",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     teamId: text("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
@@ -99,6 +92,7 @@ export const coaches = sqliteTable(
   (t) => [
     uniqueIndex("coaches_source_source_id_idx").on(t.source, t.sourceId),
     index("coaches_team_idx").on(t.teamId),
+    index("coaches_league_name_idx").on(t.leagueId, t.fullName),
   ],
 )
 
@@ -126,19 +120,14 @@ export const teamSeasonStats = sqliteTable(
     sos: real("sos"),
   },
   (t) => [
-    uniqueIndex("team_season_stats_team_season_idx").on(
-      t.teamId,
-      t.seasonId,
-    ),
+    uniqueIndex("team_season_stats_team_season_idx").on(t.teamId, t.seasonId),
   ],
 )
 
 export const players = sqliteTable(
   "players",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     fullName: text("full_name").notNull(),
     slug: text("slug").notNull().unique(),
     birthdate: text("birthdate"),
@@ -198,6 +187,10 @@ export const playerStats = sqliteTable(
   (t) => [
     uniqueIndex("player_stats_player_season_idx").on(t.playerId, t.seasonId),
     index("player_stats_season_idx").on(t.seasonId),
+    index("player_stats_team_season_idx").on(t.teamId, t.seasonId),
+    index("player_stats_season_points_idx").on(t.seasonId, t.points),
+    index("player_stats_season_rebounds_idx").on(t.seasonId, t.rebounds),
+    index("player_stats_season_assists_idx").on(t.seasonId, t.assists),
   ],
 )
 
@@ -232,15 +225,26 @@ export const syncRuns = sqliteTable("sync_runs", {
 })
 
 export const shortlists = sqliteTable("shortlists", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(uuid),
+  id: text("id").primaryKey().$defaultFn(uuid),
   ownerId: text("owner_id").notNull(),
   name: text("name").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(now),
 })
+
+export const waitlistEntries = sqliteTable(
+  "waitlist_entries",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    email: text("email").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    source: text("source"),
+  },
+  (t) => [uniqueIndex("waitlist_entries_email_idx").on(t.email)],
+)
 
 export const shortlistPlayers = sqliteTable(
   "shortlist_players",
@@ -272,6 +276,7 @@ export type PlayerStat = typeof playerStats.$inferSelect
 export type Video = typeof videos.$inferSelect
 export type SyncRun = typeof syncRuns.$inferSelect
 export type Shortlist = typeof shortlists.$inferSelect
+export type WaitlistEntry = typeof waitlistEntries.$inferSelect
 
 export const ftsPlayers = sql`
   CREATE VIRTUAL TABLE IF NOT EXISTS players_fts USING fts5(

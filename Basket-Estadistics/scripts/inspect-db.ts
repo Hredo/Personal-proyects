@@ -1,11 +1,21 @@
 import { getDb, closeDb } from "../src/lib/db/client"
-import { coaches, players, playerStats, teams, leagues, teamSeasonStats } from "../src/lib/db/schema"
+import {
+  coaches,
+  players,
+  playerStats,
+  teams,
+  leagues,
+  teamSeasonStats,
+} from "../src/lib/db/schema"
 import { eq, sql } from "drizzle-orm"
 
 async function main() {
   const db = getDb()
   const allLeagues = await db.select().from(leagues)
-  console.log("leagues:", allLeagues.map((l) => `${l.name} (${l.source})`))
+  console.log(
+    "leagues:",
+    allLeagues.map((l) => `${l.name} (${l.source})`),
+  )
   for (const lg of allLeagues) {
     const tCount = await db
       .select({ c: sql<number>`count(*)` })

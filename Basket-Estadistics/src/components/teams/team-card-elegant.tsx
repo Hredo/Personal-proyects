@@ -35,9 +35,7 @@ export function TeamCardElegant({ team }: Props) {
   const wins = s?.wins ?? 0
   const losses = s?.losses ?? 0
   const netRtg =
-    s?.netRtg != null
-      ? `${s.netRtg > 0 ? "+" : ""}${s.netRtg.toFixed(1)}`
-      : "—"
+    s?.netRtg != null ? `${s.netRtg > 0 ? "+" : ""}${s.netRtg.toFixed(1)}` : "—"
   const badge = LEAGUE_BADGE[team.league.slug] ?? LEAGUE_BADGE.nba
   const accent = team.primaryColor ?? "var(--color-brand-500)"
 

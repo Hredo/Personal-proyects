@@ -51,11 +51,7 @@ export function NavDropdown({ label, href, leagues }: Props) {
           strokeWidth="2"
           stroke="currentColor"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m6 9 6 6 6-6"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
         </svg>
       </Link>
       <div

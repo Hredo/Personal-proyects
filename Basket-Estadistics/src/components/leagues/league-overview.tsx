@@ -81,7 +81,9 @@ export function LeagueOverview({ data, index }: Props) {
             {data.seasonLabel ? (
               <>
                 <span className="mx-1.5 text-ink-500">·</span>
-                <span className={theme.accentText}>{data.seasonLabel}</span>{" "}
+                <span className={theme.accentText}>
+                  {data.seasonLabel}
+                </span>{" "}
                 season
               </>
             ) : null}
@@ -224,7 +226,9 @@ export function LeagueOverview({ data, index }: Props) {
               ) : (
                 <span
                   className="font-display text-sm font-bold text-ink-950"
-                  style={data.leader.primaryColor ? { color: "#0a0a0a" } : undefined}
+                  style={
+                    data.leader.primaryColor ? { color: "#0a0a0a" } : undefined
+                  }
                 >
                   {initials(data.leader.name)}
                 </span>
@@ -281,7 +285,9 @@ export function LeagueOverview({ data, index }: Props) {
         <Link
           href={`/teams?league=${data.slug}`}
           className={`group/btn inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold transition sm:text-sm ${theme.accentBorder} ${theme.accentText} hover:bg-white/[0.06]`}
-          style={{ background: `color-mix(in oklab, var(--shadow-league-${theme.key}) 12%, transparent)` }}
+          style={{
+            background: `color-mix(in oklab, var(--shadow-league-${theme.key}) 12%, transparent)`,
+          }}
         >
           Browse teams
           <svg

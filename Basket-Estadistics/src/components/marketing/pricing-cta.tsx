@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
+import { WaitlistForm } from "@/components/marketing/waitlist-form"
 
 const TIERS = [
   {
@@ -16,19 +17,19 @@ const TIERS = [
       "AI advisor in read-only mode",
     ],
     accent: "border-white/15",
-    ctaStyle: "border border-white/10 bg-white/5 text-ink-50 hover:border-brand-400/60",
+    ctaStyle:
+      "border border-white/10 bg-white/5 text-ink-50 hover:border-brand-400/60",
   },
   {
     name: "Pro",
     price: "Early access",
     cadence: "closed beta",
     description:
-      "Shortlists, exports, alerts and persistent AI advisor memory. We&apos;re onboarding one cohort at a time.",
-    cta: { href: "#waitlist", label: "Request access" },
+      "Shortlists, exports and persistent AI advisor sessions. We&apos;re onboarding one cohort at a time.",
+    cta: { href: "#waitlist-form", label: "Request access" },
     features: [
       "Everything in Public",
       "Shortlists with notes and share links",
-      "Live alerts on targets",
       "PDF / Excel / Word exports",
       "Priority sync, no rate limits",
     ],
@@ -86,12 +87,17 @@ export function PricingCta() {
                 <p className="mt-2 font-display text-3xl font-bold leading-none text-ink-50 sm:text-4xl">
                   {t.price}
                 </p>
-                <p className="mt-1 text-xs text-ink-400 sm:text-sm">{t.cadence}</p>
+                <p className="mt-1 text-xs text-ink-400 sm:text-sm">
+                  {t.cadence}
+                </p>
               </header>
               <p className="mt-4 text-sm text-ink-200">{t.description}</p>
               <ul className="mt-5 space-y-2.5">
                 {t.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-ink-100">
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-sm text-ink-100"
+                  >
                     <svg
                       aria-hidden
                       className="mt-0.5 h-4 w-4 shrink-0 text-brand-300"
@@ -114,7 +120,16 @@ export function PricingCta() {
                   className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition sm:text-base ${t.ctaStyle}`}
                 >
                   {t.cta.label}
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg
+                    className="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
                     <path d="M5 12h14M13 5l7 7-7 7" />
                   </svg>
                 </Link>
@@ -124,9 +139,19 @@ export function PricingCta() {
         ))}
       </div>
 
+      <div className="mx-auto mt-10 max-w-md text-center sm:mt-12">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-400 sm:text-[11px]">
+          Join the Pro waitlist
+        </p>
+        <WaitlistForm source="pricing" />
+        <p className="mt-3 text-[11px] text-ink-500">
+          One email when we open the next cohort. We don&apos;t share it.
+        </p>
+      </div>
+
       <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-ink-400 sm:text-sm">
-        Pro pricing will be published when the closed beta opens. We&apos;re
-        not in a hurry, and the data stays free.
+        Pro pricing will be published when the closed beta opens. We&apos;re not
+        in a hurry, and the data stays free.
       </p>
     </section>
   )

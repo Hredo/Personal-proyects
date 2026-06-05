@@ -21,6 +21,7 @@ const eslintConfig = [
       "next-env.d.ts",
       "scripts/debug-*.ts",
       "scripts/_dbcheck.cjs",
+      "scripts/inspect-euroleague.cjs",
     ],
   },
   {

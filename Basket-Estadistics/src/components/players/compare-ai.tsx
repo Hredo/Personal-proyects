@@ -176,13 +176,14 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
           >
             <ScoreCard data={data} aName={aName} bName={bName} />
             <Verdict data={data} />
-            <Categories
-              cats={data.categories}
+            <Categories cats={data.categories} aName={aName} bName={bName} />
+            <Insights insights={data.insights} aName={aName} bName={bName} />
+            <FitNotes
+              notes={data.fitNotes}
+              archetype={data.archetype}
               aName={aName}
               bName={bName}
             />
-            <Insights insights={data.insights} aName={aName} bName={bName} />
-            <FitNotes notes={data.fitNotes} archetype={data.archetype} aName={aName} bName={bName} />
             {data.warnings.length > 0 ? (
               <Warnings warnings={data.warnings} />
             ) : null}
@@ -251,9 +252,7 @@ function ScoreCard({
           Confianza {confidence}
         </span>
         <span className="font-semibold text-ink-100">
-          {leader === "tie"
-            ? "Empate técnico"
-            : `Líder: ${leaderName}`}
+          {leader === "tie" ? "Empate técnico" : `Líder: ${leaderName}`}
         </span>
       </div>
     </div>
@@ -310,16 +309,24 @@ function Categories({
                 <p className="flex items-center gap-2 text-sm font-semibold text-ink-100">
                   <span aria-hidden>{c.emoji}</span> {c.label}
                 </p>
-                <span className={`text-[11px] font-bold uppercase tracking-wide ${winnerColor}`}>
+                <span
+                  className={`text-[11px] font-bold uppercase tracking-wide ${winnerColor}`}
+                >
                   {winnerName}
                 </span>
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2 font-mono text-[11px] text-ink-200">
                 <span className="rounded bg-white/[0.03] px-2 py-1">
-                  <span className="text-brand-300">{aName.split(" ").slice(-1)[0]}</span>: {c.formatted.a}
+                  <span className="text-brand-300">
+                    {aName.split(" ").slice(-1)[0]}
+                  </span>
+                  : {c.formatted.a}
                 </span>
                 <span className="rounded bg-white/[0.03] px-2 py-1">
-                  <span className="text-accent-cyan">{bName.split(" ").slice(-1)[0]}</span>: {c.formatted.b}
+                  <span className="text-accent-cyan">
+                    {bName.split(" ").slice(-1)[0]}
+                  </span>
+                  : {c.formatted.b}
                 </span>
               </div>
               <p className="mt-2 text-xs text-ink-300">{c.summary}</p>

@@ -39,7 +39,12 @@ type Result = {
   heightCm: number | null
   weightKg: number | null
   photoUrl: string | null
-  team: { id: string; name: string; slug: string; logoUrl: string | null } | null
+  team: {
+    id: string
+    name: string
+    slug: string
+    logoUrl: string | null
+  } | null
   league: { id: string; name: string; slug: string; country: string }
   season: Season | null
 }
@@ -47,7 +52,11 @@ type Result = {
 const LEAGUE_FILTERS = [
   { slug: "", label: "All leagues", accent: "from-brand-500 to-accent-cyan" },
   { slug: "nba", label: "NBA", accent: "from-brand-500 to-brand-300" },
-  { slug: "euroleague", label: "EuroLeague", accent: "from-accent-cyan to-cyan-300" },
+  {
+    slug: "euroleague",
+    label: "EuroLeague",
+    accent: "from-accent-cyan to-cyan-300",
+  },
   { slug: "acb", label: "ACB", accent: "from-amber-400 to-orange-300" },
 ] as const
 
@@ -463,7 +472,16 @@ const SearchInput = forwardRef<
     inputClassName: string
   }
 >(function SearchInput(
-  { q, onChange, onFocus, onKeyDown, autoFocus, loading, isMac, inputClassName },
+  {
+    q,
+    onChange,
+    onFocus,
+    onKeyDown,
+    autoFocus,
+    loading,
+    isMac,
+    inputClassName,
+  },
   ref,
 ) {
   return (
@@ -605,7 +623,11 @@ function ResultCard({
             }`}
             style={{ gridTemplateColumns: "auto auto auto auto" }}
           >
-            <Stat label="PPG" value={formatNum(player.season.points)} highlight />
+            <Stat
+              label="PPG"
+              value={formatNum(player.season.points)}
+              highlight
+            />
             <Stat label="RPG" value={formatNum(player.season.rebounds)} />
             <Stat label="APG" value={formatNum(player.season.assists)} />
             <Stat label="SPG" value={formatNum(player.season.steals)} />
@@ -630,11 +652,7 @@ function ResultCard({
           strokeWidth="2"
           stroke="currentColor"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 5l7 7-7 7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </motion.button>
     </li>
@@ -652,7 +670,9 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="text-[9px] uppercase tracking-wider text-ink-500">{label}</p>
+      <p className="text-[9px] uppercase tracking-wider text-ink-500">
+        {label}
+      </p>
       <p
         className={`font-semibold ${highlight ? "text-brand-300" : "text-ink-100"}`}
       >

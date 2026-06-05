@@ -1,82 +1,162 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { exportToPdf, exportToWord, type ChatMessage, type TeamContext } from "@/lib/ai/export";
+import { useEffect, useRef, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  exportToPdf,
+  exportToWord,
+  type ChatMessage,
+  type TeamContext,
+} from "@/lib/ai/export"
 
-type Format = "pdf" | "word";
+type Format = "pdf" | "word"
 
 type Props = {
-  team: TeamContext | null;
-  messages: ChatMessage[];
-  disabled?: boolean;
-};
+  team: TeamContext | null
+  messages: ChatMessage[]
+  disabled?: boolean
+}
 
 type FormatOption = {
-  id: Format;
-  label: string;
-  hint: string;
-  icon: React.ReactNode;
-  accent: string;
-  run: (payload: { team: TeamContext; messages: ChatMessage[] }) => void | Promise<void>;
-};
+  id: Format
+  label: string
+  hint: string
+  icon: React.ReactNode
+  accent: string
+  run: (payload: {
+    team: TeamContext
+    messages: ChatMessage[]
+  }) => void | Promise<void>
+}
 
 function PdfIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+      />
       <path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5" />
-      <text x="8" y="17" fontSize="6" fontWeight="700" fill="currentColor" stroke="none" fontFamily="Helvetica, Arial, sans-serif">PDF</text>
+      <text
+        x="8"
+        y="17"
+        fontSize="6"
+        fontWeight="700"
+        fill="currentColor"
+        stroke="none"
+        fontFamily="Helvetica, Arial, sans-serif"
+      >
+        PDF
+      </text>
     </svg>
-  );
+  )
 }
 
 function WordIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+      />
       <path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5" />
-      <text x="7.5" y="17" fontSize="6" fontWeight="700" fill="currentColor" stroke="none" fontFamily="Helvetica, Arial, sans-serif">DOC</text>
+      <text
+        x="7.5"
+        y="17"
+        fontSize="6"
+        fontWeight="700"
+        fill="currentColor"
+        stroke="none"
+        fontFamily="Helvetica, Arial, sans-serif"
+      >
+        DOC
+      </text>
     </svg>
-  );
+  )
 }
 
 function DownloadIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"
+      />
     </svg>
-  );
+  )
 }
 
 function Spinner() {
   return (
-    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    <svg
+      className="h-4 w-4 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
     </svg>
-  );
+  )
 }
 
 export function ExportMenu({ team, messages, disabled = false }: Props) {
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<Format | null>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState<Format | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false)
       }
     }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+    if (open) document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [open])
 
-  const isEmpty = messages.length === 0;
-  const isDisabled = disabled || isEmpty || !team || busy !== null;
+  const isEmpty = messages.length === 0
+  const isDisabled = disabled || isEmpty || !team || busy !== null
 
-  const recCount = 0;
+  const recCount = 0
 
   const options: FormatOption[] = [
     {
@@ -95,18 +175,18 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
       accent: "text-sky-300 bg-sky-500/10 ring-sky-400/30",
       run: ({ team, messages }) => exportToWord({ team, messages }),
     },
-  ];
+  ]
 
   async function handleSelect(fmt: FormatOption) {
-    if (!team || isEmpty) return;
-    setBusy(fmt.id);
-    setOpen(false);
+    if (!team || isEmpty) return
+    setBusy(fmt.id)
+    setOpen(false)
     try {
-      await fmt.run({ team, messages });
+      await fmt.run({ team, messages })
     } catch (err) {
-      console.error("Export failed:", err);
+      console.error("Export failed:", err)
     } finally {
-      setBusy(null);
+      setBusy(null)
     }
   }
 
@@ -118,10 +198,17 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
         disabled={isDisabled}
         aria-haspopup="menu"
         aria-expanded={open}
-        title={isEmpty ? "Inicia una conversación para poder exportar" : "Exportar conversación"}
+        title={
+          isEmpty
+            ? "Inicia una conversación para poder exportar"
+            : "Exportar conversación"
+        }
         className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/25 ring-1 ring-brand-400/40 transition hover:from-brand-400 hover:to-brand-500 hover:shadow-xl hover:shadow-brand-500/40 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-2 focus:ring-offset-ink-950 disabled:cursor-not-allowed disabled:from-ink-700 disabled:to-ink-800 disabled:shadow-none disabled:ring-ink-700/40"
       >
-        <span className="absolute inset-y-0 left-0 w-1 bg-white/30 transition-all group-hover:w-1.5" aria-hidden />
+        <span
+          className="absolute inset-y-0 left-0 w-1 bg-white/30 transition-all group-hover:w-1.5"
+          aria-hidden
+        />
         {busy ? <Spinner /> : <DownloadIcon />}
         <span className="flex flex-col items-start leading-none">
           <span>{busy ? "Generando…" : "Exportar conversación"}</span>
@@ -133,7 +220,10 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
         </span>
         <svg
           className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
         </svg>
@@ -167,7 +257,9 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
                   disabled={busy !== null}
                   className="group flex w-full items-start gap-3 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition hover:border-white/10 hover:bg-white/[0.04] disabled:opacity-40"
                 >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ${opt.accent}`}>
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ${opt.accent}`}
+                  >
                     {opt.icon}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -183,12 +275,12 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
               ))}
             </div>
             <div className="mt-2 border-t border-white/5 px-2.5 py-2 text-[10px] leading-relaxed text-ink-500">
-              El informe incluye la conversación completa, las fichas de los jugadores
-              recomendados y el diagnóstico del equipo.
+              El informe incluye la conversación completa, las fichas de los
+              jugadores recomendados y el diagnóstico del equipo.
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  );
+  )
 }

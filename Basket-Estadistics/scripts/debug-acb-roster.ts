@@ -31,6 +31,9 @@ async function main() {
     return
   }
   console.log("Players at:", playersIdx)
-  console.log("Sample player data:", rsc.substring(playersIdx, playersIdx + 1000))
+  console.log(
+    "Sample player data:",
+    rsc.substring(playersIdx, playersIdx + 1000),
+  )
 }
 main().catch(console.error)

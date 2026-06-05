@@ -45,7 +45,9 @@ export function parseBirthdate(input?: string | null): string | undefined {
   return undefined
 }
 
-export function parseHeightToCm(input?: string | number | null): number | undefined {
+export function parseHeightToCm(
+  input?: string | number | null,
+): number | undefined {
   if (input == null) return undefined
   if (typeof input === "number") {
     return input > 50 ? Math.round(input) : undefined
@@ -66,7 +68,9 @@ export function parseHeightToCm(input?: string | number | null): number | undefi
   return undefined
 }
 
-export function parseWeightToKg(input?: string | number | null): number | undefined {
+export function parseWeightToKg(
+  input?: string | number | null,
+): number | undefined {
   if (input == null) return undefined
   if (typeof input === "number") {
     return input > 30 ? Math.round(input) : undefined

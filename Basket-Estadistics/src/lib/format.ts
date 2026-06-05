@@ -1,6 +1,10 @@
-export function formatStat(n: number | null | undefined, digits = 1): string {
+export function formatStat(
+  n: number | null | undefined,
+  digits = 1,
+  suffix = "",
+): string {
   if (n == null || Number.isNaN(n)) return "—"
-  return n.toFixed(digits)
+  return `${n.toFixed(digits)}${suffix}`
 }
 
 export function formatPct(n: number | null | undefined, digits = 1): string {

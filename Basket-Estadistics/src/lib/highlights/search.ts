@@ -133,8 +133,7 @@ function parseDdgHtml(html: string): DdgResult[] {
     if (results.length >= 20) break
   }
 
-  const snippetRe =
-    /<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g
+  const snippetRe = /<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g
   let i = 0
   while ((m = snippetRe.exec(html)) !== null && i < results.length) {
     results[i].snippet = stripTags(m[1]).trim()

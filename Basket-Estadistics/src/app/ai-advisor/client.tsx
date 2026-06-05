@@ -4,6 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { TeamSelector } from "@/app/ai-advisor/team-selector"
 import { ChatWindow } from "@/app/ai-advisor/chat-window"
 import { InputArea } from "@/app/ai-advisor/input-area"
+import {
+  LlmSettings,
+  loadLlmMode,
+  type LlmMode,
+} from "@/app/ai-advisor/llm-settings"
 import type { TeamOption } from "@/types/teams"
 import type { AdvisorOutput } from "@/lib/ai/local-advisor"
 import type { Reaction } from "@/app/ai-advisor/message-actions"
@@ -17,7 +22,9 @@ type Message = {
 
 type AdvisorApiResult = {
   content?: string
-  data?: { recommendations?: unknown[] }
+  data?: AdvisorOutput
+  mode?: "llm" | "local"
+  error?: boolean
 }
 
 const TIPS = [
@@ -44,15 +51,24 @@ function loadReactions(): Record<number, Reaction> {
   return {}
 }
 
+function clearReactions(): void {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.removeItem(REACTIONS_KEY)
+  } catch {}
+}
+
 export default function AIAdvisorClient() {
   const [selectedTeam, setSelectedTeam] = useState<TeamOption | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
   const [reactions, setReactions] = useState<Record<number, Reaction>>({})
+  const [llmMode, setLlmMode] = useState<LlmMode>("off")
   const idRef = useRef(0)
 
   useEffect(() => {
     setReactions(loadReactions())
+    setLlmMode(loadLlmMode())
   }, [])
 
   useEffect(() => {
@@ -65,6 +81,8 @@ export default function AIAdvisorClient() {
   const handleTeamChange = (team: TeamOption) => {
     setSelectedTeam(team)
     setMessages([])
+    setReactions({})
+    clearReactions()
   }
 
   const sendMessage = useCallback(
@@ -75,9 +93,14 @@ export default function AIAdvisorClient() {
       setMessages((prev) => [...prev, userMsg])
       setLoading(true)
       try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        if (llmMode === "ollama") headers["X-User-LLM"] = "ollama"
+
         const res = await fetch("/api/ai-advisor", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             teamSlug: selectedTeam.slug,
             leagueSlug: selectedTeam.leagueSlug,
@@ -88,7 +111,7 @@ export default function AIAdvisorClient() {
             })),
           }),
         })
-        const result = (await res.json()) as AdvisorApiResult & { error?: boolean }
+        const result = (await res.json()) as AdvisorApiResult
         if (!res.ok && res.status === 429) {
           const aiId = ++idRef.current
           setMessages((prev) => [
@@ -108,6 +131,7 @@ export default function AIAdvisorClient() {
           id: aiId,
           type: "ai",
           content: result.content || "",
+          data: result.data,
         }
         setMessages((prev) => [...prev, aiMsg])
       } catch {
@@ -118,34 +142,42 @@ export default function AIAdvisorClient() {
             id: aiId,
             type: "ai",
             content:
-              "Ocurrió un error al conectar con el servidor. Intenta de nuevo.",
+              "No pudimos llegar al asesor. Comprueba tu conexión o inténtalo en unos segundos.",
           },
         ])
       } finally {
         setLoading(false)
       }
     },
-    [selectedTeam, messages],
+    [selectedTeam, messages, llmMode],
   )
 
   const handleRedo = useCallback(
     async (aiMessageId: number) => {
       if (!selectedTeam || loading) return
-      setMessages((prev) => {
-        const idx = prev.findIndex((m) => m.id === aiMessageId)
-        if (idx <= 0) return prev
-        const prevUser = prev[idx - 1]
-        if (!prevUser || prevUser.type !== "user") return prev
-        const before = prev.slice(0, idx)
-        const userContent = prevUser.content
-        const history = before.slice(0, -1).map((m) => ({
-          role: m.type === "user" ? "user" : "assistant",
-          content: m.content,
-        }))
-        setLoading(true)
-        fetch("/api/ai-advisor", {
+      const idx = messages.findIndex((m) => m.id === aiMessageId)
+      if (idx <= 0) return
+      const prevUser = messages[idx - 1]
+      if (!prevUser || prevUser.type !== "user") return
+
+      const userContent = prevUser.content
+      const before = messages.slice(0, idx)
+      const history = before.slice(0, -1).map((m) => ({
+        role: m.type === "user" ? "user" : "assistant",
+        content: m.content,
+      }))
+
+      setMessages(before)
+      setLoading(true)
+      try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        if (llmMode === "ollama") headers["X-User-LLM"] = "ollama"
+
+        const r = await fetch("/api/ai-advisor", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             teamSlug: selectedTeam.slug,
             leagueSlug: selectedTeam.leagueSlug,
@@ -153,40 +185,38 @@ export default function AIAdvisorClient() {
             history,
           }),
         })
-          .then((r) => r.json() as Promise<AdvisorApiResult>)
-          .then((result) => {
-            const newAiId = ++idRef.current
-            setMessages((cur) => [
-              ...cur.slice(0, idx),
-              {
-                id: newAiId,
-                type: "ai",
-                content: result.content || "",
-              },
-            ])
-            setReactions((r) => {
-              const copy = { ...r }
-              delete copy[aiMessageId]
-              return copy
-            })
-          })
-          .catch(() => {
-            const newAiId = ++idRef.current
-            setMessages((cur) => [
-              ...cur.slice(0, idx),
-              {
-                id: newAiId,
-                type: "ai",
-                content:
-                  "Ocurrió un error al rehacer la respuesta. Intenta de nuevo.",
-              },
-            ])
-          })
-          .finally(() => setLoading(false))
-        return before
-      })
+        const result = (await r.json()) as AdvisorApiResult
+        const newAiId = ++idRef.current
+        setMessages((cur) => [
+          ...cur,
+          {
+            id: newAiId,
+            type: "ai",
+            content: result.content || "",
+            data: result.data,
+          },
+        ])
+        setReactions((r) => {
+          const copy = { ...r }
+          delete copy[aiMessageId]
+          return copy
+        })
+      } catch {
+        const newAiId = ++idRef.current
+        setMessages((cur) => [
+          ...cur,
+          {
+            id: newAiId,
+            type: "ai",
+            content:
+              "No pudimos rehacer la respuesta. Inténtalo de nuevo en unos segundos.",
+          },
+        ])
+      } finally {
+        setLoading(false)
+      }
     },
-    [selectedTeam, loading],
+    [selectedTeam, loading, messages, llmMode],
   )
 
   const handleCopy = useCallback((id: number) => {
@@ -229,6 +259,7 @@ export default function AIAdvisorClient() {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={1.5}
+              aria-hidden
             >
               <path
                 strokeLinecap="round"
@@ -248,6 +279,8 @@ export default function AIAdvisorClient() {
         </div>
       </header>
 
+      <LlmSettings mode={llmMode} onModeChange={setLlmMode} />
+
       <div className="border-b border-white/5 bg-ink-950/30">
         <TeamSelector onTeamChange={handleTeamChange} />
       </div>
@@ -264,7 +297,28 @@ export default function AIAdvisorClient() {
         />
 
         {messages.length === 0 && selectedTeam && (
-          <div className="px-4 pb-2">
+          <div className="border-t border-white/5 bg-ink-950/20 px-4 pb-3 pt-3">
+            <div className="mb-3 flex items-start gap-2 rounded-lg border border-brand-500/20 bg-brand-500/5 px-3 py-2">
+              <svg
+                className="mt-0.5 h-4 w-4 shrink-0 text-brand-300"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                aria-hidden
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" d="M12 8h.01M11 12h1v4h1" />
+              </svg>
+              <p className="text-[11px] leading-relaxed text-ink-300">
+                <span className="font-semibold text-brand-200">
+                  Por qué este asesor.
+                </span>{" "}
+                Analiza tu plantilla contra la base de datos de 2400+ jugadores,
+                busca los huecos posicionales y propone shortlists. Todo sin
+                salir del navegador.
+              </p>
+            </div>
             <p className="mb-2 text-[10px] uppercase tracking-widest text-ink-500">
               Preguntas sugeridas
             </p>

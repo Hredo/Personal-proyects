@@ -16,9 +16,24 @@ type Axis = {
 }
 
 const AXES: Axis[] = [
-  { key: "scoring", label: "Anotación", max: 32, pick: (p) => num(p.stats?.points) },
-  { key: "playmaking", label: "Asistencias", max: 11, pick: (p) => num(p.stats?.assists) },
-  { key: "rebounding", label: "Rebote", max: 13, pick: (p) => num(p.stats?.rebounds) },
+  {
+    key: "scoring",
+    label: "Anotación",
+    max: 32,
+    pick: (p) => num(p.stats?.points),
+  },
+  {
+    key: "playmaking",
+    label: "Asistencias",
+    max: 11,
+    pick: (p) => num(p.stats?.assists),
+  },
+  {
+    key: "rebounding",
+    label: "Rebote",
+    max: 13,
+    pick: (p) => num(p.stats?.rebounds),
+  },
   {
     key: "defense",
     label: "Defensa",
@@ -55,7 +70,10 @@ function sumOrNull(a: number | null, b: number | null): number | null {
 
 function pointFor(i: number, value: number) {
   const angle = (Math.PI * 2 * i) / AXES.length - Math.PI / 2
-  return [CX + Math.cos(angle) * R * value, CY + Math.sin(angle) * R * value] as const
+  return [
+    CX + Math.cos(angle) * R * value,
+    CY + Math.sin(angle) * R * value,
+  ] as const
 }
 
 function polygonFromValues(values: number[]) {
@@ -96,12 +114,28 @@ export function CompareRadar({ a, b }: Props) {
       >
         <defs>
           <linearGradient id={aId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--color-brand-400)" stopOpacity="0.65" />
-            <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity="0.15" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-brand-400)"
+              stopOpacity="0.65"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-brand-500)"
+              stopOpacity="0.15"
+            />
           </linearGradient>
           <linearGradient id={bId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent-cyan)" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="var(--color-accent-cyan)" stopOpacity="0.1" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-accent-cyan)"
+              stopOpacity="0.6"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-accent-cyan)"
+              stopOpacity="0.1"
+            />
           </linearGradient>
         </defs>
 
@@ -205,11 +239,15 @@ export function CompareRadar({ a, b }: Props) {
       <div className="absolute left-3 top-3 flex items-center gap-3 text-[11px] font-medium text-ink-200">
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm bg-brand-400" />
-          <span className="max-w-[100px] truncate sm:max-w-[140px]">{a.fullName}</span>
+          <span className="max-w-[100px] truncate sm:max-w-[140px]">
+            {a.fullName}
+          </span>
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm bg-accent-cyan" />
-          <span className="max-w-[100px] truncate sm:max-w-[140px]">{b.fullName}</span>
+          <span className="max-w-[100px] truncate sm:max-w-[140px]">
+            {b.fullName}
+          </span>
         </span>
       </div>
     </div>

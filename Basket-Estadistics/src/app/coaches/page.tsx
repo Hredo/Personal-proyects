@@ -7,6 +7,8 @@ type SearchParams = Partial<
   Record<keyof ListCoachesInput | "q" | "page", string>
 >
 
+export const revalidate = 300
+
 export const metadata: Metadata = {
   title: "Coaches & Staff",
   description:
@@ -56,8 +58,8 @@ export default async function CoachesPage(props: {
           <span className="font-mono font-semibold text-ink-100">
             {result.total.toLocaleString("en-US")}
           </span>{" "}
-          staff member{result.total === 1 ? "" : "s"} across the NBA,
-          EuroLeague and Liga ACB.
+          staff member{result.total === 1 ? "" : "s"} across the NBA, EuroLeague
+          and Liga ACB.
         </p>
       </header>
 

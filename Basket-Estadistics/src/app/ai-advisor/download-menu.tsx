@@ -37,9 +37,25 @@ function DownloadIcon() {
 
 function Spinner() {
   return (
-    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    <svg
+      className="h-3.5 w-3.5 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
     </svg>
   )
 }
@@ -47,27 +63,90 @@ function Spinner() {
 function FormatIcon({ id }: { id: Format }) {
   if (id === "pdf") {
     return (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+        />
         <path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5" />
-        <text x="8" y="17" fontSize="6" fontWeight="700" fill="currentColor" stroke="none" fontFamily="Helvetica, Arial, sans-serif">PDF</text>
+        <text
+          x="8"
+          y="17"
+          fontSize="6"
+          fontWeight="700"
+          fill="currentColor"
+          stroke="none"
+          fontFamily="Helvetica, Arial, sans-serif"
+        >
+          PDF
+        </text>
       </svg>
     )
   }
   if (id === "word") {
     return (
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+      <svg
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+        />
         <path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5" />
-        <text x="7.5" y="17" fontSize="6" fontWeight="700" fill="currentColor" stroke="none" fontFamily="Helvetica, Arial, sans-serif">DOC</text>
+        <text
+          x="7.5"
+          y="17"
+          fontSize="6"
+          fontWeight="700"
+          fill="currentColor"
+          stroke="none"
+          fontFamily="Helvetica, Arial, sans-serif"
+        >
+          DOC
+        </text>
       </svg>
     )
   }
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"
+      />
       <path strokeLinecap="round" strokeLinejoin="round" d="M14 3v5h5" />
-      <text x="7.5" y="17" fontSize="6" fontWeight="700" fill="currentColor" stroke="none" fontFamily="Helvetica, Arial, sans-serif">MD</text>
+      <text
+        x="7.5"
+        y="17"
+        fontSize="6"
+        fontWeight="700"
+        fill="currentColor"
+        stroke="none"
+        fontFamily="Helvetica, Arial, sans-serif"
+      >
+        MD
+      </text>
     </svg>
   )
 }
@@ -76,7 +155,10 @@ type Option = {
   id: Format
   label: string
   hint: string
-  run: (payload: { team: TeamContext; messages: ChatMessage[] }) => void | Promise<void>
+  run: (payload: {
+    team: TeamContext
+    messages: ChatMessage[]
+  }) => void | Promise<void>
 }
 
 export function DownloadMenu({ team, messages, disabled = false }: Props) {
@@ -86,7 +168,10 @@ export function DownloadMenu({ team, messages, disabled = false }: Props) {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
       }
     }

@@ -16,8 +16,7 @@ export function PlayerCommandPalette() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const isShortcut =
-        (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"
+      const isShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"
       if (isShortcut) {
         e.preventDefault()
         setOpen((v) => !v)

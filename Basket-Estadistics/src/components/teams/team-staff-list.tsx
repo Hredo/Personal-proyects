@@ -21,7 +21,11 @@ const ROLE_LABEL: Record<StaffItem["role"], string> = {
   staff: "Technical staff",
 }
 
-const ROLE_ORDER: StaffItem["role"][] = ["head_coach", "assistant_coach", "staff"]
+const ROLE_ORDER: StaffItem["role"][] = [
+  "head_coach",
+  "assistant_coach",
+  "staff",
+]
 
 export function TeamStaffList({ staff }: Props) {
   if (staff.length === 0) {
@@ -40,7 +44,8 @@ export function TeamStaffList({ staff }: Props) {
     <div
       className="team-staff-list sticky top-24 space-y-5 rounded-2xl border p-5"
       style={{
-        borderColor: "color-mix(in oklch, var(--team-500) 30%, rgba(255,255,255,0.06))",
+        borderColor:
+          "color-mix(in oklch, var(--team-500) 30%, rgba(255,255,255,0.06))",
         background:
           "color-mix(in oklch, var(--team-500) 5%, rgba(255,255,255,0.02))",
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.02)",

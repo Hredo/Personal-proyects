@@ -11,7 +11,9 @@ async function main() {
     console.log(`${url}: ${res.status}`)
     if (res.ok) {
       const html = await res.text()
-      const ids = [...html.matchAll(/<table[^>]*\bid="([^"]+)"/g)].map((m) => m[1])
+      const ids = [...html.matchAll(/<table[^>]*\bid="([^"]+)"/g)].map(
+        (m) => m[1],
+      )
       console.log(`  table ids:`, ids)
     }
   }

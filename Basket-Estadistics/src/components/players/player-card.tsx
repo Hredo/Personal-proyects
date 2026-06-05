@@ -27,7 +27,12 @@ type Props = {
     weightKg: number | null
     photoUrl: string | null
     league: { id: string; name: string; slug: string; country: string }
-    team: { id: string; name: string; slug: string; logoUrl: string | null } | null
+    team: {
+      id: string
+      name: string
+      slug: string
+      logoUrl: string | null
+    } | null
     stats: {
       seasonName: string
       year: number
@@ -108,7 +113,8 @@ export function PlayerCard({ player, index = 0 }: Props) {
             {player.nationality ? <span>· {player.nationality}</span> : null}
             {age != null ? <span>· {age} y.o.</span> : null}
             <span className="hidden sm:inline">
-              · {formatHeight(player.heightCm)} · {formatWeight(player.weightKg)}
+              · {formatHeight(player.heightCm)} ·{" "}
+              {formatWeight(player.weightKg)}
             </span>
           </p>
 
@@ -173,11 +179,7 @@ function Stat({
       </p>
       <p
         className={`truncate text-[11px] font-semibold sm:text-xs ${
-          highlight
-            ? "text-brand-300"
-            : muted
-              ? "text-ink-200"
-              : "text-ink-100"
+          highlight ? "text-brand-300" : muted ? "text-ink-200" : "text-ink-100"
         }`}
       >
         {value}

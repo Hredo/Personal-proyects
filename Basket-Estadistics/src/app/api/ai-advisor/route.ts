@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server"
 import { getTeamBySlug } from "@/lib/data/teams"
-import { buildLocalAdvice, findPlayerInQuery } from "@/lib/ai/local-advisor"
-import { generateAdvisorResponse, isLlmEnabled, lastLlmError } from "@/lib/ai/llm"
+import {
+  buildLocalAdvice,
+  findPlayerInQuery,
+  type AdvisorOutput,
+} from "@/lib/ai/local-advisor"
+import {
+  generateAdvisorResponse,
+  isLlmEnabled,
+  lastLlmError,
+} from "@/lib/ai/llm"
 import {
   audit,
   clientIp,
@@ -43,7 +51,9 @@ export async function POST(request: Request) {
       }),
       {
         status: 429,
-        headers: securityHeaders({ "Retry-After": String(limit.retryAfterSec) }),
+        headers: securityHeaders({
+          "Retry-After": String(limit.retryAfterSec),
+        }),
       },
     )
   }
@@ -119,7 +129,10 @@ export async function POST(request: Request) {
   }
 
   // 7. Sanitise and bound user input.
-  const userMessage = cleanUserText(body.userMessage).slice(0, MAX_USER_MESSAGE_LEN)
+  const userMessage = cleanUserText(body.userMessage).slice(
+    0,
+    MAX_USER_MESSAGE_LEN,
+  )
   if (userMessage.length === 0) {
     return jsonError("La pregunta no puede estar vacía.", 400)
   }
@@ -180,7 +193,11 @@ export async function POST(request: Request) {
   }
 
   // 12. LLM call (only if URL is safe).
-  if (isLlmEnabled()) {
+  // The client can request BYO-LLM via `X-User-LLM: ollama`. If the server
+  // isn't reachable or fails we transparently fall back to the rule-based
+  // advisor.
+  const userOptedIn = request.headers.get("x-user-llm") === "ollama"
+  if (userOptedIn && isLlmEnabled()) {
     // Defensive: refuse to call the LLM if the configured base URL is unsafe.
     const ollamaBaseUrl = process.env.OLLAMA_BASE_URL
     if (ollamaBaseUrl && !safeOllamaBaseUrl(ollamaBaseUrl)) {
@@ -201,7 +218,7 @@ export async function POST(request: Request) {
       if (llm) {
         const safe = cleanLlmOutput(llm.content)
         return NextResponse.json(
-          { content: safe, model: llm.model },
+          { content: safe, model: llm.model, mode: "llm" as const },
           { headers: securityHeaders() },
         )
       }
@@ -212,23 +229,28 @@ export async function POST(request: Request) {
     } catch (err) {
       audit("llm-threw", { ip, err: String(err) })
     }
-  } else {
-    console.warn(
-      "AI advisor: LLM no habilitado. Usando fallback rule-based.",
-    )
+  } else if (!userOptedIn) {
+    // No opt-in → use the deterministic local advisor. This is the default
+    // behaviour and works without any external service.
   }
 
   // 13. Fallback (rule-based).
   try {
-    const fallback = await buildLocalAdvice(team, userMessage)
-    const safe = cleanLlmOutput(fallback.analysis)
+    const fallback: AdvisorOutput = await buildLocalAdvice(team, userMessage)
     return NextResponse.json(
-      { content: safe },
+      {
+        content: cleanLlmOutput(fallback.analysis),
+        data: fallback,
+        mode: "local" as const,
+      },
       { headers: securityHeaders() },
     )
   } catch (err) {
     audit("fallback-failed", { ip, err: String(err) })
-    return jsonError("Ocurrió un error al procesar la consulta. Inténtalo de nuevo.", 500)
+    return jsonError(
+      "Ocurrió un error al procesar la consulta. Inténtalo de nuevo.",
+      500,
+    )
   }
 }
 

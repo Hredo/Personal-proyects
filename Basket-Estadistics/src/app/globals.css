@@ -93,37 +93,68 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, calc(var(--float-amplitude, 12px) * -1), 0); }
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, calc(var(--float-amplitude, 12px) * -1), 0);
+  }
 }
 
 @keyframes pulse-soft {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes marquee {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-50%, 0, 0); }
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
 @keyframes marquee-reverse {
-  from { transform: translate3d(-50%, 0, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.05); }
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
 }
 
 @keyframes text-shimmer {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -135,7 +166,11 @@
     color-scheme: dark;
   }
   body {
-    background: radial-gradient(ellipse at top, var(--color-court-900), var(--color-ink-950));
+    background: radial-gradient(
+      ellipse at top,
+      var(--color-court-900),
+      var(--color-ink-950)
+    );
     color: var(--color-ink-50);
     font-family: var(--font-sans);
     min-height: 100dvh;
@@ -153,7 +188,12 @@
     text-wrap: balance;
   }
   .text-gradient-brand {
-    background: linear-gradient(120deg, var(--color-brand-300), var(--color-brand-500) 50%, var(--color-accent-magenta));
+    background: linear-gradient(
+      120deg,
+      var(--color-brand-300),
+      var(--color-brand-500) 50%,
+      var(--color-accent-magenta)
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -180,14 +220,24 @@
     background-size: 48px 48px;
   }
   .ring-brand {
-    box-shadow: 0 0 0 1px var(--color-brand-500), var(--shadow-brand-glow);
+    box-shadow:
+      0 0 0 1px var(--color-brand-500),
+      var(--shadow-brand-glow);
   }
   .bg-grid-fade {
     background-image:
       linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px),
       linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px);
     background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 80%);
+    mask-image: radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      black 30%,
+      transparent 80%
+    );
+    -webkit-mask-image: radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      black 30%,
+      transparent 80%
+    );
   }
 }

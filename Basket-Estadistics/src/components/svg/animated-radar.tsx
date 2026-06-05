@@ -24,7 +24,10 @@ const R = 150
 
 function point(i: number, value: number) {
   const angle = (Math.PI * 2 * i) / AXES.length - Math.PI / 2
-  return [CX + Math.cos(angle) * R * value, CY + Math.sin(angle) * R * value] as const
+  return [
+    CX + Math.cos(angle) * R * value,
+    CY + Math.sin(angle) * R * value,
+  ] as const
 }
 
 function polygonPath(values: number[]) {
@@ -64,12 +67,28 @@ export function AnimatedRadar({
       >
         <defs>
           <linearGradient id="radar-a" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--color-brand-400)" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity="0.15" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-brand-400)"
+              stopOpacity="0.7"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-brand-500)"
+              stopOpacity="0.15"
+            />
           </linearGradient>
           <linearGradient id="radar-b" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent-cyan)" stopOpacity="0.65" />
-            <stop offset="100%" stopColor="var(--color-accent-cyan)" stopOpacity="0.1" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-accent-cyan)"
+              stopOpacity="0.65"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-accent-cyan)"
+              stopOpacity="0.1"
+            />
           </linearGradient>
         </defs>
 
@@ -200,10 +219,20 @@ export function AnimatedRadar({
 
         <g
           style={
-            { opacity: eased > 0.5 ? 1 : 0, transition: "opacity 0.3s ease" } as CSSProperties
+            {
+              opacity: eased > 0.5 ? 1 : 0,
+              transition: "opacity 0.3s ease",
+            } as CSSProperties
           }
         >
-          <rect x="20" y="20" width="10" height="10" rx="2" fill="var(--color-brand-400)" />
+          <rect
+            x="20"
+            y="20"
+            width="10"
+            height="10"
+            rx="2"
+            fill="var(--color-brand-400)"
+          />
           <text
             x="34"
             y="29"

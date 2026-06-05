@@ -1,19 +1,19 @@
-import { getTeamBySlug } from '@/lib/data/teams';
-import type { TeamProfile } from '@/lib/data/teams';
+import { getTeamBySlug } from "@/lib/data/teams"
+import type { TeamProfile } from "@/lib/data/teams"
 
 // Hugging Face Inference API configuration
 // Note: In a real app, you would store this in environment variables
 // For this implementation, we'll handle it in the API route to keep the key secure
 
 export interface AIAdvisorRequest {
-  teamSlug: string;
-  leagueSlug: string;
-  userMessage: string;
+  teamSlug: string
+  leagueSlug: string
+  userMessage: string
 }
 
 export interface AIAdvisorResponse {
-  content: string;
-  error?: string;
+  content: string
+  error?: string
 }
 
 export class AIAdvisorService {
@@ -22,31 +22,34 @@ export class AIAdvisorService {
    * @param request Contains team info and user's question
    * @returns AI response with recommendations
    */
-  static async getAdvisorAdvice(request: AIAdvisorRequest): Promise<AIAdvisorResponse> {
+  static async getAdvisorAdvice(
+    request: AIAdvisorRequest,
+  ): Promise<AIAdvisorResponse> {
     try {
       // Fetch detailed team data
-      const team = await getTeamBySlug(request.leagueSlug, request.teamSlug);
-      
+      const team = await getTeamBySlug(request.leagueSlug, request.teamSlug)
+
       if (!team) {
         return {
-          content: 'No se pudo encontrar el equipo especificado.',
-          error: 'Team not found'
-        };
+          content: "No se pudo encontrar el equipo especificado.",
+          error: "Team not found",
+        }
       }
 
       // Construct the prompt with team context
-      const prompt = this.buildPrompt(team, request.userMessage);
-      
+      const prompt = this.buildPrompt(team, request.userMessage)
+
       // Return the prompt for the API route to process
       return {
-        content: prompt
-      };
+        content: prompt,
+      }
     } catch (error) {
-      console.error('Error in AI advisor service:', error);
+      console.error("Error in AI advisor service:", error)
       return {
-        content: 'Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+        content:
+          "Lo siento, hubo un error al procesar tu solicitud. Por favor, intenta de nuevo.",
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
     }
   }
 
@@ -55,21 +58,23 @@ export class AIAdvisorService {
    */
   private static buildPrompt(team: TeamProfile, userMessage: string): string {
     // Extract key information about the team
-    const { name, league, roster, seasonStats } = team;
-    
-     // Build roster summary
-     const rosterSummary = roster.slice(0, 5).map(player => 
-       `${player.fullName} (${player.position || 'N/A'})`
-     ).join(', ');
-     
-     const rosterNote = roster.length > 5 
-       ? `${rosterSummary} y ${roster.length - 5} más` 
-       : rosterSummary;
+    const { name, league, roster, seasonStats } = team
+
+    // Build roster summary
+    const rosterSummary = roster
+      .slice(0, 5)
+      .map((player) => `${player.fullName} (${player.position || "N/A"})`)
+      .join(", ")
+
+    const rosterNote =
+      roster.length > 5
+        ? `${rosterSummary} y ${roster.length - 5} más`
+        : rosterSummary
 
     // Build season stats summary
-    const statsSummary = seasonStats ? 
-      `Temporada actual: ${seasonStats.wins}-${seasonStats.losses} (${(seasonStats.winPct ?? 0)*100}% de victorias)` :
-      'Estadísticas de temporada no disponibles';
+    const statsSummary = seasonStats
+      ? `Temporada actual: ${seasonStats.wins}-${seasonStats.losses} (${(seasonStats.winPct ?? 0) * 100}% de victorias)`
+      : "Estadísticas de temporada no disponibles"
 
     return `
 Eres un asesor experto en fichajes de baloncesto con conocimiento profundo de las ligas NBA, EuroLeague y ACB. 
@@ -97,6 +102,6 @@ INSTRUCCIONES:
 7. Si no tienes suficiente información para dar una recomendación fundamentada, indica qué datos adicionales necesitarías
 
 RESPUESTA:
-`;
+`
   }
 }

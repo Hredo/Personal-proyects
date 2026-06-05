@@ -8,11 +8,12 @@ import { Marquee } from "@/components/marketing/marquee"
 import { JsonLd } from "@/components/marketing/json-ld"
 import { TrustedBy } from "@/components/marketing/trusted-by"
 import { FeatureShowcase } from "@/components/marketing/feature-showcase"
-import { Testimonials } from "@/components/marketing/testimonials"
+import { TrustBar } from "@/components/marketing/trust-bar"
 import { Faq } from "@/components/marketing/faq"
 import { FAQ_DATA } from "@/components/marketing/faq-data"
 import { PricingCta } from "@/components/marketing/pricing-cta"
 import { SITE } from "@/lib/site"
+import { getGlobalLeagueCounts } from "@/lib/data/leagues"
 
 const TICKER_LEFT = [
   { name: "Luka Dončić", team: "DAL · NBA", stat: "32.4 PPG" },
@@ -38,7 +39,7 @@ const TICKER_RIGHT = [
 
 const STATS = [
   { v: 3, suffix: "", label: "Leagues live" },
-  { v: 2400, suffix: "+", label: "Players indexed" },
+  { v: 0, suffix: "+", label: "Players indexed", dynamic: "players" as const },
   { v: 24, suffix: "", label: "Advanced metrics" },
   { v: 2, suffix: "s", label: "To compare any two", decimals: 0 },
 ]
@@ -61,6 +62,8 @@ const PILLARS = [
   },
 ]
 
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: `${SITE.tagline} — NBA, EuroLeague & ACB scouting intelligence`,
   description: SITE.description,
@@ -78,7 +81,11 @@ export const metadata: Metadata = {
   },
 }
 
-export default function Home() {
+export default async function Home() {
+  const counts = await getGlobalLeagueCounts()
+  const stats = STATS.map((s) =>
+    "dynamic" in s && s.dynamic === "players" ? { ...s, v: counts.players } : s,
+  )
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -152,8 +159,7 @@ export default function Home() {
 
             <FadeIn delay={0.08} y={28}>
               <h1 className="mt-5 font-display text-[2.6rem] font-bold leading-[0.95] tracking-[-0.02em] text-ink-50 sm:mt-6 sm:text-6xl md:text-7xl xl:text-[5.5rem]">
-                Hoops,{" "}
-                <span className="text-gradient-shimmer">decoded.</span>
+                Hoops, <span className="text-gradient-shimmer">decoded.</span>
               </h1>
             </FadeIn>
 
@@ -196,8 +202,11 @@ export default function Home() {
 
             <FadeIn delay={0.4}>
               <dl className="mt-9 grid max-w-lg grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-4 sm:gap-6">
-                {STATS.map((s) => (
-                  <div key={s.label} className="border-l border-white/10 pl-3 sm:pl-4">
+                {stats.map((s) => (
+                  <div
+                    key={s.label}
+                    className="border-l border-white/10 pl-3 sm:pl-4"
+                  >
                     <dt className="font-display text-2xl font-bold text-ink-50 sm:text-3xl">
                       <CountUp
                         to={s.v}
@@ -314,8 +323,8 @@ export default function Home() {
               From tip-off to terminal.
             </h2>
             <p className="mt-3 text-sm text-ink-200 sm:mt-4 sm:text-base">
-              Three stages, fully automated. Every match feeds the same model
-              so the numbers stay sharp and the rankings stay honest.
+              Three stages, fully automated. Every match feeds the same model so
+              the numbers stay sharp and the rankings stay honest.
             </p>
           </FadeIn>
         </div>
@@ -334,7 +343,9 @@ export default function Home() {
                 <h3 className="mt-4 font-display text-lg font-semibold text-ink-50 sm:text-xl">
                   {pillar.title}
                 </h3>
-                <p className="mt-2 text-sm text-ink-200 sm:mt-3">{pillar.body}</p>
+                <p className="mt-2 text-sm text-ink-200 sm:mt-3">
+                  {pillar.body}
+                </p>
                 <div
                   aria-hidden
                   className="pointer-events-none absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-brand-500/0 blur-2xl transition group-hover:bg-brand-500/30"
@@ -347,7 +358,7 @@ export default function Home() {
 
       <FeatureShowcase />
 
-      <Testimonials />
+      <TrustBar />
 
       <section
         aria-labelledby="faq-heading"
@@ -409,16 +420,16 @@ export default function Home() {
               <span className="text-gradient-brand">No invite needed.</span>
             </h2>
             <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
-              Every player, every stat, every highlight — free during the
-              public beta. Open the console, drop two names, run the math.
+              Every player, every stat, every highlight — free during the public
+              beta. Open the console, drop two names, run the math.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
             <Link
-              href="/compare"
+              href="/ai-advisor"
               className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
             >
-              Open the console
+              Try the AI Advisor
               <svg
                 className="h-4 w-4"
                 viewBox="0 0 24 24"

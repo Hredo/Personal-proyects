@@ -5,6 +5,8 @@ import { TeamsInfiniteView } from "@/components/teams/teams-infinite-view"
 
 type SearchParams = Partial<Record<keyof ListTeamsInput | "q" | "page", string>>
 
+export const revalidate = 300
+
 export const metadata: Metadata = {
   title: "Teams",
   description:

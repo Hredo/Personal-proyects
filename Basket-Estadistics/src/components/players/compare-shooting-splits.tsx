@@ -21,7 +21,10 @@ function formatPct(v: number | null): string {
 }
 
 function arc(value: number | null, color: string) {
-  const v = value == null || !Number.isFinite(value) ? 0 : Math.min(1, Math.max(0, value))
+  const v =
+    value == null || !Number.isFinite(value)
+      ? 0
+      : Math.min(1, Math.max(0, value))
   const dash = CIRC * v
   return (
     <circle
@@ -43,10 +46,8 @@ export function CompareShootingSplits({ aName, bName, splits }: Props) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {splits.map((s) => {
-        const aWins =
-          s.a != null && s.b != null && s.a > s.b + 0.001
-        const bWins =
-          s.a != null && s.b != null && s.b > s.a + 0.001
+        const aWins = s.a != null && s.b != null && s.a > s.b + 0.001
+        const bWins = s.a != null && s.b != null && s.b > s.a + 0.001
         return (
           <div
             key={s.label}

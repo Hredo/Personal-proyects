@@ -12,7 +12,9 @@ const counts = {
   players: db.prepare("SELECT count(*) as c FROM players").get(),
   playerStats: db.prepare("SELECT count(*) as c FROM player_stats").get(),
   coaches: db.prepare("SELECT count(*) as c FROM coaches").get(),
-  teamSeasonStats: db.prepare("SELECT count(*) as c FROM team_season_stats").get(),
+  teamSeasonStats: db
+    .prepare("SELECT count(*) as c FROM team_season_stats")
+    .get(),
 }
 console.log("Counts:", counts)
 db.close()

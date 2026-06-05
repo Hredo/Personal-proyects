@@ -15,8 +15,15 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "no-referrer" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+          {
+            key: "Permissions-Policy",
+            value:
+              "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
+          },
         ],
       },
       {
@@ -30,7 +37,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              "connect-src 'self' http://localhost:11434 http://127.0.0.1:11434",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -38,7 +45,7 @@ const nextConfig = {
           },
         ],
       },
-    ];
+    ]
   },
   webpack(config, { dev }) {
     config.module.rules.push({
@@ -54,7 +61,7 @@ const nextConfig = {
           },
         },
       ],
-    });
+    })
 
     if (dev) {
       config.watchOptions = {
@@ -80,11 +87,11 @@ const nextConfig = {
           "**/Thumbs.db",
           "**/desktop.ini",
         ],
-      };
+      }
     }
 
-    return config;
+    return config
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

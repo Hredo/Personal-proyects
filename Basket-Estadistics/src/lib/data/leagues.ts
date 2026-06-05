@@ -9,6 +9,7 @@ import {
   teamSeasonStats,
   teams,
 } from "@/lib/db/schema"
+import { cached } from "@/lib/data/cache"
 
 export type LeagueScorer = {
   playerId: string
@@ -194,7 +195,8 @@ async function fetchLeader(
   }
 }
 
-export async function listLeagueOverviews(): Promise<LeagueOverview[]> {
+export const listLeagueOverviews = cached(
+  async (): Promise<LeagueOverview[]> => {
   const db = getDb()
   const baseRows = await db
     .select({
@@ -238,30 +240,39 @@ export async function listLeagueOverviews(): Promise<LeagueOverview[]> {
     }),
   )
   return overviews
-}
+  },
+  "listLeagueOverviews",
+  ["leagues", "seasons", "team-stats"],
+  600,
+)
 
 function ascLabel(column: typeof leagues.name) {
   return sql`lower(${column}) asc`
 }
 
-export async function getGlobalLeagueCounts(): Promise<GlobalLeagueCounts> {
-  const db = getDb()
-  const [l] = await db
-    .select({ c: sql<number>`count(*)` })
-    .from(leagues)
-  const [p] = await db
-    .select({ c: sql<number>`count(*)` })
-    .from(players)
-  const [t] = await db
-    .select({ c: sql<number>`count(*)` })
-    .from(teams)
-  const [c] = await db
-    .select({ c: sql<number>`count(*)` })
-    .from(coaches)
-  return {
-    leagues: Number(l?.c ?? 0),
-    players: Number(p?.c ?? 0),
-    teams: Number(t?.c ?? 0),
-    coaches: Number(c?.c ?? 0),
-  }
-}
+export const getGlobalLeagueCounts = cached(
+  async (): Promise<GlobalLeagueCounts> => {
+    const db = getDb()
+    const [l] = await db
+      .select({ c: sql<number>`count(*)` })
+      .from(leagues)
+    const [p] = await db
+      .select({ c: sql<number>`count(*)` })
+      .from(players)
+    const [t] = await db
+      .select({ c: sql<number>`count(*)` })
+      .from(teams)
+    const [c] = await db
+      .select({ c: sql<number>`count(*)` })
+      .from(coaches)
+    return {
+      leagues: Number(l?.c ?? 0),
+      players: Number(p?.c ?? 0),
+      teams: Number(t?.c ?? 0),
+      coaches: Number(c?.c ?? 0),
+    }
+  },
+  "getGlobalLeagueCounts",
+  ["players", "teams", "coaches"],
+  600,
+)

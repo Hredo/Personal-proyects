@@ -1,7 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
+import { useCallback, useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { PlayerCardElegant } from "@/components/players/player-card-elegant"
 
@@ -32,18 +32,15 @@ export function PlayersInfiniteView({
 }: Props) {
   const [pages, setPages] = useState<PageResult[]>([initial])
   const [loading, setLoading] = useState(false)
-  const isFirstRender = useRef(true)
 
   const current = pages[pages.length - 1]
   const items = pages.flatMap((p) => p.items)
   const hasMore = current.page < current.totalPages
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
+    if (initial.page === 1) {
+      setPages([initial])
     }
-    setPages([initial])
   }, [initial])
 
   const loadMore = useCallback(async () => {
@@ -147,7 +144,8 @@ export function PlayersInfiniteView({
           </button>
         ) : (
           <p className="font-mono text-[10px] uppercase tracking-widest text-ink-500">
-            End · {current.total.toLocaleString("en-US")} {current.total === 1 ? "result" : "results"}
+            End · {current.total.toLocaleString("en-US")}{" "}
+            {current.total === 1 ? "result" : "results"}
           </p>
         )}
       </div>

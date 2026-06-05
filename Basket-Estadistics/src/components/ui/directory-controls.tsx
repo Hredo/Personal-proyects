@@ -45,17 +45,17 @@ export function DirectoryControls({ basePath, kind, total, showing }: Props) {
         <div className="h-12 w-full animate-pulse rounded-full bg-white/[0.03]" />
       }
     >
-      <DirectoryControlsInner basePath={basePath} kind={kind} total={total} showing={showing} />
+      <DirectoryControlsInner
+        basePath={basePath}
+        kind={kind}
+        total={total}
+        showing={showing}
+      />
     </Suspense>
   )
 }
 
-function DirectoryControlsInner({
-  basePath,
-  kind,
-  total,
-  showing,
-}: Props) {
+function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
   const router = useRouter()
   const search = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -66,8 +66,7 @@ function DirectoryControlsInner({
   const urlRole = search.get("role") ?? ""
   const q = search.get("q") ?? ""
 
-  const sorts =
-    kind === "teams" ? SORTS_TEAMS : SORTS_PLAYERS
+  const sorts = kind === "teams" ? SORTS_TEAMS : SORTS_PLAYERS
 
   function apply(updates: Record<string, string | null>) {
     const params = new URLSearchParams(search.toString())
@@ -190,7 +189,9 @@ function DirectoryControlsInner({
         {kind !== "coaches" ? (
           <button
             type="button"
-            onClick={() => apply({ order: urlOrder === "asc" ? "desc" : "asc" })}
+            onClick={() =>
+              apply({ order: urlOrder === "asc" ? "desc" : "asc" })
+            }
             aria-label={`Sort ${urlOrder === "asc" ? "descending" : "ascending"}`}
             className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-ink-200 transition hover:border-white/20 hover:text-ink-50"
           >

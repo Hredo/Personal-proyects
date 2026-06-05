@@ -20,8 +20,17 @@ const RATE_LIMIT_BUCKET = new Map<string, { tokens: number; updated: number }>()
 const RATE_LIMIT_CAPACITY = 12
 const RATE_LIMIT_REFILL_PER_SEC = 0.2 // 1 token / 5s, burst 12
 
+const READ_LIMIT_BUCKETS = new Map<
+  string,
+  Map<string, { tokens: number; updated: number }>
+>()
+
 type RateLimitResult = { ok: true } | { ok: false; retryAfterSec: number }
 
+/**
+ * Per-IP token bucket for the AI advisor endpoint. Generous budget because
+ * the LLM is the bottleneck, not the DB.
+ */
 export function rateLimit(ip: string): RateLimitResult {
   const now = Date.now()
   const bucket = RATE_LIMIT_BUCKET.get(ip) ?? {
@@ -35,10 +44,54 @@ export function rateLimit(ip: string): RateLimitResult {
   )
   if (refilled < 1) {
     RATE_LIMIT_BUCKET.set(ip, { tokens: refilled, updated: now })
-    return { ok: false, retryAfterSec: Math.ceil((1 - refilled) / RATE_LIMIT_REFILL_PER_SEC) }
+    return {
+      ok: false,
+      retryAfterSec: Math.ceil((1 - refilled) / RATE_LIMIT_REFILL_PER_SEC),
+    }
   }
   RATE_LIMIT_BUCKET.set(ip, { tokens: refilled - 1, updated: now })
   return { ok: true }
+}
+
+/**
+ * Per-IP token bucket for read endpoints (list, search, options).
+ * More generous than the advisor — these are cheap DB reads — but still
+ * caps naive scrapers.
+ */
+export function readRateLimit(
+  ip: string,
+  route: string,
+  capacity = 60,
+  refillPerSec = 2,
+): RateLimitResult {
+  let perRoute = READ_LIMIT_BUCKETS.get(route)
+  if (!perRoute) {
+    perRoute = new Map()
+    READ_LIMIT_BUCKETS.set(route, perRoute)
+  }
+  const now = Date.now()
+  const bucket = perRoute.get(ip) ?? { tokens: capacity, updated: now }
+  const elapsed = (now - bucket.updated) / 1000
+  const refilled = Math.min(capacity, bucket.tokens + elapsed * refillPerSec)
+  if (refilled < 1) {
+    perRoute.set(ip, { tokens: refilled, updated: now })
+    return {
+      ok: false,
+      retryAfterSec: Math.ceil((1 - refilled) / refillPerSec),
+    }
+  }
+  perRoute.set(ip, { tokens: refilled - 1, updated: now })
+  return { ok: true }
+}
+
+export function jsonTooManyRequests(retryAfterSec: number): NextResponse {
+  return NextResponse.json(
+    { error: "Demasiadas solicitudes. Intenta de nuevo en unos segundos." },
+    {
+      status: 429,
+      headers: securityHeaders({ "Retry-After": String(retryAfterSec) }),
+    },
+  )
 }
 
 const SSRF_ALLOWED_HOSTS = new Set([
@@ -66,8 +119,10 @@ export function safeOllamaBaseUrl(raw: string | undefined): string | null {
   if (SSRF_ALLOWED_HOSTS.has(host)) return url.toString().replace(/\/$/, "")
   // Private IPv4 (10.x, 192.168.x, 172.16-31.x) — allowed only if env explicitly opts in
   if (/^10\.\d+\.\d+\.\d+$/.test(host)) return url.toString().replace(/\/$/, "")
-  if (/^192\.168\.\d+\.\d+$/.test(host)) return url.toString().replace(/\/$/, "")
-  if (/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host)) return url.toString().replace(/\/$/, "")
+  if (/^192\.168\.\d+\.\d+$/.test(host))
+    return url.toString().replace(/\/$/, "")
+  if (/^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(host))
+    return url.toString().replace(/\/$/, "")
   return null
 }
 
@@ -87,8 +142,14 @@ export function cleanUserText(raw: string): string {
 
 // Patterns that look like prompt-injection / jailbreak attempts.
 const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
-  { re: /ignore\s+(all\s+)?previous\s+(instructions|prompts|rules)/i, label: "ignore-previous" },
-  { re: /forget\s+(all\s+)?(previous|prior|earlier)/i, label: "forget-previous" },
+  {
+    re: /ignore\s+(all\s+)?previous\s+(instructions|prompts|rules)/i,
+    label: "ignore-previous",
+  },
+  {
+    re: /forget\s+(all\s+)?(previous|prior|earlier)/i,
+    label: "forget-previous",
+  },
   { re: /you\s+are\s+now\s+(a|an|the)\s+/i, label: "role-reassignment" },
   { re: /\bact\s+as\s+(a|an|the)\s+/i, label: "act-as" },
   { re: /\bsystem\s*[:>]\s*/i, label: "fake-system-tag" },
@@ -99,11 +160,20 @@ const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /\[INST\]/i, label: "llama2-inst" },
   { re: /\[\/INST\]/i, label: "llama2-inst-close" },
   { re: /\<\<SYS\>\>/i, label: "llama2-sys" },
-  { re: /reveal\s+(your|the)\s+(system|initial|hidden)\s+prompt/i, label: "prompt-extract" },
-  { re: /print\s+(your|the)\s+(system|initial)\s+prompt/i, label: "prompt-extract" },
+  {
+    re: /reveal\s+(your|the)\s+(system|initial|hidden)\s+prompt/i,
+    label: "prompt-extract",
+  },
+  {
+    re: /print\s+(your|the)\s+(system|initial)\s+prompt/i,
+    label: "prompt-extract",
+  },
   { re: /disregard\s+(safety|guardrails|guidelines)/i, label: "bypass-safety" },
   { re: /jailbreak/i, label: "explicit-jailbreak" },
-  { re: /bypass\s+(the\s+)?(filter|moderation|safety)/i, label: "bypass-moderation" },
+  {
+    re: /bypass\s+(the\s+)?(filter|moderation|safety)/i,
+    label: "bypass-moderation",
+  },
   { re: /execute\s+(code|command|script|sql)/i, label: "code-exec-attempt" },
   { re: /<\s*script\b/i, label: "xss-script" },
   { re: /javascript\s*:/i, label: "xss-js-uri" },
@@ -132,25 +202,35 @@ export function detectInjection(raw: string): InjectionFinding[] {
  * even though our Markdown renderer doesn't pass through raw HTML, defence-in-depth.
  */
 export function cleanLlmOutput(raw: string): string {
-  return raw
-    .replace(CONTROL_CHARS, " ")
-    .replace(ZERO_WIDTH, "")
-    // Belt-and-braces: neutralise stray HTML tags. Our parser doesn't render
-    // them, but if a future change does, this stops obvious XSS payloads.
-    .replace(
-      new RegExp("<\\s*(script|iframe|object|embed|svg)[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>", "gi"),
-      "[contenido bloqueado]",
-    )
-    .replace(/<\s*(script|iframe|object|embed|svg)[^>]*\/?>/gi, "[contenido bloqueado]")
-    .replace(/(href|src)\s*=\s*["']?\s*javascript:/gi, "$1=")
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
-    .trim()
-    .slice(0, MAX_LLM_OUTPUT_CHARS)
+  return (
+    raw
+      .replace(CONTROL_CHARS, " ")
+      .replace(ZERO_WIDTH, "")
+      // Belt-and-braces: neutralise stray HTML tags. Our parser doesn't render
+      // them, but if a future change does, this stops obvious XSS payloads.
+      .replace(
+        new RegExp(
+          "<\\s*(script|iframe|object|embed|svg)[^>]*>[\\s\\S]*?<\\s*/\\s*\\1\\s*>",
+          "gi",
+        ),
+        "[contenido bloqueado]",
+      )
+      .replace(
+        /<\s*(script|iframe|object|embed|svg)[^>]*\/?>/gi,
+        "[contenido bloqueado]",
+      )
+      .replace(/(href|src)\s*=\s*["']?\s*javascript:/gi, "$1=")
+      .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
+      .trim()
+      .slice(0, MAX_LLM_OUTPUT_CHARS)
+  )
 }
 
 // ---- Response helpers -----------------------------------------------------
 
-export function securityHeaders(extra: Record<string, string> = {}): HeadersInit {
+export function securityHeaders(
+  extra: Record<string, string> = {},
+): HeadersInit {
   return {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",

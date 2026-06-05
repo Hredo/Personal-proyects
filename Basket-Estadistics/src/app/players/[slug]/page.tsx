@@ -143,10 +143,7 @@ export default async function PlayerPage({ params }: Props) {
               </h3>
               <dl className="mt-3 space-y-2">
                 <Row k="Position" v={profile.position ?? "—"} />
-                <Row
-                  k="Nationality"
-                  v={profile.nationality ?? "—"}
-                />
+                <Row k="Nationality" v={profile.nationality ?? "—"} />
                 <Row
                   k="Born"
                   v={`${formatBirth(profile.birthdate)}${
@@ -212,7 +209,11 @@ export default async function PlayerPage({ params }: Props) {
                     unit="PPG"
                     highlight
                   />
-                  <StatTile label="Rebounds" value={season.rebounds} unit="RPG" />
+                  <StatTile
+                    label="Rebounds"
+                    value={season.rebounds}
+                    unit="RPG"
+                  />
                   <StatTile label="Assists" value={season.assists} unit="APG" />
                   <StatTile label="Steals" value={season.steals} unit="SPG" />
                   <StatTile label="Blocks" value={season.blocks} unit="BPG" />

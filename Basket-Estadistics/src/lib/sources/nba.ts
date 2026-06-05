@@ -19,7 +19,11 @@ const NBA_HEADERS = {
 }
 
 type NbaRow = Record<string, string | number | null>
-type NbaResultSet = { name: string; headers: string[]; rowSet: (string | number | null)[][] }
+type NbaResultSet = {
+  name: string
+  headers: string[]
+  rowSet: (string | number | null)[][]
+}
 type NbaEnvelope = { resultSets: NbaResultSet[] }
 
 function readResultSet(payload: NbaEnvelope, name: string): NbaRow[] {
@@ -132,7 +136,9 @@ export const nbaAdapter: SourceAdapter = {
       })
     }
     const teamIds = out.map((t) => t.sourceId)
-    const detailMap = await this.fetchTeamDetails(teamIds)
+    const detailMap = this.fetchTeamDetails
+      ? await this.fetchTeamDetails(teamIds)
+      : new Map<string, Partial<SourceTeam>>()
     for (const t of out) {
       const d = detailMap.get(t.sourceId)
       if (!d) continue
@@ -144,22 +150,49 @@ export const nbaAdapter: SourceAdapter = {
     return out
   },
 
-  async fetchTeamDetails(teamIds: string[]): Promise<Map<string, { arena?: string; arenaCapacity?: number; foundedYear?: number; websiteUrl?: string }>> {
-    const out = new Map<string, { arena?: string; arenaCapacity?: number; foundedYear?: number; websiteUrl?: string }>()
+  async fetchTeamDetails(
+    teamIds: string[],
+  ): Promise<
+    Map<
+      string,
+      {
+        arena?: string
+        arenaCapacity?: number
+        foundedYear?: number
+        websiteUrl?: string
+      }
+    >
+  > {
+    const out = new Map<
+      string,
+      {
+        arena?: string
+        arenaCapacity?: number
+        foundedYear?: number
+        websiteUrl?: string
+      }
+    >()
     await Promise.all(
       teamIds.map(async (id) => {
         try {
           const url = `${BASE_URL}/teamdetails?LeagueID=00&TeamID=${id}`
-          const payload = await fetchJson<NbaEnvelope>(url, { headers: NBA_HEADERS })
-          const set = payload.resultSets.find((rs) => rs.name === "TeamBackground")
+          const payload = await fetchJson<NbaEnvelope>(url, {
+            headers: NBA_HEADERS,
+          })
+          const set = payload.resultSets.find(
+            (rs) => rs.name === "TeamBackground",
+          )
           if (!set) return
           const row = set.rowSet[0]
           if (!row) return
           const obj: NbaRow = {}
-          for (let i = 0; i < set.headers.length; i++) obj[set.headers[i]!] = row[i] ?? null
+          for (let i = 0; i < set.headers.length; i++)
+            obj[set.headers[i]!] = row[i] ?? null
           out.set(id, {
             arena: obj.ARENA ? String(obj.ARENA) : undefined,
-            arenaCapacity: obj.ARENACAPACITY ? Number(obj.ARENACAPACITY) : undefined,
+            arenaCapacity: obj.ARENACAPACITY
+              ? Number(obj.ARENACAPACITY)
+              : undefined,
             foundedYear: obj.YEARFOUNDED ? Number(obj.YEARFOUNDED) : undefined,
           })
         } catch {
@@ -189,7 +222,8 @@ export const nbaAdapter: SourceAdapter = {
         fullName: String(name).trim(),
         nationality: r.COUNTRY ? String(r.COUNTRY) : undefined,
         age: r.AGE != null ? Number(r.AGE) : undefined,
-        heightCm: heightInches > 0 ? Math.round(heightInches * 2.54) : undefined,
+        heightCm:
+          heightInches > 0 ? Math.round(heightInches * 2.54) : undefined,
         weightKg: weightLbs > 0 ? Math.round(weightLbs * 0.453592) : undefined,
         teamSourceId: r.TEAM_ID ? String(r.TEAM_ID) : undefined,
         photoUrl: photoUrl(id),
@@ -232,26 +266,24 @@ export const nbaAdapter: SourceAdapter = {
       const playerId = r.PLAYER_ID
       if (playerId == null) continue
       const key = String(playerId)
-      const entry =
-        accum.get(key) ??
-        {
-          playerId: key,
-          teamId: r.TEAM_ID ? String(r.TEAM_ID) : undefined,
-          games: 0,
-          min: 0,
-          pts: 0,
-          reb: 0,
-          ast: 0,
-          stl: 0,
-          blk: 0,
-          tov: 0,
-          fgm: 0,
-          fga: 0,
-          fg3m: 0,
-          fg3a: 0,
-          ftm: 0,
-          fta: 0,
-        }
+      const entry = accum.get(key) ?? {
+        playerId: key,
+        teamId: r.TEAM_ID ? String(r.TEAM_ID) : undefined,
+        games: 0,
+        min: 0,
+        pts: 0,
+        reb: 0,
+        ast: 0,
+        stl: 0,
+        blk: 0,
+        tov: 0,
+        fgm: 0,
+        fga: 0,
+        fg3m: 0,
+        fg3a: 0,
+        ftm: 0,
+        fta: 0,
+      }
       entry.games += 1
       entry.min += Number(r.MIN ?? 0) || 0
       entry.pts += Number(r.PTS ?? 0) || 0
@@ -307,9 +339,8 @@ export const nbaAdapter: SourceAdapter = {
       if (!name) continue
       const coachId = name.toLowerCase().replace(/[^a-z0-9]+/g, "-")
       const teamHref =
-        row.match(
-          /<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/,
-        )?.[1] ?? undefined
+        row.match(/<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/)?.[1] ??
+        undefined
       const teamCode = teamHref?.match(/\/teams\/([^/]+)\//)?.[1]
       const role = (cells.get("role") ?? "head_coach").toLowerCase()
       const normalizedRole: SourceCoach["role"] = role.includes("assistant")
@@ -335,13 +366,18 @@ export const nbaAdapter: SourceAdapter = {
     const advancedHtml = extractTableById(html, "advanced-team")
     const advancedByCode = new Map<
       string,
-      { offRtg?: number; defRtg?: number; netRtg?: number; pace?: number; sos?: number }
+      {
+        offRtg?: number
+        defRtg?: number
+        netRtg?: number
+        pace?: number
+        sos?: number
+      }
     >()
     for (const row of rowsFromTable(advancedHtml)) {
       const teamHref =
-        row.match(
-          /<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/,
-        )?.[1] ?? undefined
+        row.match(/<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/)?.[1] ??
+        undefined
       const teamCode = teamHref?.match(/\/teams\/([^/]+)\//)?.[1]
       if (!teamCode) continue
       const cells = getRowCells(row)
@@ -362,9 +398,8 @@ export const nbaAdapter: SourceAdapter = {
       const rows = rowsFromTable(tableHtml)
       for (const row of rows) {
         const teamHref =
-          row.match(
-            /<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/,
-          )?.[1] ?? undefined
+          row.match(/<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/)?.[1] ??
+          undefined
         const teamCode = teamHref?.match(/\/teams\/([^/]+)\//)?.[1]
         if (!teamCode) continue
         if (seen.has(teamCode)) continue

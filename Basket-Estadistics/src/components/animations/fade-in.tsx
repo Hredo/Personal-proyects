@@ -1,13 +1,28 @@
 "use client"
 
-import { createElement, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
+import {
+  createElement,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react"
 
 type FadeInProps = {
   children: ReactNode
   delay?: number
   y?: number
   className?: string
-  as?: "div" | "section" | "article" | "li" | "header" | "footer" | "ul" | "span"
+  as?:
+    | "div"
+    | "section"
+    | "article"
+    | "li"
+    | "header"
+    | "footer"
+    | "ul"
+    | "span"
 }
 
 export function FadeIn({
@@ -45,7 +60,7 @@ export function FadeIn({
           }
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 }
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
     )
     io.observe(el)
     return () => io.disconnect()
@@ -60,11 +75,7 @@ export function FadeIn({
         willChange: shown ? "auto" : "opacity, transform",
       }
 
-  return createElement(
-    as,
-    { ref, className, style },
-    children
-  )
+  return createElement(as, { ref, className, style }, children)
 }
 
 export default FadeIn

@@ -1,9 +1,6 @@
 import type { Metadata } from "next"
 import { FadeIn } from "@/components/animations/fade-in"
-import {
-  getGlobalLeagueCounts,
-  listLeagueOverviews,
-} from "@/lib/data/leagues"
+import { getGlobalLeagueCounts, listLeagueOverviews } from "@/lib/data/leagues"
 import { GlobalStatsBand } from "@/components/leagues/global-stats-band"
 import { LeagueOverview } from "@/components/leagues/league-overview"
 
@@ -13,7 +10,7 @@ export const metadata: Metadata = {
     "NBA, EuroLeague and Liga ACB — coverage, season leaders and top scorers for every league in our database.",
 }
 
-export const dynamic = "force-dynamic"
+export const revalidate = 600
 
 export default async function LeaguesPage() {
   const [leagues, counts] = await Promise.all([

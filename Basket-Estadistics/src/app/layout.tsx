@@ -4,6 +4,7 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google"
 import { Logo } from "@/components/svg/logo"
 import { NavDropdown } from "@/components/layout/nav-dropdown"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { Footer } from "@/components/layout/footer"
 import { SearchTrigger } from "@/components/players/search-trigger"
 import { PlayerCommandPalette } from "@/components/players/player-command-palette"
 import { JsonLd } from "@/components/marketing/json-ld"
@@ -82,7 +83,11 @@ export const metadata: Metadata = {
     address: false,
   },
   icons: {
-    icon: [{ url: "/icon", type: "image/png" }],
+    icon: [
+      { url: "/icon", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512", type: "image/png", sizes: "512x512" },
+    ],
   },
   manifest: "/manifest.webmanifest",
 }
@@ -153,36 +158,46 @@ export default function RootLayout({
             <Link
               href="/"
               className="flex items-center gap-2 text-ink-50 sm:gap-3"
-              aria-label="Basket Estadistics — Home"
+              aria-label={`${SITE.name} — Home`}
             >
               <Logo className="h-7 w-7 sm:h-8 sm:w-8" />
               <span className="font-display text-base font-bold tracking-tight sm:text-lg">
-                Basket<span className="text-brand-400">·</span>Estadistics
+                globalhoopstats
               </span>
             </Link>
-             <nav
-               className="hidden items-center gap-6 text-sm text-ink-200 md:flex lg:gap-8"
-               aria-label="Primary"
-             >
-               <NavDropdown
-                 label="Players"
-                 href="/players"
-                 leagues={NAV_LEAGUES}
-               />
-               <NavDropdown label="Teams" href="/teams" leagues={NAV_LEAGUES} />
-               <Link href="/coaches" className="transition hover:text-brand-300">
-                 Coaches
-               </Link>
-               <Link href="/compare" className="transition hover:text-brand-300">
-                 Compare
-               </Link>
-               <Link href="/leagues" className="transition hover:text-brand-300">
-                 Leagues
-               </Link>
-               <Link href="/ai-advisor" className="transition hover:text-brand-300">
-                 AI Advisor
-               </Link>
-             </nav>
+            <nav
+              className="hidden items-center gap-6 text-sm text-ink-200 md:flex lg:gap-8"
+              aria-label="Primary"
+            >
+              <NavDropdown
+                label="Players"
+                href="/players"
+                leagues={NAV_LEAGUES}
+              />
+              <NavDropdown label="Teams" href="/teams" leagues={NAV_LEAGUES} />
+              <Link href="/coaches" className="transition hover:text-brand-300">
+                Coaches
+              </Link>
+              <Link href="/compare" className="transition hover:text-brand-300">
+                Compare
+              </Link>
+              <Link href="/leagues" className="transition hover:text-brand-300">
+                Leagues
+              </Link>
+              <Link
+                href="/ai-advisor"
+                className="group inline-flex items-center gap-1.5 transition hover:text-brand-300"
+              >
+                AI Advisor
+                <span className="inline-flex items-center gap-1 rounded-full border border-accent-cyan/40 bg-accent-cyan/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-accent-cyan">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-cyan opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-cyan" />
+                  </span>
+                  Pro
+                </span>
+              </Link>
+            </nav>
             <div className="flex items-center gap-2 sm:gap-3">
               <SearchTrigger />
               <Link
@@ -199,37 +214,7 @@ export default function RootLayout({
           {children}
         </main>
         <PlayerCommandPalette />
-        <footer className="mt-16 border-t border-white/5 sm:mt-24">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm text-ink-300 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
-            <p>© {new Date().getFullYear()} Basket Estadistics</p>
-            <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-              <Link
-                href="/players"
-                className="transition hover:text-brand-300"
-              >
-                Players
-              </Link>
-              <Link
-                href="/teams"
-                className="transition hover:text-brand-300"
-              >
-                Teams
-              </Link>
-              <Link
-                href="/compare"
-                className="transition hover:text-brand-300"
-              >
-                Compare
-              </Link>
-              <a
-                href="mailto:Hrvaldes22@gmail.com"
-                className="transition hover:text-brand-300"
-              >
-                Contact
-              </a>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </body>
     </html>
   )

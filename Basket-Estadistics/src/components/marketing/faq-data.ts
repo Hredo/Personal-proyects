@@ -1,7 +1,7 @@
 export type FaqItem = {
-  question: string;
-  answer: string;
-};
+  question: string
+  answer: string
+}
 
 export const FAQ_DATA: FaqItem[] = [
   {
@@ -17,12 +17,11 @@ export const FAQ_DATA: FaqItem[] = [
   {
     question: "Do I need an account to browse?",
     answer:
-      "No. The full directory — players, teams, coaches, comparisons and league hubs — is open during the public beta. You'll only need an account when we open the shortlist, scouting reports and AI advisor saving features.",
+      "No. The full directory — players, teams, coaches, comparisons and league hubs — is open during the public beta.",
   },
   {
     question: "Which leagues are supported?",
-    answer:
-      "Today: the NBA, the EuroLeague and the Liga ACB. The WNBA, the NBL and selected national team competitions are on the roadmap.",
+    answer: "Today: the NBA, the EuroLeague and the Liga ACB.",
   },
   {
     question: "Can I compare a player from the NBA with one from EuroLeague?",
@@ -37,11 +36,11 @@ export const FAQ_DATA: FaqItem[] = [
   {
     question: "How much does it cost?",
     answer:
-      "The public beta is free. We will introduce a paid tier for shortlists, exports, the AI advisor memory and live alerts, but the database and comparisons will stay open.",
+      "The public beta is free. We will introduce a paid tier for shortlists, exports and persistent AI advisor sessions, but the database and comparisons will stay open.",
   },
   {
     question: "Can I export or share a comparison?",
     answer:
-      "Yes. The AI advisor and the compare page both support export to PDF, Excel and Word. Share links for shortlists are coming with the next release.",
+      "Yes. The AI advisor and the compare page support export to PDF, Excel and Word.",
   },
-];
+]

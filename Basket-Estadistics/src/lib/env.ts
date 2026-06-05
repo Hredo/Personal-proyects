@@ -4,23 +4,22 @@ const emptyToUndefined = (v: unknown) =>
   typeof v === "string" && v.trim() === "" ? undefined : v
 
 const serverSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
   DATABASE_URL: z.preprocess(
     emptyToUndefined,
-    z.string().min(1).default("file:./data/basket.db")
+    z.string().min(1).default("file:./data/basket.db"),
   ),
   HUGGINGFACE_API_KEY: z.preprocess(
     emptyToUndefined,
-    z.string().min(1).optional()
+    z.string().min(1).optional(),
   ),
   HUGGINGFACE_RERANK_MODEL: z.preprocess(
     emptyToUndefined,
-    z.string().min(1).optional()
+    z.string().min(1).optional(),
   ),
-  CRON_SECRET: z.preprocess(
-    emptyToUndefined,
-    z.string().min(16).optional()
-  ),
+  CRON_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
 })
 
 const clientSchema = z.object({

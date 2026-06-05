@@ -3,7 +3,11 @@ import { listPlayers, type ListPlayersInput } from "@/lib/data/players"
 import { DirectoryControls } from "@/components/ui/directory-controls"
 import { PlayersInfiniteView } from "@/components/players/players-infinite-view"
 
-type SearchParams = Partial<Record<keyof ListPlayersInput | "q" | "page", string>>
+type SearchParams = Partial<
+  Record<keyof ListPlayersInput | "q" | "page", string>
+>
+
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: "Players",
@@ -27,8 +31,14 @@ function parseInput(sp: SearchParams): ListPlayersInput {
     query: q || undefined,
     league: league && LEAGUE_VALUES.has(league) ? league : undefined,
     team: team || undefined,
-    sort: sort && SORT_VALUES.has(sort) ? (sort as ListPlayersInput["sort"]) : "points",
-    order: order && ORDER_VALUES.has(order) ? (order as ListPlayersInput["order"]) : "desc",
+    sort:
+      sort && SORT_VALUES.has(sort)
+        ? (sort as ListPlayersInput["sort"])
+        : "points",
+    order:
+      order && ORDER_VALUES.has(order)
+        ? (order as ListPlayersInput["order"])
+        : "desc",
     page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
     pageSize: PAGE_SIZE,
   }

@@ -16,8 +16,16 @@ export function Court(props: SVGProps<SVGSVGElement>) {
           <stop offset="100%" stopColor="var(--color-court-900)" />
         </linearGradient>
         <linearGradient id="courtLine" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--color-paper-50)" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="var(--color-paper-100)" stopOpacity="0.75" />
+          <stop
+            offset="0%"
+            stopColor="var(--color-paper-50)"
+            stopOpacity="0.95"
+          />
+          <stop
+            offset="100%"
+            stopColor="var(--color-paper-100)"
+            stopOpacity="0.75"
+          />
         </linearGradient>
       </defs>
       <rect

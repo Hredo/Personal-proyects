@@ -1,12 +1,13 @@
 export const SITE = {
-  name: "Basket·Estadistics",
-  shortName: "B·E",
-  url: "https://basketestadistics.com",
+  name: "globalhoopstats",
+  shortName: "GHS",
+  url: "https://globalhoopstats.com",
   description:
-    "Global basketball scouting intelligence. Box scores, advanced splits, side-by-side comparisons and highlight reels from the NBA, EuroLeague and Liga ACB — all in one console.",
+    "Global basketball intelligence. Box scores, advanced splits, side-by-side comparisons and highlight reels from the NBA, EuroLeague and Liga ACB — all in one console.",
   tagline: "Hoops, decoded.",
+  taglineShort: "Global basketball intelligence",
   locale: "en",
-  twitter: "@basket_estad",
+  twitter: "",
   contact: "Hrvaldes22@gmail.com",
   author: "Hugo Redondo Valdés",
 }
@@ -27,4 +28,5 @@ export const SEO_KEYWORDS = [
   "scouting reports",
   "player profiles",
   "shot charts",
+  "globalhoopstats",
 ]

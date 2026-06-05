@@ -58,8 +58,7 @@ export const EUROLEAGUE_TEAM_META: Record<string, EuroleagueTeamMeta> = {
   MCO: {
     city: "Monaco",
     arena: "Salle Gaston Médecin",
-    logoUrl:
-      "https://upload.wikimedia.org/wikipedia/en/b/ba/AS_Monaco_FC.svg",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/en/b/ba/AS_Monaco_FC.svg",
     websiteUrl: "https://www.asm-rocket.com",
     foundedYear: 1928,
   },
@@ -169,9 +168,7 @@ export type EuroleagueCoach = {
 }
 
 export const EUROLEAGUE_COACHES_2024_25: Record<string, EuroleagueCoach[]> = {
-  MAD: [
-    { fullName: "Chus Mateo", role: "head_coach", nationality: "Spain" },
-  ],
+  MAD: [{ fullName: "Chus Mateo", role: "head_coach", nationality: "Spain" }],
   BAR: [
     { fullName: "Joan Peñarroya", role: "head_coach", nationality: "Spain" },
     { fullName: "Roger Grimau", role: "assistant_coach", nationality: "Spain" },
@@ -183,49 +180,97 @@ export const EUROLEAGUE_COACHES_2024_25: Record<string, EuroleagueCoach[]> = {
   ],
   MUN: [
     { fullName: "Pablo Laso", role: "head_coach", nationality: "Spain" },
-    { fullName: "Rene Spandauw", role: "assistant_coach", nationality: "Germany" },
+    {
+      fullName: "Rene Spandauw",
+      role: "assistant_coach",
+      nationality: "Germany",
+    },
   ],
   PAN: [
     { fullName: "Ergin Ataman", role: "head_coach", nationality: "Turkey" },
-    { fullName: "Hakan Demirel", role: "assistant_coach", nationality: "Turkey" },
+    {
+      fullName: "Hakan Demirel",
+      role: "assistant_coach",
+      nationality: "Turkey",
+    },
   ],
   OLY: [
-    { fullName: "Georgios Bartzokas", role: "head_coach", nationality: "Greece" },
-    { fullName: "Christos Serelis", role: "assistant_coach", nationality: "Greece" },
+    {
+      fullName: "Georgios Bartzokas",
+      role: "head_coach",
+      nationality: "Greece",
+    },
+    {
+      fullName: "Christos Serelis",
+      role: "assistant_coach",
+      nationality: "Greece",
+    },
   ],
   MCO: [
     { fullName: "Saša Obradović", role: "head_coach", nationality: "Serbia" },
-    { fullName: "Jasmin Repeša", role: "assistant_coach", nationality: "Croatia" },
+    {
+      fullName: "Jasmin Repeša",
+      role: "assistant_coach",
+      nationality: "Croatia",
+    },
   ],
   MIL: [
     { fullName: "Ettore Messina", role: "head_coach", nationality: "Italy" },
-    { fullName: "Tomasso Fratesi", role: "assistant_coach", nationality: "Italy" },
+    {
+      fullName: "Tomasso Fratesi",
+      role: "assistant_coach",
+      nationality: "Italy",
+    },
   ],
   VIR: [
     { fullName: "Luca Banchi", role: "head_coach", nationality: "Italy" },
-    { fullName: "Giampaolo Ricci", role: "assistant_coach", nationality: "Italy" },
+    {
+      fullName: "Giampaolo Ricci",
+      role: "assistant_coach",
+      nationality: "Italy",
+    },
   ],
   BAS: [
     { fullName: "Paolo Galbiati", role: "head_coach", nationality: "Italy" },
   ],
   ULK: [
-    { fullName: "Šarūnas Jasikevičius", role: "head_coach", nationality: "Lithuania" },
-    { fullName: "Ioannis Sfairopoulos", role: "assistant_coach", nationality: "Greece" },
+    {
+      fullName: "Šarūnas Jasikevičius",
+      role: "head_coach",
+      nationality: "Lithuania",
+    },
+    {
+      fullName: "Ioannis Sfairopoulos",
+      role: "assistant_coach",
+      nationality: "Greece",
+    },
   ],
   TEL: [
     { fullName: "Oded Kattash", role: "head_coach", nationality: "Israel" },
-    { fullName: "Ariel Bet-Halahmi", role: "assistant_coach", nationality: "Israel" },
+    {
+      fullName: "Ariel Bet-Halahmi",
+      role: "assistant_coach",
+      nationality: "Israel",
+    },
   ],
   PAR: [
     { fullName: "Željko Obradović", role: "head_coach", nationality: "Serbia" },
     { fullName: "Petar Božić", role: "assistant_coach", nationality: "Serbia" },
   ],
   RED: [
-    { fullName: "Ioannis Sfairopoulos", role: "head_coach", nationality: "Greece" },
+    {
+      fullName: "Ioannis Sfairopoulos",
+      role: "head_coach",
+      nationality: "Greece",
+    },
   ],
   ZAL: [
     { fullName: "Andrea Trinchieri", role: "head_coach", nationality: "Italy" },
-    { fullName: "Kazys Maksvytis", role: "assistant_coach", nationality: "Lithuania" },
+    {
+      fullName: "Kazys Maksvytis",
+      role: "assistant_coach",
+      nationality: "Lithuania",
+    },
   ],
   ASV: [
     { fullName: "Pierric Poupet", role: "head_coach", nationality: "France" },
@@ -236,10 +281,18 @@ export const EUROLEAGUE_COACHES_2024_25: Record<string, EuroleagueCoach[]> = {
   ],
   BER: [
     { fullName: "Israel González", role: "head_coach", nationality: "Spain" },
-    { fullName: "Thomas Päch", role: "assistant_coach", nationality: "Germany" },
+    {
+      fullName: "Thomas Päch",
+      role: "assistant_coach",
+      nationality: "Germany",
+    },
   ],
   PRS: [
     { fullName: "Tuomas Iisalo", role: "head_coach", nationality: "Finland" },
-    { fullName: "Petri Virtanen", role: "assistant_coach", nationality: "Finland" },
+    {
+      fullName: "Petri Virtanen",
+      role: "assistant_coach",
+      nationality: "Finland",
+    },
   ],
 }

@@ -28,10 +28,8 @@ export function CompareBar({
 }: Props) {
   const aPct = safePct(a, max)
   const bPct = safePct(b, max)
-  const aWins =
-    a != null && b != null && (lowerBetter ? a < b : a > b)
-  const bWins =
-    a != null && b != null && (lowerBetter ? b < a : b > a)
+  const aWins = a != null && b != null && (lowerBetter ? a < b : a > b)
+  const bWins = a != null && b != null && (lowerBetter ? b < a : b > a)
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">

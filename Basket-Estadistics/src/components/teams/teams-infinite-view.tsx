@@ -147,7 +147,8 @@ export function TeamsInfiniteView({
           </button>
         ) : (
           <p className="font-mono text-[10px] uppercase tracking-widest text-ink-500">
-            End · {current.total.toLocaleString("en-US")} {current.total === 1 ? "result" : "results"}
+            End · {current.total.toLocaleString("en-US")}{" "}
+            {current.total === 1 ? "result" : "results"}
           </p>
         )}
       </div>

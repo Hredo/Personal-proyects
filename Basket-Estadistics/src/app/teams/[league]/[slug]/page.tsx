@@ -11,7 +11,9 @@ type Params = { league: string; slug: string }
 
 export const dynamicParams = true
 
-export async function generateStaticParams(): Promise<Array<{ league: string; slug: string }>> {
+export async function generateStaticParams(): Promise<
+  Array<{ league: string; slug: string }>
+> {
   const options = await listTeamOptions(500)
   return options
     .filter((t) => LEAGUE_VALUES.has(t.leagueSlug))
