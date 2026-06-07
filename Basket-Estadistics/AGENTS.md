@@ -15,6 +15,7 @@ Basketball statistics tracking application. This project is part of the Personal
 ## Project Conventions
 
 ### Code Style
+
 - Use TypeScript strict mode
 - Use functional components with hooks (no class components)
 - Use named exports for components
@@ -22,14 +23,17 @@ Basketball statistics tracking application. This project is part of the Personal
 - Path alias: `@/*` maps to `src/*`
 
 ### Git
+
 - Commit messages in English, following conventional commits (feat:, fix:, chore:, refactor:, docs:)
 - Work on feature branches, merge into master via PR
 
 ### Testing
+
 - Unit tests with Vitest or Jest
 - E2E tests with Playwright (if applicable)
 
 ### Project Structure
+
 ```
 src/
   app/          - Next.js App Router pages

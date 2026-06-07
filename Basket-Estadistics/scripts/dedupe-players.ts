@@ -45,19 +45,24 @@ async function main() {
     const teamFrequency = new Map<string, number>()
     for (const s of statRows) {
       if (s.teamId) {
-        teamFrequency.set(s.teamId, (teamFrequency.get(s.teamId) ?? 0) + s.gamesPlayed)
+        teamFrequency.set(
+          s.teamId,
+          (teamFrequency.get(s.teamId) ?? 0) + s.gamesPlayed,
+        )
       }
     }
-    const dominantTeamId = Array.from(teamFrequency.entries()).sort(
-      (a, b) => b[1] - a[1],
-    )[0]?.[0] ?? null
+    const dominantTeamId =
+      Array.from(teamFrequency.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ??
+      null
 
     const scored = group.map((p) => {
       const stats = statsByPlayer.get(p.id) ?? []
       const totalGames = stats.reduce((sum, s) => sum + (s.gamesPlayed ?? 0), 0)
       const statsCount = stats.length
       const updatedAt =
-        p.updatedAt instanceof Date ? p.updatedAt.getTime() : Number(p.updatedAt ?? 0)
+        p.updatedAt instanceof Date
+          ? p.updatedAt.getTime()
+          : Number(p.updatedAt ?? 0)
       return {
         player: p,
         totalGames,

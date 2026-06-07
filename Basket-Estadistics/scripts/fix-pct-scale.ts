@@ -1,13 +1,13 @@
-import Database from "better-sqlite3";
+import Database from "better-sqlite3"
 
-const DB_PATH = process.env.DB_PATH ?? "data/basket.db";
+const DB_PATH = process.env.DB_PATH ?? "data/basket.db"
 
-const PctColumns = ["fg_pct", "three_pct", "ft_pct"] as const;
-const Sources = ["acb", "euroleague"] as const;
+const PctColumns = ["fg_pct", "three_pct", "ft_pct"] as const
+const Sources = ["acb", "euroleague"] as const
 
-const db = new Database(DB_PATH);
+const db = new Database(DB_PATH)
 
-const placeholders = Sources.map(() => "?").join(",");
+const placeholders = Sources.map(() => "?").join(",")
 
 const stats = db
   .prepare(
@@ -24,13 +24,13 @@ const stats = db
     GROUP BY p.source
   `,
   )
-  .all(...Sources);
+  .all(...Sources)
 
-console.log("Pre-backfill counts (values < 0.5):");
-console.table(stats);
+console.log("Pre-backfill counts (values < 0.5):")
+console.table(stats)
 
 const runBackfill = db.transaction(() => {
-  let updated = 0;
+  let updated = 0
   for (const col of PctColumns) {
     const res = db
       .prepare(
@@ -44,14 +44,14 @@ const runBackfill = db.transaction(() => {
         AND ${col} < 0.5
       `,
       )
-      .run(...Sources);
-    updated += res.changes;
-    console.log(`  ${col}: updated ${res.changes} rows`);
+      .run(...Sources)
+    updated += res.changes
+    console.log(`  ${col}: updated ${res.changes} rows`)
   }
-  return updated;
-});
+  return updated
+})
 
-const updated = runBackfill();
+const updated = runBackfill()
 
 const after = db
   .prepare(
@@ -67,10 +67,10 @@ const after = db
     GROUP BY p.source
   `,
   )
-  .all(...Sources);
+  .all(...Sources)
 
-console.log("Post-backfill ranges:");
-console.table(after);
-console.log(`Total updated: ${updated}`);
+console.log("Post-backfill ranges:")
+console.table(after)
+console.log(`Total updated: ${updated}`)
 
-db.close();
+db.close()

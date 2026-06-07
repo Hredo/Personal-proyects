@@ -2,10 +2,13 @@ import { NextResponse } from "next/server"
 import { and, asc, eq, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import { leagues, players, teams } from "@/lib/db/schema"
+import { rateLimit, clientIp } from "@/lib/security/ai-advisor"
 
 export const dynamic = "force-dynamic"
 
 const LEAGUES = new Set(["nba", "euroleague", "acb"])
+const MAX_QUERY_LEN = 100
+const MAX_LEAGUE_LEN = 32
 
 type Row = {
   id: string
@@ -26,19 +29,42 @@ type Row = {
 }
 
 export async function GET(req: Request) {
+  const ip = clientIp(req)
+  const limit = rateLimit(ip)
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        error: `Demasiadas solicitudes. Intenta de nuevo en ${limit.retryAfterSec}s.`,
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSec) },
+      },
+    )
+  }
+
   const url = new URL(req.url)
   const q = url.searchParams.get("q")?.trim() ?? ""
   const league = url.searchParams.get("league")?.trim() ?? ""
   const rawLimit = Number(url.searchParams.get("limit") ?? 12)
-  const limit = Math.min(
+  const limitNum = Math.min(
     Math.max(Number.isFinite(rawLimit) ? rawLimit : 12, 1),
     30,
   )
 
+  if (q.length > MAX_QUERY_LEN || league.length > MAX_LEAGUE_LEN) {
+    return NextResponse.json(
+      { error: "Parámetros demasiado largos." },
+      { status: 400 },
+    )
+  }
+
   const db = getDb()
   const conditions = []
   if (q) {
-    conditions.push(like(sql`lower(${players.fullName})`, `%${q.toLowerCase()}%`))
+    conditions.push(
+      like(sql`lower(${players.fullName})`, `%${q.toLowerCase()}%`),
+    )
   }
   if (LEAGUES.has(league)) {
     conditions.push(eq(leagues.slug, league))
@@ -68,11 +94,9 @@ export async function GET(req: Request) {
     .leftJoin(teams, eq(players.currentTeamId, teams.id))
     .where(where)
     .orderBy(asc(players.fullName))
-    .limit(limit)
+    .limit(limitNum)
 
-  const ranked = q
-    ? rankByQuery(rows, q.toLowerCase())
-    : rows
+  const ranked = q ? rankByQuery(rows, q.toLowerCase()) : rows
 
   return NextResponse.json({
     results: ranked.map((r) => ({

@@ -1,5 +1,5 @@
-import Database from 'better-sqlite3';
-const db = new Database('data/basket.db');
+import Database from "better-sqlite3"
+const db = new Database("data/basket.db")
 
 // Test query: with dedup using subquery (SQLite doesn't have QUALIFY)
 const sql1 = `
@@ -42,11 +42,13 @@ const sql1 = `
   left join teams t on t.id = r.team_id
   where r.rn = 1
   order by r.points desc nulls last
-`;
+`
 
-const rows = db.prepare(sql1).all();
-console.log(`Real Madrid players (all leagues, deduped): ${rows.length}`);
+const rows = db.prepare(sql1).all()
+console.log(`Real Madrid players (all leagues, deduped): ${rows.length}`)
 for (const r of rows) {
-  console.log(`  ${r.full_name.padEnd(30)} | ${(r.league).padEnd(15)} | ${(r.team || '-').padEnd(20)} | ${r.points ?? '—'} PPG`);
+  console.log(
+    `  ${r.full_name.padEnd(30)} | ${r.league.padEnd(15)} | ${(r.team || "-").padEnd(20)} | ${r.points ?? "—"} PPG`,
+  )
 }
-db.close();
+db.close()

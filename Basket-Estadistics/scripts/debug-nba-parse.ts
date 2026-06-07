@@ -21,7 +21,14 @@ async function main() {
       const inner = mm[2].replace(/<[^>]+>/g, "").trim()
       cells.set(stat, inner)
     }
-    console.log(`row ${i}:`, cells.get("team"), cells.get("g"), cells.get("wins"), cells.get("losses"), cells.get("pts_per_g"))
+    console.log(
+      `row ${i}:`,
+      cells.get("team"),
+      cells.get("g"),
+      cells.get("wins"),
+      cells.get("losses"),
+      cells.get("pts_per_g"),
+    )
   }
 }
 main().catch(console.error)

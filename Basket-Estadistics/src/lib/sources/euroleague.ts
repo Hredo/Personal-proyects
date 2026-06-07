@@ -7,8 +7,15 @@ import {
   type SourceTeamStats,
   SOURCE_META,
 } from "@/lib/sources/types"
-import { brSlugToEuroleagueCode, euroleagueTeamLogoUrl } from "@/lib/sources/euroleague-teams"
-import { parseBirthdate, parseHeightToCm, parseWeightToKg } from "@/lib/sync/slug"
+import {
+  brSlugToEuroleagueCode,
+  euroleagueTeamLogoUrl,
+} from "@/lib/sources/euroleague-teams"
+import {
+  parseBirthdate,
+  parseHeightToCm,
+  parseWeightToKg,
+} from "@/lib/sync/slug"
 
 const BR_BASE = "https://www.basketball-reference.com"
 const BR_LEAGUE_PATH = "/international/euroleague"
@@ -69,7 +76,6 @@ function percentileToDecimal(s: string | undefined): number | undefined {
   const n = Number(s)
   return Number.isFinite(n) ? Number(n.toFixed(3)) : undefined
 }
-
 
 function extractTableById(html: string, id: string): string {
   const re = new RegExp(`<table[^>]*\\bid="${id}"[\\s\\S]*?<\\/table>`, "i")
@@ -158,7 +164,9 @@ export const euroleagueAdapter: SourceAdapter = {
         heightCm:
           toNumberOrNull(cells.get("height")) ??
           parseHeightToCm(cells.get("height")),
-        weightKg: toNumberOrNull(cells.get("weight")) ?? parseWeightToKg(cells.get("weight")),
+        weightKg:
+          toNumberOrNull(cells.get("weight")) ??
+          parseWeightToKg(cells.get("weight")),
         teamSourceId: teamCode,
         photoUrl: undefined,
       })
@@ -327,7 +335,7 @@ export const euroleagueAdapter: SourceAdapter = {
         const oppPts = (st.pointsAgainst ?? 0) * t.g
         defRtg = Number((100 * (oppPts / teamPoss)).toFixed(1))
         netRtg = Number((offRtg - defRtg).toFixed(1))
-        pace = Number((48 * (2 * teamPossPerG) / 40).toFixed(1))
+        pace = Number(((48 * (2 * teamPossPerG)) / 40).toFixed(1))
         if (!Number.isFinite(offRtg)) offRtg = undefined
         if (!Number.isFinite(defRtg)) defRtg = undefined
         if (!Number.isFinite(netRtg)) netRtg = undefined

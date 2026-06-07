@@ -71,7 +71,9 @@ export function CoachCard({ coach, index = 0 }: Props) {
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-ink-300 sm:text-xs">
             {coach.nationality ? <span>{coach.nationality}</span> : null}
             {coach.age != null ? <span>· {coach.age} y.o.</span> : null}
-            {coach.licenseType ? <span>· License {coach.licenseType}</span> : null}
+            {coach.licenseType ? (
+              <span>· License {coach.licenseType}</span>
+            ) : null}
           </p>
 
           <p className="mt-0.5 truncate text-[11px] text-ink-400 sm:text-xs">

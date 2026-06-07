@@ -26,9 +26,7 @@ export function CountUp({
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const reduce = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     if (reduce) {
       setValue(to)
       return

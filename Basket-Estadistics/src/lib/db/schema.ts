@@ -12,9 +12,7 @@ const uuid = () => crypto.randomUUID()
 const now = () => new Date()
 
 export const leagues = sqliteTable("leagues", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(uuid),
+  id: text("id").primaryKey().$defaultFn(uuid),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   country: text("country").notNull(),
@@ -28,9 +26,7 @@ export const leagues = sqliteTable("leagues", {
 export const seasons = sqliteTable(
   "seasons",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     leagueId: text("league_id")
       .notNull()
       .references(() => leagues.id, { onDelete: "cascade" }),
@@ -43,9 +39,7 @@ export const seasons = sqliteTable(
 export const teams = sqliteTable(
   "teams",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     leagueId: text("league_id")
       .notNull()
       .references(() => leagues.id, { onDelete: "cascade" }),
@@ -65,15 +59,14 @@ export const teams = sqliteTable(
   (t) => [
     uniqueIndex("teams_league_source_idx").on(t.leagueId, t.sourceId),
     uniqueIndex("teams_league_slug_idx").on(t.leagueId, t.slug),
+    index("teams_league_name_idx").on(t.leagueId, t.name),
   ],
 )
 
 export const coaches = sqliteTable(
   "coaches",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     teamId: text("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
@@ -99,6 +92,7 @@ export const coaches = sqliteTable(
   (t) => [
     uniqueIndex("coaches_source_source_id_idx").on(t.source, t.sourceId),
     index("coaches_team_idx").on(t.teamId),
+    index("coaches_league_name_idx").on(t.leagueId, t.fullName),
   ],
 )
 
@@ -126,19 +120,14 @@ export const teamSeasonStats = sqliteTable(
     sos: real("sos"),
   },
   (t) => [
-    uniqueIndex("team_season_stats_team_season_idx").on(
-      t.teamId,
-      t.seasonId,
-    ),
+    uniqueIndex("team_season_stats_team_season_idx").on(t.teamId, t.seasonId),
   ],
 )
 
 export const players = sqliteTable(
   "players",
   {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(uuid),
+    id: text("id").primaryKey().$defaultFn(uuid),
     fullName: text("full_name").notNull(),
     slug: text("slug").notNull().unique(),
     birthdate: text("birthdate"),
@@ -198,6 +187,10 @@ export const playerStats = sqliteTable(
   (t) => [
     uniqueIndex("player_stats_player_season_idx").on(t.playerId, t.seasonId),
     index("player_stats_season_idx").on(t.seasonId),
+    index("player_stats_team_season_idx").on(t.teamId, t.seasonId),
+    index("player_stats_season_points_idx").on(t.seasonId, t.points),
+    index("player_stats_season_rebounds_idx").on(t.seasonId, t.rebounds),
+    index("player_stats_season_assists_idx").on(t.seasonId, t.assists),
   ],
 )
 
@@ -232,15 +225,26 @@ export const syncRuns = sqliteTable("sync_runs", {
 })
 
 export const shortlists = sqliteTable("shortlists", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(uuid),
+  id: text("id").primaryKey().$defaultFn(uuid),
   ownerId: text("owner_id").notNull(),
   name: text("name").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(now),
 })
+
+export const waitlistEntries = sqliteTable(
+  "waitlist_entries",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    email: text("email").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    source: text("source"),
+  },
+  (t) => [uniqueIndex("waitlist_entries_email_idx").on(t.email)],
+)
 
 export const shortlistPlayers = sqliteTable(
   "shortlist_players",
@@ -262,6 +266,114 @@ export const shortlistPlayers = sqliteTable(
   ],
 )
 
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    passwordHash: text("password_hash"),
+    plan: text("plan", { enum: ["free", "pro"] })
+      .notNull()
+      .default("free"),
+    role: text("role", { enum: ["user", "admin"] })
+      .notNull()
+      .default("user"),
+    proSince: integer("pro_since", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [uniqueIndex("users_email_idx").on(t.email)],
+)
+
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    userAgent: text("user_agent"),
+    ip: text("ip"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [
+    index("sessions_user_idx").on(t.userId),
+    index("sessions_expires_idx").on(t.expiresAt),
+  ],
+)
+
+export const conversations = sqliteTable(
+  "conversations",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    teamId: text("team_id"),
+    teamSlug: text("team_slug").notNull(),
+    teamName: text("team_name").notNull(),
+    leagueSlug: text("league_slug").notNull(),
+    title: text("title").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [index("conversations_user_idx").on(t.userId, t.updatedAt)],
+)
+
+export const messages = sqliteTable(
+  "messages",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["user", "assistant"] }).notNull(),
+    content: text("content").notNull(),
+    model: text("model"),
+    mode: text("mode"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt)],
+)
+
+export const compareUses = sqliteTable(
+  "compare_uses",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    usedAt: integer("used_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [index("compare_uses_user_idx").on(t.userId)],
+)
+
+export type Plan = "free" | "pro" | "admin"
+
+export function userPlan(
+  u: { plan: string; role: string } | null | undefined,
+): Plan {
+  if (!u) return "free"
+  if (u.role === "admin") return "admin"
+  return u.plan === "pro" ? "pro" : "free"
+}
+
 export type League = typeof leagues.$inferSelect
 export type Season = typeof seasons.$inferSelect
 export type Team = typeof teams.$inferSelect
@@ -272,6 +384,11 @@ export type PlayerStat = typeof playerStats.$inferSelect
 export type Video = typeof videos.$inferSelect
 export type SyncRun = typeof syncRuns.$inferSelect
 export type Shortlist = typeof shortlists.$inferSelect
+export type WaitlistEntry = typeof waitlistEntries.$inferSelect
+export type User = typeof users.$inferSelect
+export type Session = typeof sessions.$inferSelect
+export type Conversation = typeof conversations.$inferSelect
+export type Message = typeof messages.$inferSelect
 
 export const ftsPlayers = sql`
   CREATE VIRTUAL TABLE IF NOT EXISTS players_fts USING fts5(

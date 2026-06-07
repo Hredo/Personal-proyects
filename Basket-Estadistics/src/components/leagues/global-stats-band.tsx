@@ -2,7 +2,11 @@
 
 import { CountUp } from "@/components/marketing/count-up"
 
-type Stat = { value: number; label: string; accent: "brand" | "cyan" | "magenta" | "lime" }
+type Stat = {
+  value: number
+  label: string
+  accent: "brand" | "cyan" | "magenta" | "lime"
+}
 
 type Props = {
   counts: {

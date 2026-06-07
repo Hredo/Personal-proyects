@@ -8,7 +8,13 @@ type FloatProps = {
   delay?: number
 }
 
-export function Float({ children, duration = 6, y = 12, delay = 0, className }: FloatProps) {
+export function Float({
+  children,
+  duration = 6,
+  y = 12,
+  delay = 0,
+  className,
+}: FloatProps) {
   const style: CSSProperties = {
     animation: `float ${duration}s ease-in-out ${delay}s infinite`,
     ["--float-amplitude" as string]: `${y}px`,

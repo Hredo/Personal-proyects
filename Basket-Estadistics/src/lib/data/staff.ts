@@ -205,3 +205,14 @@ export async function listCoachesByTeam(
     },
   }))
 }
+
+export async function listAllCoachSlugs(
+  limit = 5000,
+): Promise<Array<{ slug: string }>> {
+  const db = getDb()
+  return db
+    .select({ slug: coaches.slug })
+    .from(coaches)
+    .orderBy(asc(coaches.slug))
+    .limit(limit)
+}

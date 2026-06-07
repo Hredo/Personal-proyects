@@ -15,9 +15,7 @@ export function StatBar({ label, value, max, format, hint }: Props) {
   const raw = isFallback ? 0 : (value as number)
   const safeMax = max > 0 ? max : 1
   const ratio = raw / safeMax
-  const pct = isFallback
-    ? 0
-    : Math.min(100, Math.max(0, ratio * 100))
+  const pct = isFallback ? 0 : Math.min(100, Math.max(0, ratio * 100))
   const fmt = format ?? defaultFormat
   const display = isFallback ? "—" : fmt(raw)
   return (

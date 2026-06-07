@@ -14,7 +14,9 @@ async function main() {
   const coaches = await acbAdapter.fetchCoaches()
   console.log(`Got ${coaches.length} coaches`)
   for (const c of coaches.slice(0, 8)) {
-    console.log(`  ${c.sourceId} ${c.fullName} - ${c.role} (${c.nationality ?? "?"}) age ${c.age ?? "?"}`)
+    console.log(
+      `  ${c.sourceId} ${c.fullName} - ${c.role} (${c.nationality ?? "?"}) age ${c.age ?? "?"}`,
+    )
   }
 
   console.log("\nFetching ACB team stats...")

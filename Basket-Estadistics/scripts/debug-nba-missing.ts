@@ -15,7 +15,8 @@ async function main() {
     console.log(`\n${id}:`)
     for (let i = 0; i < rows.length; i++) {
       const cells = new Map<string, string>()
-      const cellRe = /<t[hd]\b[^>]*\bdata-stat="([^"]+)"[^>]*>([\s\S]*?)<\/t[hd]>/g
+      const cellRe =
+        /<t[hd]\b[^>]*\bdata-stat="([^"]+)"[^>]*>([\s\S]*?)<\/t[hd]>/g
       let mm: RegExpExecArray | null
       while ((mm = cellRe.exec(rows[i])) !== null) {
         cells.set(mm[1], mm[2].replace(/<[^>]+>/g, "").trim())

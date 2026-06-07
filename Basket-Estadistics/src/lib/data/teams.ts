@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/client"
 import { leagues, players, seasons, teamSeasonStats, teams } from "@/lib/db/schema"
 import type { PlayerListItem } from "@/lib/data/players"
 import type { CoachListItem } from "@/lib/data/staff"
+import { cached } from "@/lib/data/cache"
 
 export type TeamListItem = {
   id: string
@@ -248,10 +249,11 @@ export type TeamProfile = {
   } | null
 }
 
-export async function getTeamBySlug(
+export const getTeamBySlug = cached(
+  async (
   leagueSlug: string,
   slug: string,
-): Promise<TeamProfile | null> {
+): Promise<TeamProfile | null> => {
   const db = getDb()
   const rows = await db
     .select({
@@ -365,4 +367,8 @@ export async function getTeamBySlug(
         }
       : null,
   }
-}
+  },
+  "getTeamBySlug",
+  ["teams", "players", "team-stats"],
+  3600,
+)

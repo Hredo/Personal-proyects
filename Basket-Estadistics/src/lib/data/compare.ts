@@ -7,6 +7,7 @@ import {
   seasons,
   teams,
 } from "@/lib/db/schema"
+import { cached } from "@/lib/data/cache"
 
 export type ComparePlayer = {
   id: string
@@ -34,9 +35,8 @@ export type ComparePlayer = {
   } | null
 }
 
-export async function getPlayerForCompare(
-  slug: string,
-): Promise<ComparePlayer | null> {
+export const getPlayerForCompare = cached(
+  async (slug: string): Promise<ComparePlayer | null> => {
   const db = getDb()
   const rows = await db
     .select({
@@ -115,5 +115,9 @@ export async function getPlayerForCompare(
         : null,
     stats: statRows[0] ?? null,
   }
-}
+  },
+  "getPlayerForCompare",
+  ["players", "player-stats"],
+  3600,
+)
 

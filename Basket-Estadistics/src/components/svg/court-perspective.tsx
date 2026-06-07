@@ -56,18 +56,50 @@ export function CourtPerspective({
             <stop offset="100%" stopColor="var(--color-court-950)" />
           </linearGradient>
           <linearGradient id="cpLine" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-paper-50)" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="var(--color-paper-100)" stopOpacity="0.55" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-paper-50)"
+              stopOpacity="0.95"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-paper-100)"
+              stopOpacity="0.55"
+            />
           </linearGradient>
           <linearGradient id="cpTrail" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stopColor="var(--color-brand-500)" stopOpacity="0" />
-            <stop offset="20%" stopColor="var(--color-brand-400)" stopOpacity="0.9" />
-            <stop offset="80%" stopColor="var(--color-accent-magenta)" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="var(--color-accent-cyan)" stopOpacity="0" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-brand-500)"
+              stopOpacity="0"
+            />
+            <stop
+              offset="20%"
+              stopColor="var(--color-brand-400)"
+              stopOpacity="0.9"
+            />
+            <stop
+              offset="80%"
+              stopColor="var(--color-accent-magenta)"
+              stopOpacity="0.95"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-accent-cyan)"
+              stopOpacity="0"
+            />
           </linearGradient>
           <radialGradient id="cpGlow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stopColor="var(--color-brand-400)" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity="0" />
+            <stop
+              offset="0%"
+              stopColor="var(--color-brand-400)"
+              stopOpacity="0.55"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--color-brand-500)"
+              stopOpacity="0"
+            />
           </radialGradient>
           <radialGradient id="cpBall" cx="0.35" cy="0.35" r="0.75">
             <stop offset="0%" stopColor="var(--color-brand-300)" />
@@ -93,7 +125,12 @@ export function CourtPerspective({
           <path d="M 520 100 Q 520 210 520 320" />
         </g>
 
-        <g stroke="var(--color-brand-400)" strokeWidth="2" fill="none" opacity="0.95">
+        <g
+          stroke="var(--color-brand-400)"
+          strokeWidth="2"
+          fill="none"
+          opacity="0.95"
+        >
           <path d="M 80 100 A 110 110 0 0 1 80 320" />
           <path d="M 520 100 A 110 110 0 0 0 520 320" />
         </g>

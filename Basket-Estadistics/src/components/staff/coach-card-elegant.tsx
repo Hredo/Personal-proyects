@@ -73,9 +73,7 @@ export function CoachCardElegant({ coach }: Props) {
               />
             </span>
           ) : null}
-          <p className="truncate text-xs text-ink-300">
-            {coach.team.name}
-          </p>
+          <p className="truncate text-xs text-ink-300">{coach.team.name}</p>
         </div>
       </div>
     </Link>

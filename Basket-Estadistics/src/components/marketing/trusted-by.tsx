@@ -1,9 +1,21 @@
 import { FadeIn } from "@/components/animations/fade-in"
 
 const LEAGUES = [
-  { name: "NBA", color: "text-league-nba-300", border: "border-league-nba-500/30" },
-  { name: "EuroLeague", color: "text-league-euro-300", border: "border-league-euro-500/30" },
-  { name: "Liga ACB", color: "text-league-acb-300", border: "border-league-acb-500/30" },
+  {
+    name: "NBA",
+    color: "text-league-nba-300",
+    border: "border-league-nba-500/30",
+  },
+  {
+    name: "EuroLeague",
+    color: "text-league-euro-300",
+    border: "border-league-euro-500/30",
+  },
+  {
+    name: "Liga ACB",
+    color: "text-league-acb-300",
+    border: "border-league-acb-500/30",
+  },
   { name: "WNBA*", color: "text-ink-200", border: "border-white/10" },
   { name: "FIBA*", color: "text-ink-200", border: "border-white/10" },
   { name: "NBL*", color: "text-ink-200", border: "border-white/10" },
@@ -32,7 +44,8 @@ export function TrustedBy() {
                 Coverage today
               </p>
               <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-ink-50 sm:text-3xl">
-                Three leagues live. <span className="text-gradient-brand">More on the way.</span>
+                Three leagues live.{" "}
+                <span className="text-gradient-brand">More on the way.</span>
               </h2>
               <p className="mt-2 text-sm text-ink-300 sm:text-[15px]">
                 We&apos;re onboarding scouts, programs and agencies to the
@@ -45,7 +58,9 @@ export function TrustedBy() {
                   key={l.name}
                   className={`flex items-center justify-between gap-2 rounded-xl border bg-white/[0.02] px-3 py-3 sm:px-4 ${l.border}`}
                 >
-                  <span className={`font-display text-sm font-bold sm:text-base ${l.color}`}>
+                  <span
+                    className={`font-display text-sm font-bold sm:text-base ${l.color}`}
+                  >
                     {l.name}
                   </span>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-ink-400">

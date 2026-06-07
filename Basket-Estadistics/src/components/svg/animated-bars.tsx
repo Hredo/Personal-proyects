@@ -28,7 +28,12 @@ const BARS: Bar[] = [
   },
 ]
 
-const METRICS: { key: keyof Bar["values"]; label: string; max: number; unit: string }[] = [
+const METRICS: {
+  key: keyof Bar["values"]
+  label: string
+  max: number
+  unit: string
+}[] = [
   { key: "ppg", label: "Points", max: 28, unit: "/g" },
   { key: "rpg", label: "Rebounds", max: 12, unit: "/g" },
   { key: "apg", label: "Assists", max: 9, unit: "/g" },
@@ -81,8 +86,16 @@ export function AnimatedBars(props: SVGProps<SVGSVGElement>) {
               x2="0"
               y2="1"
             >
-              <stop offset="0%" stopColor={accentVar(b.accent)} stopOpacity="0.95" />
-              <stop offset="100%" stopColor={accentVar(b.accent)} stopOpacity="0.25" />
+              <stop
+                offset="0%"
+                stopColor={accentVar(b.accent)}
+                stopOpacity="0.95"
+              />
+              <stop
+                offset="100%"
+                stopColor={accentVar(b.accent)}
+                stopOpacity="0.25"
+              />
             </linearGradient>
           ))}
         </defs>
@@ -135,9 +148,11 @@ export function AnimatedBars(props: SVGProps<SVGSVGElement>) {
                     height={h}
                     fill={`url(#bar-${b.league})`}
                     rx="2"
-                    style={{
-                      transition: "all 0.15s ease-out",
-                    } as CSSProperties}
+                    style={
+                      {
+                        transition: "all 0.15s ease-out",
+                      } as CSSProperties
+                    }
                   />
                 )
               })}
@@ -157,11 +172,18 @@ export function AnimatedBars(props: SVGProps<SVGSVGElement>) {
 
         <g
           style={
-            { opacity: eased > 0.5 ? 1 : 0, transition: "opacity 0.3s ease" } as CSSProperties
+            {
+              opacity: eased > 0.5 ? 1 : 0,
+              transition: "opacity 0.3s ease",
+            } as CSSProperties
           }
         >
           {BARS.map((b, j) => {
-            const x = PAD_LEFT + (METRICS.length - 1) * (groupW + GROUP_GAP) + 8 + j * 70
+            const x =
+              PAD_LEFT +
+              (METRICS.length - 1) * (groupW + GROUP_GAP) +
+              8 +
+              j * 70
             return (
               <g key={b.league}>
                 <rect

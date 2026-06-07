@@ -18,15 +18,61 @@ export const metadata: Metadata = {
 type Search = { a?: string; b?: string }
 
 const STAT_KEYS = [
-  { key: "points", label: "Points / G", fmt: (n: number) => n.toFixed(1), max: 35 },
-  { key: "rebounds", label: "Rebounds / G", fmt: (n: number) => n.toFixed(1), max: 15 },
-  { key: "assists", label: "Assists / G", fmt: (n: number) => n.toFixed(1), max: 12 },
-  { key: "steals", label: "Steals / G", fmt: (n: number) => n.toFixed(1), max: 3 },
-  { key: "blocks", label: "Blocks / G", fmt: (n: number) => n.toFixed(1), max: 3 },
-  { key: "turnovers", label: "Turnovers / G", fmt: (n: number) => n.toFixed(1), max: 5, lowerBetter: true },
-  { key: "fgPct", label: "FG%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
-  { key: "threePct", label: "3P%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
-  { key: "ftPct", label: "FT%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
+  {
+    key: "points",
+    label: "Points / G",
+    fmt: (n: number) => n.toFixed(1),
+    max: 35,
+  },
+  {
+    key: "rebounds",
+    label: "Rebounds / G",
+    fmt: (n: number) => n.toFixed(1),
+    max: 15,
+  },
+  {
+    key: "assists",
+    label: "Assists / G",
+    fmt: (n: number) => n.toFixed(1),
+    max: 12,
+  },
+  {
+    key: "steals",
+    label: "Steals / G",
+    fmt: (n: number) => n.toFixed(1),
+    max: 3,
+  },
+  {
+    key: "blocks",
+    label: "Blocks / G",
+    fmt: (n: number) => n.toFixed(1),
+    max: 3,
+  },
+  {
+    key: "turnovers",
+    label: "Turnovers / G",
+    fmt: (n: number) => n.toFixed(1),
+    max: 5,
+    lowerBetter: true,
+  },
+  {
+    key: "fgPct",
+    label: "FG%",
+    fmt: (n: number) => `${(n * 100).toFixed(1)}%`,
+    max: 1,
+  },
+  {
+    key: "threePct",
+    label: "3P%",
+    fmt: (n: number) => `${(n * 100).toFixed(1)}%`,
+    max: 1,
+  },
+  {
+    key: "ftPct",
+    label: "FT%",
+    fmt: (n: number) => `${(n * 100).toFixed(1)}%`,
+    max: 1,
+  },
 ] as const
 
 export default async function ComparePage(props: {

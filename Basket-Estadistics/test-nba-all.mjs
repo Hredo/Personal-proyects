@@ -7,11 +7,12 @@ const res = await fetch(
       "User-Agent": "Mozilla/5.0",
     },
   },
-);
-const json = await res.json();
-const set = json.resultSets[0];
-console.log("Headers:", set.headers.join(","));
-console.log("Count:", set.rowSet.length);
-const obj = {};
-for (let i = 0; i < set.headers.length; i++) obj[set.headers[i]] = set.rowSet[0][i];
-console.log("Sample:", JSON.stringify(obj, null, 2));
+)
+const json = await res.json()
+const set = json.resultSets[0]
+console.log("Headers:", set.headers.join(","))
+console.log("Count:", set.rowSet.length)
+const obj = {}
+for (let i = 0; i < set.headers.length; i++)
+  obj[set.headers[i]] = set.rowSet[0][i]
+console.log("Sample:", JSON.stringify(obj, null, 2))

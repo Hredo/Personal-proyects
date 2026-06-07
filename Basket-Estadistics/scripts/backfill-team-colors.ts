@@ -49,7 +49,9 @@ async function main() {
 
   console.log("\nBackfill summary:")
   for (const [slug, t] of Object.entries(totals)) {
-    console.log(`  ${slug.padEnd(11)} updated=${t.updated} skipped=${t.skipped}`)
+    console.log(
+      `  ${slug.padEnd(11)} updated=${t.updated} skipped=${t.skipped}`,
+    )
   }
   console.log(
     `\nDone. Run \`pnpm sync:acb\` to refresh ACB colors from the source, ` +

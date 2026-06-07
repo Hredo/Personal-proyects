@@ -1,5 +1,6 @@
 import { SOURCES, SOURCE_IDS, type SourceId } from "@/lib/sources"
 import { runSync, shutdown, summarizeDb, type SyncResult } from "@/lib/sync/run"
+import { revalidateCacheTags } from "@/lib/sync/revalidate"
 
 function parseTargets(argv: string[]): SourceId[] {
   const args = argv.slice(2).filter((a) => !a.startsWith("--"))
@@ -23,7 +24,9 @@ function formatResult(r: SyncResult): string {
 
 async function main() {
   const targets = parseTargets(process.argv)
-  console.log(`→ syncing ${targets.join(", ")} (season ${SOURCES[targets[0]!].season})`)
+  console.log(
+    `→ syncing ${targets.join(", ")} (season ${SOURCES[targets[0]!].season})`,
+  )
 
   const results: SyncResult[] = []
   for (const id of targets) {
@@ -51,6 +54,8 @@ async function main() {
       `players: ${summary.players}, stats rows: ${summary.stats}, ` +
       `coaches: ${summary.coaches}, team_stats: ${summary.teamStats}`,
   )
+
+  await revalidateCacheTags()
 
   shutdown()
   const failed = results.filter((r) => r.status === "failed")

@@ -45,7 +45,7 @@ function saveCache(cache: WikiCache) {
 
 const WIKI_HEADERS = {
   "User-Agent":
-    "BasketEstadistics/1.0 (basketball statistics aggregator; contact via repo)",
+    "globalhoopstats/1.0 (basketball statistics aggregator; contact via repo)",
   Accept: "application/json",
 }
 
@@ -92,7 +92,10 @@ const POSITION_MAP: Record<string, string> = {
 function parsePosition(text: string): string | undefined {
   const lower = text.toLowerCase()
   for (const [key, val] of Object.entries(POSITION_MAP)) {
-    if (lower.includes(`plays the ${key}`) || lower.includes(`${key} position`)) {
+    if (
+      lower.includes(`plays the ${key}`) ||
+      lower.includes(`${key} position`)
+    ) {
       return val
     }
   }
@@ -104,7 +107,9 @@ function parsePosition(text: string): string | undefined {
 }
 
 function parseHeightCm(text: string): number | undefined {
-  const ftIn = text.match(/(\d+)\s*(?:ft|feet|′|')\s*(\d+)?\s*(?:in|inches|″|")?/i)
+  const ftIn = text.match(
+    /(\d+)\s*(?:ft|feet|′|')\s*(\d+)?\s*(?:in|inches|″|")?/i,
+  )
   if (ftIn) {
     const feet = Number(ftIn[1])
     const inches = Number(ftIn[2] ?? 0)
@@ -127,22 +132,46 @@ function parseWeightKg(text: string): number | undefined {
 
 function parseBirthdate(text: string): string | undefined {
   const monthMap: Record<string, string> = {
-    january: "01", february: "02", march: "03", april: "04", may: "05", june: "06",
-    july: "07", august: "08", september: "09", october: "10", november: "11", december: "12",
+    january: "01",
+    february: "02",
+    march: "03",
+    april: "04",
+    may: "05",
+    june: "06",
+    july: "07",
+    august: "08",
+    september: "09",
+    october: "10",
+    november: "11",
+    december: "12",
   }
   const monthShort: Record<string, string> = {
-    jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
-    jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12",
+    jan: "01",
+    feb: "02",
+    mar: "03",
+    apr: "04",
+    may: "05",
+    jun: "06",
+    jul: "07",
+    aug: "08",
+    sep: "09",
+    oct: "10",
+    nov: "11",
+    dec: "12",
   }
   const named = text.match(/(\d{1,2})\s+([A-Z][a-z]+)\s+(\d{4})/)
   if (named) {
     const day = named[1].padStart(2, "0")
-    const mon = monthMap[named[2].toLowerCase()] ?? monthShort[named[2].toLowerCase().slice(0, 3)]
+    const mon =
+      monthMap[named[2].toLowerCase()] ??
+      monthShort[named[2].toLowerCase().slice(0, 3)]
     if (mon) return `${named[3]}-${mon}-${day}`
   }
   const namedUS = text.match(/([A-Z][a-z]+)\s+(\d{1,2}),?\s+(\d{4})/)
   if (namedUS) {
-    const mon = monthMap[namedUS[1].toLowerCase()] ?? monthShort[namedUS[1].toLowerCase().slice(0, 3)]
+    const mon =
+      monthMap[namedUS[1].toLowerCase()] ??
+      monthShort[namedUS[1].toLowerCase().slice(0, 3)]
     const day = namedUS[2].padStart(2, "0")
     if (mon) return `${namedUS[3]}-${mon}-${day}`
   }
@@ -152,25 +181,94 @@ function parseBirthdate(text: string): string | undefined {
 }
 
 function parseNationality(text: string): string | undefined {
-  const m = text.match(/\b(is an?|was an?)\s+([A-Z][a-z]+(?:[\s-][A-Z][a-z]+)*)\s+(?:professional|amateur|basketball|football)/)
+  const m = text.match(
+    /\b(is an?|was an?)\s+([A-Z][a-z]+(?:[\s-][A-Z][a-z]+)*)\s+(?:professional|amateur|basketball|football)/,
+  )
   if (m) {
     const candidate = m[2]
     if (candidate.length < 25) return candidate
   }
   const flags = [
-    "American", "Argentine", "Australian", "Austrian", "Belgian", "Brazilian",
-    "British", "Bulgarian", "Canadian", "Chilean", "Chinese", "Colombian",
-    "Croatian", "Cuban", "Czech", "Danish", "Dominican", "Dutch", "Egyptian",
-    "English", "Estonian", "Filipino", "Finnish", "French", "Georgian",
-    "German", "Greek", "Hungarian", "Icelandic", "Indian", "Indonesian",
-    "Iranian", "Iraqi", "Irish", "Israeli", "Italian", "Jamaican", "Japanese",
-    "Kazakh", "Kenyan", "Korean", "Latvian", "Lebanese", "Lithuanian",
-    "Macedonian", "Malaysian", "Mexican", "Mongolian", "Montenegrin", "Moroccan",
-    "New Zealander", "Nigerian", "Norwegian", "Pakistani", "Panamanian", "Peruvian",
-    "Polish", "Portuguese", "Puerto Rican", "Romanian", "Russian", "Saudi",
-    "Scottish", "Senegalese", "Serbian", "Slovak", "Slovenian", "South African",
-    "Spanish", "Swedish", "Swiss", "Thai", "Tunisian", "Turkish", "Ukrainian",
-    "Uruguayan", "Uzbek", "Venezuelan", "Vietnamese", "Welsh",
+    "American",
+    "Argentine",
+    "Australian",
+    "Austrian",
+    "Belgian",
+    "Brazilian",
+    "British",
+    "Bulgarian",
+    "Canadian",
+    "Chilean",
+    "Chinese",
+    "Colombian",
+    "Croatian",
+    "Cuban",
+    "Czech",
+    "Danish",
+    "Dominican",
+    "Dutch",
+    "Egyptian",
+    "English",
+    "Estonian",
+    "Filipino",
+    "Finnish",
+    "French",
+    "Georgian",
+    "German",
+    "Greek",
+    "Hungarian",
+    "Icelandic",
+    "Indian",
+    "Indonesian",
+    "Iranian",
+    "Iraqi",
+    "Irish",
+    "Israeli",
+    "Italian",
+    "Jamaican",
+    "Japanese",
+    "Kazakh",
+    "Kenyan",
+    "Korean",
+    "Latvian",
+    "Lebanese",
+    "Lithuanian",
+    "Macedonian",
+    "Malaysian",
+    "Mexican",
+    "Mongolian",
+    "Montenegrin",
+    "Moroccan",
+    "New Zealander",
+    "Nigerian",
+    "Norwegian",
+    "Pakistani",
+    "Panamanian",
+    "Peruvian",
+    "Polish",
+    "Portuguese",
+    "Puerto Rican",
+    "Romanian",
+    "Russian",
+    "Saudi",
+    "Scottish",
+    "Senegalese",
+    "Serbian",
+    "Slovak",
+    "Slovenian",
+    "South African",
+    "Spanish",
+    "Swedish",
+    "Swiss",
+    "Thai",
+    "Tunisian",
+    "Turkish",
+    "Ukrainian",
+    "Uruguayan",
+    "Uzbek",
+    "Venezuelan",
+    "Vietnamese",
+    "Welsh",
   ]
   for (const f of flags) {
     const re = new RegExp(`\\b${f}\\b`, "i")
@@ -204,7 +302,18 @@ async function searchWikipedia(
       `&titles=${encodeURIComponent(query)}`
     try {
       const data = (await fetchJson(url)) as {
-        query?: { pages?: Record<string, { pageid?: number; title?: string; extract?: string; original?: { source?: string }; missing?: string }> }
+        query?: {
+          pages?: Record<
+            string,
+            {
+              pageid?: number
+              title?: string
+              extract?: string
+              original?: { source?: string }
+              missing?: string
+            }
+          >
+        }
       }
       const pages = data.query?.pages ?? {}
       const page = Object.values(pages)[0]
@@ -263,7 +372,8 @@ async function backfillTeams() {
     if (!t.city && meta.city) update.city = meta.city
     if (!t.arena && meta.arena) update.arena = meta.arena
     if (!t.websiteUrl && meta.websiteUrl) update.websiteUrl = meta.websiteUrl
-    if (!t.foundedYear && meta.foundedYear) update.foundedYear = meta.foundedYear
+    if (!t.foundedYear && meta.foundedYear)
+      update.foundedYear = meta.foundedYear
     if (!t.primaryColor && color) update.primaryColor = color
     if (Object.keys(update).length === 0) {
       totals.skipped++
@@ -271,7 +381,9 @@ async function backfillTeams() {
     }
     await db.update(teams).set(update).where(eq(teams.id, t.id))
     totals.updated++
-    console.log(`[team] ${t.sourceId} ${t.name}: ${Object.keys(update).join(", ")}`)
+    console.log(
+      `[team] ${t.sourceId} ${t.name}: ${Object.keys(update).join(", ")}`,
+    )
   }
   return totals
 }
@@ -305,7 +417,9 @@ async function backfillCoaches() {
       const existing = await db
         .select()
         .from(coaches)
-        .where(and(eq(coaches.source, "euroleague"), eq(coaches.sourceId, sourceId)))
+        .where(
+          and(eq(coaches.source, "euroleague"), eq(coaches.sourceId, sourceId)),
+        )
         .limit(1)
       const row = {
         teamId,
@@ -362,10 +476,18 @@ async function backfillPlayers(limit: number | null = null) {
     .where(eq(players.source, "euroleague"))
 
   const todo = playerRows.filter(
-    (p) => !p.photoUrl || !p.position || !p.nationality || !p.birthdate || !p.heightCm || !p.weightKg,
+    (p) =>
+      !p.photoUrl ||
+      !p.position ||
+      !p.nationality ||
+      !p.birthdate ||
+      !p.heightCm ||
+      !p.weightKg,
   )
   const target = limit ? todo.slice(0, limit) : todo
-  console.log(`[player] ${todo.length}/${playerRows.length} need enrichment; processing ${target.length}`)
+  console.log(
+    `[player] ${todo.length}/${playerRows.length} need enrichment; processing ${target.length}`,
+  )
 
   const totals = { matched: 0, missing: 0, updated: 0, rateLimited: 0 }
   for (let i = 0; i < target.length; i++) {
@@ -391,15 +513,22 @@ async function backfillPlayers(limit: number | null = null) {
       totals.matched++
       const update: Partial<typeof players.$inferInsert> = {}
       if (!p.photoUrl && bio.image) update.photoUrl = bio.image
-      if (!p.birthdate && bio.parsed.birthdate) update.birthdate = bio.parsed.birthdate
-      if (!p.nationality && bio.parsed.nationality) update.nationality = bio.parsed.nationality
-      if (!p.position && bio.parsed.position) update.position = bio.parsed.position
-      if (!p.heightCm && bio.parsed.heightCm) update.heightCm = bio.parsed.heightCm
-      if (!p.weightKg && bio.parsed.weightKg) update.weightKg = bio.parsed.weightKg
+      if (!p.birthdate && bio.parsed.birthdate)
+        update.birthdate = bio.parsed.birthdate
+      if (!p.nationality && bio.parsed.nationality)
+        update.nationality = bio.parsed.nationality
+      if (!p.position && bio.parsed.position)
+        update.position = bio.parsed.position
+      if (!p.heightCm && bio.parsed.heightCm)
+        update.heightCm = bio.parsed.heightCm
+      if (!p.weightKg && bio.parsed.weightKg)
+        update.weightKg = bio.parsed.weightKg
       if (Object.keys(update).length > 0) {
         await db.update(players).set(update).where(eq(players.id, p.id))
         totals.updated++
-        process.stdout.write(`+${Object.keys(update).length} fields (${bio.title})\n`)
+        process.stdout.write(
+          `+${Object.keys(update).length} fields (${bio.title})\n`,
+        )
       } else {
         process.stdout.write(`no new fields (${bio.title})\n`)
       }

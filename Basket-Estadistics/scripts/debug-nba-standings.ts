@@ -18,7 +18,8 @@ async function main() {
         /<a[^>]*href=(?:"|')(\/teams\/[^"']+\.html)(?:"|')/,
       )
       const cells = new Map<string, string>()
-      const cellRe = /<t[hd]\b[^>]*\bdata-stat="([^"]+)"[^>]*>([\s\S]*?)<\/t[hd]>/g
+      const cellRe =
+        /<t[hd]\b[^>]*\bdata-stat="([^"]+)"[^>]*>([\s\S]*?)<\/t[hd]>/g
       let mm: RegExpExecArray | null
       while ((mm = cellRe.exec(rows[i])) !== null) {
         cells.set(mm[1], mm[2].replace(/<[^>]+>/g, "").trim())
@@ -26,7 +27,9 @@ async function main() {
       const teamName = cells.get("team_name")
       const teamCode = teamHref?.[1].match(/\/teams\/([^/]+)\//)?.[1]
       if (teamName && teamCode) {
-        console.log(`  ${teamName} (${teamCode}) — W: ${cells.get("wins")}, L: ${cells.get("losses")}, PPG: ${cells.get("pts_per_g")}, OPP: ${cells.get("opp_pts_per_g")}`)
+        console.log(
+          `  ${teamName} (${teamCode}) — W: ${cells.get("wins")}, L: ${cells.get("losses")}, PPG: ${cells.get("pts_per_g")}, OPP: ${cells.get("opp_pts_per_g")}`,
+        )
       }
     }
   }

@@ -120,7 +120,8 @@ export function MobileNav({ leagues }: Props) {
           <nav className="flex-1 px-3 py-4">
             <ul className="space-y-1">
               {PRIMARY_LINKS.map((l) => {
-                const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
+                const active =
+                  pathname === l.href || pathname.startsWith(`${l.href}/`)
                 return (
                   <li key={l.href}>
                     <Link

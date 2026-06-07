@@ -92,11 +92,15 @@ function getRscPayload(html: string): string {
   const re = /self\.__next_f\.push\(\[\s*1\s*,\s*"((?:[^"\\]|\\.)*)"\s*\]\)/g
   const chunks: string[] = []
   let m: RegExpExecArray | null
-  while ((m = re.exec(html)) !== null) chunks.push(unescapeJsonString(m[1] ?? ""))
+  while ((m = re.exec(html)) !== null)
+    chunks.push(unescapeJsonString(m[1] ?? ""))
   return chunks.join("")
 }
 
-function findBalancedObject(rsc: string, start: number): { start: number; end: number } | null {
+function findBalancedObject(
+  rsc: string,
+  start: number,
+): { start: number; end: number } | null {
   let i = start
   while (i < rsc.length && /\s/.test(rsc[i] ?? "")) i++
   if (rsc[i] !== "{") return null
@@ -121,7 +125,10 @@ function findBalancedObject(rsc: string, start: number): { start: number; end: n
   return null
 }
 
-function findBalancedArray(rsc: string, start: number): { start: number; end: number } | null {
+function findBalancedArray(
+  rsc: string,
+  start: number,
+): { start: number; end: number } | null {
   let i = start
   while (i < rsc.length && /\s/.test(rsc[i] ?? "")) i++
   if (rsc[i] !== "[") return null
@@ -254,10 +261,14 @@ async function fetchRoster(clubId: number): Promise<{
   clubInfo: AcbClubInfo | null
 }> {
   const slug = await resolveSlug(clubId)
-  const html = await fetchHtml(`${ACB_BASE}${ACB_LIGA}/equipos/${slug}/plantilla`)
+  const html = await fetchHtml(
+    `${ACB_BASE}${ACB_LIGA}/equipos/${slug}/plantilla`,
+  )
   const rsc = getRscPayload(html)
   const roster = extractRscObject(rsc, "currentRoster")
-  const players = Array.isArray(roster?.players) ? (roster.players as Raw[]) : []
+  const players = Array.isArray(roster?.players)
+    ? (roster.players as Raw[])
+    : []
   const staff = Array.isArray(roster?.staff) ? (roster.staff as Raw[]) : []
   const clubInfo = extractRscObject(rsc, "clubInfo") as AcbClubInfo | null
   return { players, staff, clubInfo }
@@ -280,7 +291,8 @@ function mapPlayer(raw: Raw, teamSourceId: string): SourcePlayer | null {
     position: pickString(p, ["gameRole"]) ?? undefined,
     jerseyNumber: pickString(p, ["shirtNumber"]) ?? undefined,
     age: pickNumber(raw, ["age"]),
-    heightCm: typeof height === "number" ? height : parseHeightToCm(String(height)),
+    heightCm:
+      typeof height === "number" ? height : parseHeightToCm(String(height)),
     teamSourceId,
     photoUrl:
       pickString(p, ["headshotImageNoBackgroundUrl", "headshotImageUrl"]) ??
@@ -325,13 +337,23 @@ function mapCoach(raw: Raw, teamSourceId: string): SourceCoach | null {
 type Roster = {
   players: SourcePlayer[]
   coaches: SourceCoach[]
-  details: { city?: string; foundedYear?: number; arena?: string; arenaCapacity?: number; websiteUrl?: string }
-  stats: { position?: number; wins?: number; losses?: number; pointsFor?: number; pointsAgainst?: number }
+  details: {
+    city?: string
+    foundedYear?: number
+    arena?: string
+    arenaCapacity?: number
+    websiteUrl?: string
+  }
+  stats: {
+    position?: number
+    wins?: number
+    losses?: number
+    pointsFor?: number
+    pointsAgainst?: number
+  }
 }
 
-async function fetchTeamStatsHtml(
-  clubId: number,
-): Promise<Roster["stats"]> {
+async function fetchTeamStatsHtml(clubId: number): Promise<Roster["stats"]> {
   const slug = await resolveSlug(clubId)
   try {
     const html = await fetchHtml(`${ACB_BASE}${ACB_LIGA}/equipos/${slug}`)
@@ -356,9 +378,7 @@ async function fetchTeamStatsHtml(
   }
 }
 
-async function fetchAllRosters(
-  teams: AcbTeam[],
-): Promise<Map<string, Roster>> {
+async function fetchAllRosters(teams: AcbTeam[]): Promise<Map<string, Roster>> {
   const out = new Map<string, Roster>()
   for (const t of teams) {
     try {
@@ -443,7 +463,13 @@ export const acbAdapter: SourceAdapter = {
     for (const t of teams) {
       const r = data.get(t.sourceId)
       if (!r?.stats) continue
-      const { wins = 0, losses = 0, pointsFor, pointsAgainst, position } = r.stats
+      const {
+        wins = 0,
+        losses = 0,
+        pointsFor,
+        pointsAgainst,
+        position,
+      } = r.stats
       const gp = wins + losses
       if (gp === 0 && position == null) continue
       out.push({
@@ -453,9 +479,12 @@ export const acbAdapter: SourceAdapter = {
         wins,
         losses,
         winPct: gp > 0 ? Number((wins / gp).toFixed(3)) : undefined,
-        pointsFor: pointsFor != null ? Number((pointsFor / gp).toFixed(1)) : undefined,
+        pointsFor:
+          pointsFor != null ? Number((pointsFor / gp).toFixed(1)) : undefined,
         pointsAgainst:
-          pointsAgainst != null ? Number((pointsAgainst / gp).toFixed(1)) : undefined,
+          pointsAgainst != null
+            ? Number((pointsAgainst / gp).toFixed(1))
+            : undefined,
         position,
       })
     }

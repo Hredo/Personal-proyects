@@ -1,9 +1,22 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { TeamSelector } from "@/app/ai-advisor/team-selector"
 import { ChatWindow } from "@/app/ai-advisor/chat-window"
 import { InputArea } from "@/app/ai-advisor/input-area"
+import {
+  LlmSettings,
+  loadLlmMode,
+  type LlmMode,
+} from "@/app/ai-advisor/llm-settings"
+import { PaywallModal } from "@/components/auth/paywall-modal"
 import type { TeamOption } from "@/types/teams"
 import type { AdvisorOutput } from "@/lib/ai/local-advisor"
 import type { Reaction } from "@/app/ai-advisor/message-actions"
@@ -13,20 +26,47 @@ type Message = {
   type: "user" | "ai"
   content: string
   data?: AdvisorOutput
+  mode?: "llm" | "local"
+  model?: string
 }
 
 type AdvisorApiResult = {
   content?: string
-  data?: { recommendations?: unknown[] }
+  data?: AdvisorOutput
+  mode?: "llm" | "local"
+  model?: string
+  conversationId?: string
+  error?: boolean
+}
+
+type ConversationSummary = {
+  id: string
+  teamSlug: string
+  teamName: string
+  leagueSlug: string
+  title: string
+  createdAt: string
+  updatedAt: string
+}
+
+type ConversationDetail = ConversationSummary & {
+  messages: Array<{
+    id: string
+    role: "user" | "assistant"
+    content: string
+    model: string | null
+    mode: string | null
+    createdAt: string
+  }>
 }
 
 const TIPS = [
-  "Quiero un buen defensor para el equipo",
-  "Necesito un anotador exterior",
-  "Buscamos un base organizador",
-  "Refuerzo para el juego interior",
-  "Una opción económica para la rotación",
-  "Fichaje estrella de impacto inmediato",
+  "I want a strong defender for the team",
+  "I need a scoring wing",
+  "Looking for a playmaking point guard",
+  "Reinforcement for the frontcourt",
+  "A budget-friendly option for the rotation",
+  "Star signing with immediate impact",
 ]
 
 const REACTIONS_KEY = "ai-advisor:reactions"
@@ -44,15 +84,48 @@ function loadReactions(): Record<number, Reaction> {
   return {}
 }
 
+function clearReactions(): void {
+  if (typeof window === "undefined") return
+  try {
+    window.localStorage.removeItem(REACTIONS_KEY)
+  } catch {}
+}
+
+function timeAgo(iso: string): string {
+  const t = new Date(iso).getTime()
+  if (!Number.isFinite(t)) return ""
+  const diff = Date.now() - t
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 4) return `${weeks}w ago`
+  return new Date(iso).toLocaleDateString()
+}
+
 export default function AIAdvisorClient() {
   const [selectedTeam, setSelectedTeam] = useState<TeamOption | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
   const [reactions, setReactions] = useState<Record<number, Reaction>>({})
+  const [llmMode, setLlmMode] = useState<LlmMode>("off")
+  const [conversations, setConversations] = useState<ConversationSummary[]>([])
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(
+    null,
+  )
+  const [loadingConversation, setLoadingConversation] = useState(false)
+  const [paywall, setPaywall] = useState<"auth" | "quota" | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const idRef = useRef(0)
+  const initialized = useRef(false)
 
   useEffect(() => {
     setReactions(loadReactions())
+    setLlmMode(loadLlmMode())
   }, [])
 
   useEffect(() => {
@@ -62,10 +135,111 @@ export default function AIAdvisorClient() {
     } catch {}
   }, [reactions])
 
-  const handleTeamChange = (team: TeamOption) => {
-    setSelectedTeam(team)
+  const loadConversationList = useCallback(async () => {
+    try {
+      const res = await fetch("/api/conversations", { cache: "no-store" })
+      if (res.status === 401) {
+        setConversations([])
+        return
+      }
+      if (!res.ok) return
+      const data = (await res.json()) as { conversations?: ConversationSummary[] }
+      if (Array.isArray(data.conversations)) {
+        setConversations(data.conversations)
+      }
+    } catch {
+      // best-effort
+    }
+  }, [])
+
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+    loadConversationList()
+  }, [loadConversationList])
+
+  const handleTeamChange = useCallback(
+    (team: TeamOption) => {
+      setSelectedTeam(team)
+      setMessages([])
+      setReactions({})
+      clearReactions()
+      setActiveConversationId(null)
+    },
+    [],
+  )
+
+  const openConversation = useCallback(
+    async (id: string) => {
+      setLoadingConversation(true)
+      setSidebarOpen(false)
+      try {
+        const res = await fetch(`/api/conversations/${id}`, {
+          cache: "no-store",
+        })
+        if (res.status === 401) {
+          setPaywall("auth")
+          return
+        }
+        if (!res.ok) return
+        const data = (await res.json()) as { conversation: ConversationDetail }
+        const conv = data.conversation
+        if (!conv) return
+        setActiveConversationId(conv.id)
+        const teamOption: TeamOption = {
+          id: "",
+          name: conv.teamName,
+          slug: conv.teamSlug,
+          leagueSlug: conv.leagueSlug,
+        }
+        setSelectedTeam(teamOption)
+        idRef.current = 0
+        const next: Message[] = conv.messages.map((m) => ({
+          id: ++idRef.current,
+          type: m.role === "user" ? "user" : "ai",
+          content: m.content,
+          mode: (m.mode as "llm" | "local" | undefined) ?? undefined,
+          model: m.model ?? undefined,
+        }))
+        setMessages(next)
+        setReactions({})
+        clearReactions()
+      } finally {
+        setLoadingConversation(false)
+      }
+    },
+    [],
+  )
+
+  const startNewChat = useCallback(() => {
+    setActiveConversationId(null)
     setMessages([])
-  }
+    setReactions({})
+    clearReactions()
+    setSidebarOpen(false)
+  }, [])
+
+  const deleteConversation = useCallback(
+    async (id: string) => {
+      const ok =
+        typeof window !== "undefined"
+          ? window.confirm("Delete this conversation?")
+          : true
+      if (!ok) return
+      try {
+        await fetch(`/api/conversations?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        })
+      } catch {
+        // best-effort
+      }
+      setConversations((prev) => prev.filter((c) => c.id !== id))
+      if (activeConversationId === id) {
+        startNewChat()
+      }
+    },
+    [activeConversationId, startNewChat],
+  )
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -75,20 +249,45 @@ export default function AIAdvisorClient() {
       setMessages((prev) => [...prev, userMsg])
       setLoading(true)
       try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        if (llmMode === "ollama") headers["X-User-LLM"] = "ollama"
+
+        const body: Record<string, unknown> = {
+          teamSlug: selectedTeam.slug,
+          leagueSlug: selectedTeam.leagueSlug,
+          userMessage: content,
+          history: messages.map((m) => ({
+            role: m.type === "user" ? "user" : "assistant",
+            content: m.content,
+          })),
+        }
+        if (activeConversationId) {
+          body.conversationId = activeConversationId
+        } else {
+          body.conversationTitle = `${selectedTeam.name} - ${content.slice(0, 60)}`
+        }
+
         const res = await fetch("/api/ai-advisor", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            teamSlug: selectedTeam.slug,
-            leagueSlug: selectedTeam.leagueSlug,
-            userMessage: content,
-            history: messages.map((m) => ({
-              role: m.type === "user" ? "user" : "assistant",
-              content: m.content,
-            })),
-          }),
+          headers,
+          body: JSON.stringify(body),
         })
-        const result = (await res.json()) as AdvisorApiResult & { error?: boolean }
+        const result = (await res.json()) as AdvisorApiResult
+        if (res.status === 401) {
+          setPaywall("auth")
+          setMessages((prev) => prev.filter((m) => m.id !== userId))
+          return
+        }
+        if (
+          res.status === 403 &&
+          (result as { error?: string })?.error === "free_quota_exceeded"
+        ) {
+          setPaywall("quota")
+          setMessages((prev) => prev.filter((m) => m.id !== userId))
+          return
+        }
         if (!res.ok && res.status === 429) {
           const aiId = ++idRef.current
           setMessages((prev) => [
@@ -98,7 +297,7 @@ export default function AIAdvisorClient() {
               type: "ai",
               content:
                 result.content ||
-                "Has enviado demasiados mensajes seguidos. Espera unos segundos.",
+                "You sent too many messages in a row. Please wait a few seconds.",
             },
           ])
           return
@@ -108,8 +307,15 @@ export default function AIAdvisorClient() {
           id: aiId,
           type: "ai",
           content: result.content || "",
+          data: result.data,
+          mode: result.mode,
+          model: result.model,
         }
         setMessages((prev) => [...prev, aiMsg])
+        if (result.conversationId) {
+          setActiveConversationId(result.conversationId)
+          loadConversationList()
+        }
       } catch {
         const aiId = ++idRef.current
         setMessages((prev) => [
@@ -118,75 +324,95 @@ export default function AIAdvisorClient() {
             id: aiId,
             type: "ai",
             content:
-              "Ocurrió un error al conectar con el servidor. Intenta de nuevo.",
+              "We couldn't reach the advisor. Check your connection or try again in a few seconds.",
           },
         ])
       } finally {
         setLoading(false)
       }
     },
-    [selectedTeam, messages],
+    [selectedTeam, messages, llmMode, activeConversationId, loadConversationList],
   )
 
   const handleRedo = useCallback(
     async (aiMessageId: number) => {
       if (!selectedTeam || loading) return
-      setMessages((prev) => {
-        const idx = prev.findIndex((m) => m.id === aiMessageId)
-        if (idx <= 0) return prev
-        const prevUser = prev[idx - 1]
-        if (!prevUser || prevUser.type !== "user") return prev
-        const before = prev.slice(0, idx)
-        const userContent = prevUser.content
-        const history = before.slice(0, -1).map((m) => ({
-          role: m.type === "user" ? "user" : "assistant",
-          content: m.content,
-        }))
-        setLoading(true)
-        fetch("/api/ai-advisor", {
+      const idx = messages.findIndex((m) => m.id === aiMessageId)
+      if (idx <= 0) return
+      const prevUser = messages[idx - 1]
+      if (!prevUser || prevUser.type !== "user") return
+
+      const userContent = prevUser.content
+      const before = messages.slice(0, idx)
+      const history = before.slice(0, -1).map((m) => ({
+        role: m.type === "user" ? "user" : "assistant",
+        content: m.content,
+      }))
+
+      setMessages(before)
+      setLoading(true)
+      try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        }
+        if (llmMode === "ollama") headers["X-User-LLM"] = "ollama"
+
+        const r = await fetch("/api/ai-advisor", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({
             teamSlug: selectedTeam.slug,
             leagueSlug: selectedTeam.leagueSlug,
             userMessage: userContent,
             history,
+            conversationId: activeConversationId ?? undefined,
           }),
         })
-          .then((r) => r.json() as Promise<AdvisorApiResult>)
-          .then((result) => {
-            const newAiId = ++idRef.current
-            setMessages((cur) => [
-              ...cur.slice(0, idx),
-              {
-                id: newAiId,
-                type: "ai",
-                content: result.content || "",
-              },
-            ])
-            setReactions((r) => {
-              const copy = { ...r }
-              delete copy[aiMessageId]
-              return copy
-            })
-          })
-          .catch(() => {
-            const newAiId = ++idRef.current
-            setMessages((cur) => [
-              ...cur.slice(0, idx),
-              {
-                id: newAiId,
-                type: "ai",
-                content:
-                  "Ocurrió un error al rehacer la respuesta. Intenta de nuevo.",
-              },
-            ])
-          })
-          .finally(() => setLoading(false))
-        return before
-      })
+        const result = (await r.json()) as AdvisorApiResult
+        if (r.status === 401) {
+          setPaywall("auth")
+          return
+        }
+        if (
+          r.status === 403 &&
+          (result as { error?: string })?.error === "free_quota_exceeded"
+        ) {
+          setPaywall("quota")
+          return
+        }
+        const newAiId = ++idRef.current
+        setMessages((cur) => [
+          ...cur,
+          {
+            id: newAiId,
+            type: "ai",
+            content: result.content || "",
+            data: result.data,
+            mode: result.mode,
+            model: result.model,
+          },
+        ])
+        setReactions((r) => {
+          const copy = { ...r }
+          delete copy[aiMessageId]
+          return copy
+        })
+      } catch {
+        const newAiId = ++idRef.current
+        setMessages((cur) => [
+          ...cur,
+          {
+            id: newAiId,
+            type: "ai",
+            content:
+              "We couldn't regenerate the response. Please try again in a few seconds.",
+          },
+        ])
+      } finally {
+        setLoading(false)
+      }
     },
-    [selectedTeam, loading],
+    [selectedTeam, loading, messages, llmMode, activeConversationId],
   )
 
   const handleCopy = useCallback((id: number) => {
@@ -218,86 +444,269 @@ export default function AIAdvisorClient() {
       }
     : null
 
+  const sortedConversations = useMemo(() => {
+    return [...conversations].sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    )
+  }, [conversations])
+
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-64px)] max-w-5xl flex-col">
-      <header className="border-b border-white/5 bg-ink-950/50 px-4 py-4 backdrop-blur-sm sm:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15 ring-1 ring-brand-500/25">
+    <div className="mx-auto flex min-h-[calc(100dvh-64px)] max-w-7xl">
+      <AnimatePresence>
+        {sidebarOpen ? (
+          <motion.div
+            key="sidebar-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-30 bg-ink-950/60 backdrop-blur-sm lg:hidden"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/5 bg-ink-950/95 backdrop-blur-md transition-transform duration-300 lg:relative lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{ top: "var(--header-h, 0px)" }}
+      >
+        <div className="flex flex-col gap-2 border-b border-white/5 p-3">
+          <button
+            type="button"
+            onClick={startNewChat}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-3 py-2 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
+          >
             <svg
-              className="h-5 w-5 text-brand-400"
-              fill="none"
+              className="h-4 w-4"
               viewBox="0 0 24 24"
+              fill="none"
               stroke="currentColor"
-              strokeWidth={1.5}
+              strokeWidth={2.2}
+              aria-hidden
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"
-              />
+              <path strokeLinecap="round" d="M12 5v14M5 12h14" />
             </svg>
-          </div>
-          <div>
-            <h1 className="font-display text-lg font-bold text-ink-50">
-              Asesor de Fichajes
-            </h1>
-            <p className="text-xs text-ink-400">
-              Análisis inteligente basado en tu base de datos
-            </p>
-          </div>
+            New chat
+          </button>
+          <p className="px-1 pt-1 font-mono text-[10px] uppercase tracking-widest text-ink-500">
+            Conversations
+          </p>
         </div>
-      </header>
 
-      <div className="border-b border-white/5 bg-ink-950/30">
-        <TeamSelector onTeamChange={handleTeamChange} />
-      </div>
-
-      <main className="flex flex-1 flex-col overflow-hidden">
-        <ChatWindow
-          messages={messages}
-          loading={loading}
-          reactions={reactions}
-          onCopy={handleCopy}
-          onLike={handleLike}
-          onDislike={handleDislike}
-          onRedo={handleRedo}
-        />
-
-        {messages.length === 0 && selectedTeam && (
-          <div className="px-4 pb-2">
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-ink-500">
-              Preguntas sugeridas
+        <div className="flex-1 overflow-y-auto px-2 pb-3">
+          {sortedConversations.length === 0 ? (
+            <p className="px-3 py-6 text-center text-xs text-ink-500">
+              No conversations yet. Pick a team and start a chat.
             </p>
-            <div className="flex flex-wrap gap-2">
-              {TIPS.map((tip) => (
-                <button
-                  key={tip}
-                  type="button"
-                  onClick={() => sendMessage(tip)}
-                  disabled={loading}
-                  className="rounded-full border border-ink-700 bg-ink-800/50 px-3 py-1.5 text-xs text-ink-300 transition hover:border-brand-500/50 hover:text-brand-300 disabled:opacity-30"
-                >
-                  {tip}
-                </button>
-              ))}
+          ) : (
+            <ul className="space-y-1">
+              {sortedConversations.map((c) => {
+                const active = c.id === activeConversationId
+                return (
+                  <li
+                    key={c.id}
+                    className={`group relative rounded-lg border transition ${
+                      active
+                        ? "border-brand-500/40 bg-brand-500/10"
+                        : "border-transparent hover:border-white/10 hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openConversation(c.id)}
+                      className="block w-full px-3 py-2.5 text-left"
+                    >
+                      <p className="truncate pr-6 text-sm font-medium text-ink-100">
+                        {c.title}
+                      </p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-ink-500">
+                        <span className="font-mono uppercase tracking-widest">
+                          {c.leagueSlug}
+                        </span>
+                        <span>·</span>
+                        <span>{timeAgo(c.updatedAt)}</span>
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteConversation(c.id)
+                      }}
+                      aria-label="Delete conversation"
+                      className="absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-md text-ink-500 opacity-0 transition hover:bg-white/[0.06] hover:text-red-300 group-hover:opacity-100"
+                    >
+                      <svg
+                        className="h-3.5 w-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        aria-hidden
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 7l-1 12a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7m5 4v6m4-6v6M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="border-t border-white/5 p-3 text-[11px] text-ink-500">
+          Conversations are private to your account. They live as long as you do.
+        </div>
+      </aside>
+
+      <div className="flex w-full min-w-0 flex-col">
+        <header className="flex items-center justify-between border-b border-white/5 bg-ink-950/50 px-4 py-3 backdrop-blur-sm sm:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open conversations"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-ink-200 transition hover:border-white/25 hover:text-ink-50 lg:hidden"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+                />
+              </svg>
+            </button>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/15 ring-1 ring-brand-500/25">
+              <svg
+                className="h-4.5 w-4.5 text-brand-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h1 className="font-display text-base font-bold text-ink-50 sm:text-lg">
+                Scouting Advisor
+              </h1>
+              <p className="text-[11px] text-ink-400 sm:text-xs">
+                Smart analysis powered by your player database
+              </p>
             </div>
           </div>
-        )}
-      </main>
+          {loadingConversation ? (
+            <span className="font-mono text-[10px] uppercase tracking-widest text-ink-500">
+              Loading…
+            </span>
+          ) : null}
+        </header>
 
-      <InputArea
-        onSend={sendMessage}
-        disabled={!selectedTeam}
-        loading={loading}
-        team={teamContext}
-        messages={messages}
-        placeholder={
-          !selectedTeam
-            ? "Selecciona un equipo arriba..."
-            : loading
-              ? "Analizando..."
-              : `Pregunta sobre fichajes para ${selectedTeam.name}...`
-        }
+        <LlmSettings mode={llmMode} onModeChange={setLlmMode} />
+
+        <div className="border-b border-white/5 bg-ink-950/30">
+          <TeamSelector
+            key={activeConversationId ?? "new"}
+            onTeamChange={handleTeamChange}
+            initialTeam={selectedTeam}
+          />
+        </div>
+
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <ChatWindow
+            messages={messages}
+            loading={loading}
+            reactions={reactions}
+            onCopy={handleCopy}
+            onLike={handleLike}
+            onDislike={handleDislike}
+            onRedo={handleRedo}
+          />
+
+          {messages.length === 0 && selectedTeam ? (
+            <div className="border-t border-white/5 bg-ink-950/20 px-4 pb-3 pt-3">
+              <div className="mb-3 flex items-start gap-2 rounded-lg border border-brand-500/20 bg-brand-500/5 px-3 py-2">
+                <svg
+                  className="mt-0.5 h-4 w-4 shrink-0 text-brand-300"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  aria-hidden
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path strokeLinecap="round" d="M12 8h.01M11 12h1v4h1" />
+                </svg>
+                <p className="text-[11px] leading-relaxed text-ink-300">
+                  <span className="font-semibold text-brand-200">
+                    Why this advisor.
+                  </span>{" "}
+                  It scans your roster against a database of 2,400+ players,
+                  detects positional gaps and proposes shortlists. All without
+                  leaving the browser.
+                </p>
+              </div>
+              <p className="mb-2 text-[10px] uppercase tracking-widest text-ink-500">
+                Suggested questions
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {TIPS.map((tip) => (
+                  <button
+                    key={tip}
+                    type="button"
+                    onClick={() => sendMessage(tip)}
+                    disabled={loading}
+                    className="rounded-full border border-ink-700 bg-ink-800/50 px-3 py-1.5 text-xs text-ink-300 transition hover:border-brand-500/50 hover:text-brand-300 disabled:opacity-30"
+                  >
+                    {tip}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </main>
+
+        <InputArea
+          onSend={sendMessage}
+          disabled={!selectedTeam}
+          loading={loading}
+          team={teamContext}
+          messages={messages}
+          placeholder={
+            !selectedTeam
+              ? "Pick a team above to get started..."
+              : loading
+                ? "Analysing..."
+                : `Ask about signings for ${selectedTeam.name}...`
+          }
+        />
+      </div>
+
+      <PaywallModal
+        open={paywall !== null}
+        onClose={() => setPaywall(null)}
+        variant={paywall ?? "auth"}
+        feature="advisor"
       />
     </div>
   )

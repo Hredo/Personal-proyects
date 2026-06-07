@@ -27,8 +27,14 @@ export function TeamStatsStrip({ stats }: Props) {
         sub={`Season ${stats.year}`}
         accent
       />
-      <Tile label="Win %" value={winPct != null ? `${winPct.toFixed(1)}%` : "—"} />
-      <Tile label="Position" value={stats.position != null ? `#${stats.position}` : "—"} />
+      <Tile
+        label="Win %"
+        value={winPct != null ? `${winPct.toFixed(1)}%` : "—"}
+      />
+      <Tile
+        label="Position"
+        value={stats.position != null ? `#${stats.position}` : "—"}
+      />
       <Tile label="PPG" value={formatNumber(stats.pointsFor)} />
       <Tile label="OPP PPG" value={formatNumber(stats.pointsAgainst)} />
     </div>
@@ -52,7 +58,8 @@ function Tile({
       style={
         accent
           ? {
-              borderColor: "color-mix(in oklch, var(--team-500) 45%, transparent)",
+              borderColor:
+                "color-mix(in oklch, var(--team-500) 45%, transparent)",
               background:
                 "color-mix(in oklch, var(--team-500) 10%, rgba(255,255,255,0.02))",
             }
@@ -67,13 +74,15 @@ function Tile({
       </p>
       <p
         className="mt-0.5 font-display text-xl font-bold"
-        style={accent ? { color: "var(--team-200)" } : { color: "var(--color-ink-50, #f5f5f5)" }}
+        style={
+          accent
+            ? { color: "var(--team-200)" }
+            : { color: "var(--color-ink-50, #f5f5f5)" }
+        }
       >
         {value}
       </p>
-      {sub ? (
-        <p className="font-mono text-[10px] text-ink-500">{sub}</p>
-      ) : null}
+      {sub ? <p className="font-mono text-[10px] text-ink-500">{sub}</p> : null}
     </div>
   )
 }

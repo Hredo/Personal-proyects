@@ -1,15 +1,15 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { FAQ_DATA, type FaqItem } from "@/components/marketing/faq-data";
+import { useState } from "react"
+import { FAQ_DATA, type FaqItem } from "@/components/marketing/faq-data"
 
 export function Faq() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [open, setOpen] = useState<number | null>(0)
   return (
     <div className="mx-auto max-w-3xl">
       <ul className="space-y-2 sm:space-y-3">
         {FAQ_DATA.map((item, i) => {
-          const isOpen = open === i;
+          const isOpen = open === i
           return (
             <li key={item.question}>
               <div
@@ -32,7 +32,9 @@ export function Faq() {
                   <span
                     aria-hidden
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-200 transition ${
-                      isOpen ? "rotate-45 border-brand-400/40 text-brand-200" : ""
+                      isOpen
+                        ? "rotate-45 border-brand-400/40 text-brand-200"
+                        : ""
                     }`}
                   >
                     <svg
@@ -64,11 +66,11 @@ export function Faq() {
                 </div>
               </div>
             </li>
-          );
+          )
         })}
       </ul>
     </div>
-  );
+  )
 }
 
-export type { FaqItem };
+export type { FaqItem }

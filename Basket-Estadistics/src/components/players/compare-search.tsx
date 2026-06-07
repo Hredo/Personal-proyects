@@ -17,7 +17,12 @@ import type { ComparePlayer } from "@/lib/data/compare"
 import { SmartImage } from "@/components/ui/smart-image"
 
 type LeagueInfo = { id: string; name: string; slug: string; country: string }
-type TeamInfo = { id: string; name: string; slug: string; logoUrl: string | null } | null
+type TeamInfo = {
+  id: string
+  name: string
+  slug: string
+  logoUrl: string | null
+} | null
 
 export type CompareChoice = {
   id: string
@@ -409,9 +414,7 @@ export function CompareSearch({ side, current, otherSlug }: Props) {
                   ) : results.length === 0 ? (
                     <div className="px-3 py-8 text-center">
                       <p className="text-sm text-ink-200">
-                        {q
-                          ? `No players match “${q}”`
-                          : "No players available"}
+                        {q ? `No players match “${q}”` : "No players available"}
                       </p>
                       <p className="mt-1 text-xs text-ink-400">
                         {q

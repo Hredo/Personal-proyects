@@ -5,7 +5,9 @@ async function main() {
   const teams = await acbAdapter.fetchTeams()
   console.log(`Got ${teams.length} teams`)
   for (const t of teams) {
-    console.log(`  ${t.sourceId} ${t.name} (${t.shortName}) - founded ${t.foundedYear ?? "?"} arena ${t.arena ?? "?"}`)
+    console.log(
+      `  ${t.sourceId} ${t.name} (${t.shortName}) - founded ${t.foundedYear ?? "?"} arena ${t.arena ?? "?"}`,
+    )
   }
 }
 

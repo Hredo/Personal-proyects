@@ -11,7 +11,12 @@ export const SOURCE_META: Record<
     season: number
   }
 > = {
-  nba: { displayName: "NBA", country: "USA", seasonCode: "2025-26", season: 2025 },
+  nba: {
+    displayName: "NBA",
+    country: "USA",
+    seasonCode: "2025-26",
+    season: 2025,
+  },
   euroleague: {
     displayName: "EuroLeague",
     country: "EU",
@@ -111,4 +116,7 @@ export type SourceAdapter = {
   fetchStats(): Promise<SourceStats[]>
   fetchCoaches(): Promise<SourceCoach[]>
   fetchTeamStats(): Promise<SourceTeamStats[]>
+  fetchTeamDetails?(
+    teamIds: string[],
+  ): Promise<Map<string, Partial<SourceTeam> & Record<string, unknown>>>
 }

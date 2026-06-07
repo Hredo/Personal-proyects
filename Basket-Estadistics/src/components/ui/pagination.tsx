@@ -60,7 +60,8 @@ export function Pagination({
     if (total > 0) {
       return (
         <p className="text-center text-[11px] uppercase tracking-widest text-ink-400 sm:text-xs">
-          {formatRange(currentPage, pageSize, total)} {total === 1 ? "result" : "results"}
+          {formatRange(currentPage, pageSize, total)}{" "}
+          {total === 1 ? "result" : "results"}
         </p>
       )
     }
@@ -114,7 +115,11 @@ export function Pagination({
           const active = it === currentPage
           return (
             <li key={it}>
-              <PageLink href={href} active={active} aria-current={active ? "page" : undefined}>
+              <PageLink
+                href={href}
+                active={active}
+                aria-current={active ? "page" : undefined}
+              >
                 {it}
               </PageLink>
             </li>

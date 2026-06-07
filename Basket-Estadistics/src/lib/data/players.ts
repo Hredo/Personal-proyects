@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm"
-import { getDb, closeDb } from "@/lib/db/client"
+import { and, asc, desc, eq, like, sql } from "drizzle-orm"
+import { getDb } from "@/lib/db/client"
 import {
   leagues,
   playerStats,
@@ -7,6 +7,7 @@ import {
   seasons,
   teams,
 } from "@/lib/db/schema"
+import { cached } from "@/lib/data/cache"
 
 export type PlayerListItem = {
   id: string
@@ -417,9 +418,8 @@ export type PlayerProfile = {
   }>
 }
 
-export async function getPlayerBySlug(
-  slug: string,
-): Promise<PlayerProfile | null> {
+export const getPlayerBySlug = cached(
+  async (slug: string): Promise<PlayerProfile | null> => {
   const db = getDb()
   const rows = await db
     .select({
@@ -505,23 +505,92 @@ export async function getPlayerBySlug(
         : null,
     seasons: statRows,
   }
+  },
+  "getPlayerBySlug",
+  ["players", "player-stats"],
+  3600,
+)
+
+type SearchCacheEntry = {
+  expires: number
+  results: { id: string; slug: string; fullName: string }[]
+}
+const SEARCH_CACHE = new Map<string, SearchCacheEntry>()
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000
+const SEARCH_CACHE_MAX_ENTRIES = 200
+
+function searchCacheKey(query: string, limit: number): string {
+  return `${limit}::${query.trim().toLowerCase()}`
+}
+
+function readSearchCache(key: string): SearchCacheEntry["results"] | null {
+  const entry = SEARCH_CACHE.get(key)
+  if (!entry) return null
+  if (entry.expires < Date.now()) {
+    SEARCH_CACHE.delete(key)
+    return null
+  }
+  return entry.results
+}
+
+function writeSearchCache(key: string, results: SearchCacheEntry["results"]): void {
+  if (SEARCH_CACHE.size >= SEARCH_CACHE_MAX_ENTRIES) {
+    const oldest = SEARCH_CACHE.keys().next().value
+    if (oldest !== undefined) SEARCH_CACHE.delete(oldest)
+  }
+  SEARCH_CACHE.set(key, { expires: Date.now() + SEARCH_CACHE_TTL_MS, results })
 }
 
 export async function searchPlayersByName(
   query: string,
   limit = 20,
 ): Promise<{ id: string; slug: string; fullName: string }[]> {
+  const key = searchCacheKey(query, limit)
+  const cached = readSearchCache(key)
+  if (cached) return cached
+
   const db = getDb()
-  const q = `%${query.toLowerCase()}%`
-  return db
-    .select({
-      id: players.id,
-      slug: players.slug,
-      fullName: players.fullName,
-    })
-    .from(players)
-    .where(like(sql`lower(${players.fullName})`, q))
-    .limit(limit)
+  const cleaned = query.replace(/[\u0000-\u001f"()]/g, " ").trim()
+  const matchExpr = cleaned ? `${cleaned}*` : null
+  let results: { id: string; slug: string; fullName: string }[] = []
+  if (matchExpr) {
+    try {
+      const rows = (await db.all(sql`
+        select p.id, p.slug, p.full_name
+        from ${players} p
+        inner join players_fts f on f.rowid = p.rowid
+        where players_fts match ${matchExpr}
+        order by rank
+        limit ${limit}
+      `)) as Array<{ id: string; slug: string; full_name: string }>
+      if (rows.length > 0) {
+        results = rows.map((r) => ({
+          id: r.id,
+          slug: r.slug,
+          fullName: r.full_name,
+        }))
+      }
+    } catch {
+      // players_fts unavailable (e.g. running against a backend that lacks FTS5);
+      // fall through to the LIKE-based query below.
+    }
+  }
+
+  if (results.length === 0) {
+    const q = `%${query.toLowerCase()}%`
+    results = await db
+      .select({
+        id: players.id,
+        slug: players.slug,
+        fullName: players.fullName,
+      })
+      .from(players)
+      .where(like(sql`lower(${players.fullName})`, q))
+      .limit(limit)
+  }
+
+  writeSearchCache(key, results)
+  return results
 }
 
 export type AutocompletePlayer = {
@@ -768,7 +837,8 @@ export type LeagueSummary = {
   playerCount: number
 }
 
-export async function listLeagues(): Promise<LeagueSummary[]> {
+export const listLeagues = cached(
+  async (): Promise<LeagueSummary[]> => {
   const db = getDb()
   const rows = await db
     .select({
@@ -803,7 +873,19 @@ export async function listLeagues(): Promise<LeagueSummary[]> {
     })
   }
   return out
-}
+  },
+  "listLeagues",
+  ["leagues"],
+  600,
+)
 
-void or
-void closeDb
+export async function listAllPlayerSlugs(
+  limit = 5000,
+): Promise<Array<{ slug: string }>> {
+  const db = getDb()
+  return db
+    .select({ slug: players.slug })
+    .from(players)
+    .orderBy(asc(players.slug))
+    .limit(limit)
+}

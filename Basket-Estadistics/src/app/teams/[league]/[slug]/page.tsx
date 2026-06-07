@@ -4,6 +4,9 @@ import type { Metadata } from "next"
 import { FadeIn } from "@/components/animations/fade-in"
 import { TeamDetailView } from "@/components/teams/team-detail-view"
 import { getTeamBySlug, listTeamOptions } from "@/lib/data/teams"
+import { JsonLd } from "@/components/marketing/json-ld"
+import { breadcrumbJsonLd, teamJsonLd } from "@/lib/seo/structured-data"
+import { SITE } from "@/lib/site"
 
 const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
 
@@ -11,7 +14,9 @@ type Params = { league: string; slug: string }
 
 export const dynamicParams = true
 
-export async function generateStaticParams(): Promise<Array<{ league: string; slug: string }>> {
+export async function generateStaticParams(): Promise<
+  Array<{ league: string; slug: string }>
+> {
   const options = await listTeamOptions(500)
   return options
     .filter((t) => LEAGUE_VALUES.has(t.leagueSlug))
@@ -34,6 +39,7 @@ export async function generateMetadata({
   return {
     title: team.name,
     description,
+    alternates: { canonical: `${SITE.url}/teams/${league}/${slug}` },
   }
 }
 
@@ -47,8 +53,24 @@ export default async function TeamDetailPage({
   const team = await getTeamBySlug(league, slug)
   if (!team) notFound()
 
+  const structuredData = [
+    teamJsonLd({
+      name: team.name,
+      slug: team.slug,
+      leagueSlug: team.league.slug,
+      leagueName: team.league.name,
+      logoUrl: team.logoUrl,
+      city: team.city,
+    }),
+    breadcrumbJsonLd([
+      { name: "Teams", path: "/teams" },
+      { name: team.name, path: `/teams/${team.league.slug}/${team.slug}` },
+    ]),
+  ]
+
   return (
     <div className="py-8">
+      <JsonLd data={structuredData} />
       <FadeIn>
         <Link
           href="/teams"

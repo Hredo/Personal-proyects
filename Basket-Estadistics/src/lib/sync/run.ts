@@ -46,9 +46,7 @@ export type SyncResult = {
   }
 }
 
-export async function runSync(
-  adapter: SourceAdapter,
-): Promise<SyncResult> {
+export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
   const db = getDb()
   const startedAt = new Date()
   const started = Date.now()
@@ -162,13 +160,14 @@ export async function runSync(
     }
 
     const sourcePlayers = await adapter.fetchPlayers()
-    const existingPlayerRows = await db
-      .select()
-      .from(players)
+    const existingPlayerRows = await db.select().from(players)
     const existingPlayersBySourceId = new Map(
       existingPlayerRows.map((p) => [p.sourceId, p]),
     )
-    const existingPlayersByName = new Map<string, (typeof existingPlayerRows)[number]>()
+    const existingPlayersByName = new Map<
+      string,
+      (typeof existingPlayerRows)[number]
+    >()
     for (const p of existingPlayerRows) {
       const key = p.fullName.toLowerCase().trim().replace(/\s+/g, " ")
       const prior = existingPlayersByName.get(key)
@@ -194,7 +193,7 @@ export async function runSync(
       const matchByName = existingPlayersByName.get(nameKey)
       const existingBySourceId = existingPlayersBySourceId.get(p.sourceId)
       const teamId = p.teamSourceId
-        ? teamIdBySourceId.get(p.teamSourceId) ?? null
+        ? (teamIdBySourceId.get(p.teamSourceId) ?? null)
         : null
       const fillIns: Partial<typeof players.$inferInsert> = {}
       if (p.photoUrl) fillIns.photoUrl = p.photoUrl
@@ -271,7 +270,7 @@ export async function runSync(
       const playerId = playerIdBySourceId.get(s.playerSourceId)
       if (!playerId) continue
       const teamId = s.teamSourceId
-        ? teamIdBySourceId.get(s.teamSourceId) ?? null
+        ? (teamIdBySourceId.get(s.teamSourceId) ?? null)
         : null
       await db
         .insert(playerStats)
@@ -324,7 +323,7 @@ export async function runSync(
     const usedCoachSlugs = new Set<string>()
     for (const c of sourceCoaches) {
       const teamId = c.teamSourceId
-        ? teamIdBySourceId.get(c.teamSourceId) ?? null
+        ? (teamIdBySourceId.get(c.teamSourceId) ?? null)
         : null
       if (!teamId) continue
       const baseSlug =
@@ -412,7 +411,11 @@ export async function runSync(
     }
 
     const rowsWritten =
-      totals.teams + totals.players + totals.stats + totals.coaches + totals.teamStats
+      totals.teams +
+      totals.players +
+      totals.stats +
+      totals.coaches +
+      totals.teamStats
     const finishedAt = new Date()
     await db
       .update(syncRuns)

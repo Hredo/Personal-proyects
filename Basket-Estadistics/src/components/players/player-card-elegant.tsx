@@ -18,7 +18,12 @@ type Props = {
     position: string | null
     photoUrl: string | null
     league: { id: string; name: string; slug: string; country: string }
-    team: { id: string; name: string; slug: string; logoUrl: string | null } | null
+    team: {
+      id: string
+      name: string
+      slug: string
+      logoUrl: string | null
+    } | null
     stats: {
       year: number
       gamesPlayed: number

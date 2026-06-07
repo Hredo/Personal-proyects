@@ -78,7 +78,11 @@ function rgbToHsl(
   return { h, s, l }
 }
 
-function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: number } {
+function hslToRgb(
+  h: number,
+  s: number,
+  l: number,
+): { r: number; g: number; b: number } {
   const hue = ((h % 360) + 360) % 360
   const sat = clamp(s, 0, 1)
   const light = clamp(l, 0, 1)
@@ -115,7 +119,10 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
   }
 }
 
-export function buildTeamPalette(hex: string, source: string): TeamPalette | null {
+export function buildTeamPalette(
+  hex: string,
+  source: string,
+): TeamPalette | null {
   const rgb = hexToRgb(hex)
   if (!rgb) return null
   const { h, s, l } = rgbToHsl(rgb.r, rgb.g, rgb.b)
