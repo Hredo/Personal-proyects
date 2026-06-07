@@ -35,7 +35,6 @@ export type AdvisorOutput = {
     name: string
     league: string
     leagueBadge: string
-    record: string
     rosterSize: number
     topPlayers: string[]
   }
@@ -520,9 +519,6 @@ export async function buildLocalAdvice(
   const meta = INTENT_META[intent]
   const recs = pickRecommendations(intent, 3, team.league.name)
   const gap = analyzeTeamGaps(team.roster)
-  const record = team.seasonStats
-    ? `${team.seasonStats.wins}-${team.seasonStats.losses}`
-    : "N/A"
 
   const priorities = [
     {
@@ -547,7 +543,6 @@ export async function buildLocalAdvice(
       name: team.name,
       league: team.league.name,
       leagueBadge: getLeagueBadge(team.league.name),
-      record,
       rosterSize: team.roster.length,
       topPlayers: team.roster.slice(0, 4).map((p) => p.fullName),
     },
@@ -733,9 +728,6 @@ function buildPlayerSpecificAdvice(
   profile: PlayerProfile,
 ): AdvisorOutput {
   const latest = profile.seasons[0]
-  const record = team.seasonStats
-    ? `${team.seasonStats.wins}-${team.seasonStats.losses}`
-    : "N/A"
   const age = profile.birthdate
     ? Math.floor(
         (Date.now() - new Date(profile.birthdate).getTime()) /
@@ -855,7 +847,6 @@ function buildPlayerSpecificAdvice(
       name: team.name,
       league: team.league.name,
       leagueBadge: getLeagueBadge(team.league.name),
-      record,
       rosterSize: team.roster.length,
       topPlayers: team.roster.slice(0, 4).map((p) => p.fullName),
     },

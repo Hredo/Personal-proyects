@@ -107,16 +107,6 @@ function buildTeamContext(team: TeamProfile): string {
   lines.push(`- Liga: ${team.league.name} (${team.league.country})`)
   lines.push(`- Plantilla: ${team.roster.length} jugadores`)
 
-  if (team.seasonStats) {
-    lines.push(
-      `- Récord: ${team.seasonStats.wins}-${team.seasonStats.losses} (${team.seasonStats.position ?? "?"}º)`,
-    )
-    if (team.seasonStats.netRtg !== null)
-      lines.push(`- Net Rating: ${team.seasonStats.netRtg.toFixed(1)}`)
-  } else {
-    lines.push(`- Récord temporada: N/D`)
-  }
-
   const positions = team.roster.reduce<Record<string, number>>((acc, p) => {
     const pos = (p.position || "?").toUpperCase().charAt(0)
     acc[pos] = (acc[pos] ?? 0) + 1

@@ -13,13 +13,10 @@ export default async function TeamOgImage({ params }: Props) {
   const team = await getTeamBySlug(league, slug).catch(() => null)
 
   const title = team?.name ?? "Team"
-  const record = team?.seasonStats
-    ? `${team.seasonStats.wins ?? 0}-${team.seasonStats.losses ?? 0}`
-    : null
   const chips = [
     team?.league.name,
-    record ? `Record ${record}` : null,
     `${team?.roster.length ?? 0} players`,
+    `${team?.staff.length ?? 0} staff`,
   ].filter(Boolean) as string[]
 
   return ogCard({

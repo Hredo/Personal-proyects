@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, like, sql } from "drizzle-orm"
+import { and, asc, eq, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
-import { leagues, players, seasons, teamSeasonStats, teams } from "@/lib/db/schema"
+import { leagues, players, teams } from "@/lib/db/schema"
 import type { PlayerListItem } from "@/lib/data/players"
 import type { CoachListItem } from "@/lib/data/staff"
 import { cached } from "@/lib/data/cache"
@@ -18,27 +18,12 @@ export type TeamListItem = {
   primaryColor: string | null
   league: { id: string; name: string; slug: string; country: string }
   playerCount: number
-  seasonStats: {
-    seasonId: string
-    year: number
-    gamesPlayed: number
-    wins: number | null
-    losses: number | null
-    winPct: number | null
-    pointsFor: number | null
-    pointsAgainst: number | null
-    position: number | null
-    pace: number | null
-    offRtg: number | null
-    defRtg: number | null
-    netRtg: number | null
-  } | null
 }
 
 export type ListTeamsInput = {
   query?: string
   league?: string
-  sort?: "name" | "players" | "wins" | "netRtg"
+  sort?: "name" | "players"
   order?: "asc" | "desc"
   page?: number
   pageSize?: number
@@ -86,10 +71,6 @@ export async function listTeams(
     switch (sort) {
       case "players":
         return sql`coalesce(${playerCountExpr}, 0) ${sql.raw(dir)}, ${teams.name} ${sql.raw(dir)}`
-      case "wins":
-        return sql`coalesce(${teamSeasonStats.wins}, 0) ${sql.raw(dir)}, ${teams.name} ${sql.raw(dir)}`
-      case "netRtg":
-        return sql`coalesce(${teamSeasonStats.netRtg}, 0) ${sql.raw(dir)}, ${teams.name} ${sql.raw(dir)}`
       default:
         return sql`${teams.name} ${sql.raw(dir)}`
     }
@@ -112,33 +93,9 @@ export async function listTeams(
       leagueSlug: leagues.slug,
       leagueCountry: leagues.country,
       playerCount: playerCountExpr,
-      seasonId: teamSeasonStats.seasonId,
-      seasonYear: seasons.year,
-      gamesPlayed: teamSeasonStats.gamesPlayed,
-      wins: teamSeasonStats.wins,
-      losses: teamSeasonStats.losses,
-      winPct: teamSeasonStats.winPct,
-      pointsFor: teamSeasonStats.pointsFor,
-      pointsAgainst: teamSeasonStats.pointsAgainst,
-      position: teamSeasonStats.position,
-      pace: teamSeasonStats.pace,
-      offRtg: teamSeasonStats.offRtg,
-      defRtg: teamSeasonStats.defRtg,
-      netRtg: teamSeasonStats.netRtg,
     })
     .from(teams)
     .innerJoin(leagues, eq(teams.leagueId, leagues.id))
-    .leftJoin(
-      teamSeasonStats,
-      and(
-        eq(teamSeasonStats.teamId, teams.id),
-        eq(
-          teamSeasonStats.seasonId,
-          sql`(select s.id from seasons s where s.league_id = ${leagues.id} order by s.year desc limit 1)`,
-        ),
-      ),
-    )
-    .leftJoin(seasons, eq(teamSeasonStats.seasonId, seasons.id))
     .where(where)
     .orderBy(orderByExpr)
     .limit(pageSize)
@@ -165,24 +122,6 @@ export async function listTeams(
         country: r.leagueCountry,
       },
       playerCount: Number(r.playerCount ?? 0),
-      seasonStats:
-        r.gamesPlayed == null
-          ? null
-          : {
-              seasonId: r.seasonId!,
-              year: r.seasonYear ?? 0,
-              gamesPlayed: r.gamesPlayed,
-              wins: r.wins,
-              losses: r.losses,
-              winPct: r.winPct,
-              pointsFor: r.pointsFor,
-              pointsAgainst: r.pointsAgainst,
-              position: r.position,
-              pace: r.pace,
-              offRtg: r.offRtg,
-              defRtg: r.defRtg,
-              netRtg: r.netRtg,
-            },
     })),
     total,
     page,
@@ -232,21 +171,6 @@ export type TeamProfile = {
   }
   roster: PlayerListItem[]
   staff: CoachListItem[]
-  seasonStats: {
-    seasonId: string
-    year: number
-    gamesPlayed: number
-    wins: number | null
-    losses: number | null
-    winPct: number | null
-    pointsFor: number | null
-    pointsAgainst: number | null
-    position: number | null
-    pace: number | null
-    offRtg: number | null
-    defRtg: number | null
-    netRtg: number | null
-  } | null
 }
 
 export const getTeamBySlug = cached(
@@ -287,7 +211,7 @@ export const getTeamBySlug = cached(
   const { listPlayers } = await import("@/lib/data/players")
   const { listCoachesByTeam } = await import("@/lib/data/staff")
 
-  const [roster, staff, statRows] = await Promise.all([
+  const [roster, staff] = await Promise.all([
     listPlayers({
       league: leagueSlug,
       team: r.name,
@@ -296,35 +220,7 @@ export const getTeamBySlug = cached(
       pageSize: 200,
     }),
     listCoachesByTeam(r.id),
-    db
-      .select({
-        seasonId: teamSeasonStats.seasonId,
-        year: seasons.year,
-        gamesPlayed: teamSeasonStats.gamesPlayed,
-        wins: teamSeasonStats.wins,
-        losses: teamSeasonStats.losses,
-        winPct: teamSeasonStats.winPct,
-        pointsFor: teamSeasonStats.pointsFor,
-        pointsAgainst: teamSeasonStats.pointsAgainst,
-        position: teamSeasonStats.position,
-        pace: teamSeasonStats.pace,
-        offRtg: teamSeasonStats.offRtg,
-        defRtg: teamSeasonStats.defRtg,
-        netRtg: teamSeasonStats.netRtg,
-      })
-      .from(teamSeasonStats)
-      .innerJoin(seasons, eq(teamSeasonStats.seasonId, seasons.id))
-      .where(
-        and(
-          eq(teamSeasonStats.teamId, r.id),
-          eq(seasons.leagueId, r.leagueId),
-        ),
-      )
-      .orderBy(desc(seasons.year))
-      .limit(1),
   ])
-
-  const seasonStats = statRows[0] ?? null
 
   return {
     id: r.id,
@@ -349,26 +245,9 @@ export const getTeamBySlug = cached(
     },
     roster: roster.items,
     staff,
-    seasonStats: seasonStats
-      ? {
-          seasonId: seasonStats.seasonId,
-          year: seasonStats.year,
-          gamesPlayed: seasonStats.gamesPlayed,
-          wins: seasonStats.wins,
-          losses: seasonStats.losses,
-          winPct: seasonStats.winPct,
-          pointsFor: seasonStats.pointsFor,
-          pointsAgainst: seasonStats.pointsAgainst,
-          position: seasonStats.position,
-          pace: seasonStats.pace,
-          offRtg: seasonStats.offRtg,
-          defRtg: seasonStats.defRtg,
-          netRtg: seasonStats.netRtg,
-        }
-      : null,
   }
   },
   "getTeamBySlug",
-  ["teams", "players", "team-stats"],
+  ["teams", "players"],
   3600,
 )

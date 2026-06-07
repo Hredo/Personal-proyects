@@ -9,22 +9,6 @@ type Props = {
   index: number
 }
 
-function formatPct(value: number | null): string {
-  if (value == null) return "—"
-  return `${(value * 100).toFixed(1)}%`
-}
-
-function formatRecord(wins: number | null, losses: number | null): string {
-  if (wins == null || losses == null) return "—"
-  return `${wins}-${losses}`
-}
-
-function formatNetRtg(value: number | null): string {
-  if (value == null) return "—"
-  const sign = value > 0 ? "+" : ""
-  return `${sign}${value.toFixed(1)}`
-}
-
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
@@ -34,13 +18,6 @@ function initials(name: string): string {
 export function LeagueOverview({ data, index }: Props) {
   const theme = getLeagueTheme(data.slug)
   const accentBarStyle = { background: theme.glowVar }
-  const teamAccent = data.leader?.primaryColor
-  const leaderRing = teamAccent
-    ? { boxShadow: `0 0 24px -8px ${teamAccent}` }
-    : undefined
-  const leaderSwatchStyle = teamAccent
-    ? { background: teamAccent, boxShadow: `0 0 18px -2px ${teamAccent}` }
-    : undefined
 
   return (
     <article
@@ -190,73 +167,6 @@ export function LeagueOverview({ data, index }: Props) {
         ) : (
           <p className="mt-3 rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-3 py-4 text-center text-xs text-ink-400">
             No scorer data yet for this league.
-          </p>
-        )}
-      </section>
-
-      <div
-        aria-hidden
-        className={`my-5 h-px bg-gradient-to-r from-transparent ${theme.divider} to-transparent`}
-      />
-
-      <section className="relative">
-        <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-300 sm:text-[11px]">
-          <span className={`h-1.5 w-1.5 rounded-full ${theme.accentBg}`} />
-          Season leader
-        </p>
-        {data.leader ? (
-          <Link
-            href={`/teams/${data.slug}/${data.leader.slug}`}
-            className="group/leader mt-3 flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-3 transition hover:border-white/20 hover:bg-white/[0.05]"
-            style={leaderRing}
-          >
-            <span
-              className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-white/95"
-              style={leaderSwatchStyle}
-            >
-              {data.leader.logoUrl ? (
-                <Image
-                  src={data.leader.logoUrl}
-                  alt={data.leader.name}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 object-contain p-1"
-                  unoptimized
-                />
-              ) : (
-                <span
-                  className="font-display text-sm font-bold text-ink-950"
-                  style={
-                    data.leader.primaryColor ? { color: "#0a0a0a" } : undefined
-                  }
-                >
-                  {initials(data.leader.name)}
-                </span>
-              )}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-ink-50 group-hover/leader:text-white">
-                {data.leader.name}
-              </p>
-              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-400">
-                {formatRecord(data.leader.wins, data.leader.losses)} · Win%{" "}
-                {formatPct(data.leader.winPct)}
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p
-                className={`font-mono text-base font-bold tabular-nums ${theme.accentText}`}
-              >
-                {formatNetRtg(data.leader.netRtg)}
-              </p>
-              <p className="font-mono text-[9px] uppercase tracking-widest text-ink-500">
-                NetRtg
-              </p>
-            </div>
-          </Link>
-        ) : (
-          <p className="mt-3 rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-3 py-4 text-center text-xs text-ink-400">
-            No standings synced yet.
           </p>
         )}
       </section>

@@ -19,8 +19,6 @@ const SORTS_PLAYERS = [
 
 const SORTS_TEAMS = [
   { value: "name", label: "Name" },
-  { value: "wins", label: "Wins" },
-  { value: "netRtg", label: "Net rating" },
   { value: "players", label: "Roster size" },
 ] as const
 

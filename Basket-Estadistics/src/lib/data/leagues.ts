@@ -6,7 +6,6 @@ import {
   playerStats,
   players,
   seasons,
-  teamSeasonStats,
   teams,
 } from "@/lib/db/schema"
 import { cached } from "@/lib/data/cache"
@@ -18,18 +17,6 @@ export type LeagueScorer = {
   photoUrl: string | null
   team: { id: string; name: string; slug: string; logoUrl: string | null } | null
   ppg: number
-}
-
-export type LeagueLeader = {
-  teamId: string
-  name: string
-  slug: string
-  logoUrl: string | null
-  primaryColor: string | null
-  wins: number | null
-  losses: number | null
-  winPct: number | null
-  netRtg: number | null
 }
 
 export type LeagueOverview = {
@@ -45,7 +32,6 @@ export type LeagueOverview = {
   playerCount: number
   coachCount: number
   topScorers: LeagueScorer[]
-  leader: LeagueLeader | null
 }
 
 export type GlobalLeagueCounts = {
@@ -154,47 +140,6 @@ async function fetchTopScorers(
   }))
 }
 
-async function fetchLeader(
-  db: ReturnType<typeof getDb>,
-  seasonId: string,
-): Promise<LeagueLeader | null> {
-  const rows = await db
-    .select({
-      teamId: teams.id,
-      name: teams.name,
-      slug: teams.slug,
-      logoUrl: teams.logoUrl,
-      primaryColor: teams.primaryColor,
-      wins: teamSeasonStats.wins,
-      losses: teamSeasonStats.losses,
-      winPct: teamSeasonStats.winPct,
-      netRtg: teamSeasonStats.netRtg,
-    })
-    .from(teamSeasonStats)
-    .innerJoin(teams, eq(teamSeasonStats.teamId, teams.id))
-    .where(
-      and(
-        eq(teamSeasonStats.seasonId, seasonId),
-        isNotNull(teamSeasonStats.winPct),
-      ),
-    )
-    .orderBy(sql`${teamSeasonStats.winPct} desc`)
-    .limit(1)
-  const r = rows[0]
-  if (!r) return null
-  return {
-    teamId: r.teamId,
-    name: r.name,
-    slug: r.slug,
-    logoUrl: r.logoUrl,
-    primaryColor: r.primaryColor,
-    wins: r.wins,
-    losses: r.losses,
-    winPct: r.winPct,
-    netRtg: r.netRtg,
-  }
-}
-
 export const listLeagueOverviews = cached(
   async (): Promise<LeagueOverview[]> => {
   const db = getDb()
@@ -216,12 +161,9 @@ export const listLeagueOverviews = cached(
         fetchCounts(db, row),
         fetchLatestSeason(db, row.id),
       ])
-      const [topScorers, leader] = season
-        ? await Promise.all([
-            fetchTopScorers(db, season.id, 3),
-            fetchLeader(db, season.id),
-          ])
-        : [[] as LeagueScorer[], null as LeagueLeader | null]
+      const topScorers = season
+        ? await fetchTopScorers(db, season.id, 3)
+        : ([] as LeagueScorer[])
       return {
         id: row.id,
         slug: row.slug,
@@ -235,7 +177,6 @@ export const listLeagueOverviews = cached(
         playerCount: counts.playerCount,
         coachCount: counts.coachCount,
         topScorers,
-        leader,
       }
     }),
   )

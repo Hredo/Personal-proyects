@@ -1,5 +1,4 @@
 import { TeamLogoHero } from "@/components/teams/team-logo-hero"
-import { TeamStatsStrip } from "@/components/teams/team-stats-strip"
 
 type Props = {
   name: string
@@ -12,15 +11,6 @@ type Props = {
   arena: string | null
   arenaCapacity: number | null
   websiteUrl: string | null
-  seasonStats: {
-    year: number
-    gamesPlayed: number
-    wins: number | null
-    losses: number | null
-    position: number | null
-    pointsFor: number | null
-    pointsAgainst: number | null
-  } | null
 }
 
 export function TeamHero({
@@ -34,7 +24,6 @@ export function TeamHero({
   arena,
   arenaCapacity,
   websiteUrl,
-  seasonStats,
 }: Props) {
   const location = [city, country].filter(Boolean).join(", ") || null
   return (
@@ -106,11 +95,6 @@ export function TeamHero({
                 {websiteUrl.replace(/^https?:\/\//, "")} ↗
               </a>
             </p>
-          ) : null}
-          {seasonStats ? (
-            <div className="mt-6">
-              <TeamStatsStrip stats={seasonStats} />
-            </div>
           ) : null}
         </div>
       </div>

@@ -127,8 +127,8 @@ async function main() {
   await bench("listTeams (all leagues, sort=name asc)", () =>
     listTeams({ sort: "name", order: "asc", pageSize: 24 }),
   )
-  await bench("listTeams (league=nba, sort=wins desc)", () =>
-    listTeams({ league: "nba", sort: "wins", order: "desc", pageSize: 24 }),
+  await bench("listTeams (league=nba, sort=players desc)", () =>
+    listTeams({ league: "nba", sort: "players", order: "desc", pageSize: 24 }),
   )
 
   await bench("getPlayerBySlug (raw, nikola-jokic)", () =>
