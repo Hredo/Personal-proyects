@@ -279,10 +279,6 @@ export const users = sqliteTable(
     role: text("role", { enum: ["user", "admin"] })
       .notNull()
       .default("user"),
-    authProvider: text("auth_provider", { enum: ["email", "google"] })
-      .notNull()
-      .default("email"),
-    googleSub: text("google_sub"),
     proSince: integer("pro_since", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
@@ -291,10 +287,7 @@ export const users = sqliteTable(
       .notNull()
       .$defaultFn(now),
   },
-  (t) => [
-    uniqueIndex("users_email_idx").on(t.email),
-    uniqueIndex("users_google_sub_idx").on(t.googleSub),
-  ],
+  (t) => [uniqueIndex("users_email_idx").on(t.email)],
 )
 
 export const sessions = sqliteTable(

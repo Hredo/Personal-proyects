@@ -24,12 +24,6 @@ const serverSchema = z.object({
     z.coerce.number().int().min(1).max(365).default(30),
   ),
   ADMIN_EMAILS: z.preprocess(emptyToUndefined, z.string().optional()),
-  GOOGLE_CLIENT_ID: z.preprocess(emptyToUndefined, z.string().optional()),
-  GOOGLE_CLIENT_SECRET: z.preprocess(emptyToUndefined, z.string().optional()),
-  GOOGLE_REDIRECT_URI: z.preprocess(
-    emptyToUndefined,
-    z.string().url().optional(),
-  ),
   HUGGINGFACE_API_KEY: z.preprocess(
     emptyToUndefined,
     z.string().min(1).optional(),
