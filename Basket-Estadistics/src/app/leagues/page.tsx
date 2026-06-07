@@ -42,7 +42,7 @@ export default async function LeaguesPage() {
             League <span className="text-gradient-shimmer">hubs.</span>
           </h1>
           <p className="mt-4 max-w-2xl text-sm text-ink-200 sm:text-base">
-            Three professional leagues, one scouting engine. Each hub shows the
+            Six professional leagues, one scouting engine. Each hub shows the
             current season, the top three scorers, the team on top of the
             standings and direct jumps to the player and team directories.
           </p>

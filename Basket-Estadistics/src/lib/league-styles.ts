@@ -52,7 +52,18 @@ const THEME: Record<LeagueThemeKey, LeagueTheme> = {
   },
 }
 
+// FEB leagues share the Spanish (ACB) colour family but need their own badge
+// label so they don't fall back to the NBA theme.
+const LABEL_OVERRIDES: Record<string, { base: LeagueThemeKey; label: string }> =
+  {
+    "leb-oro": { base: "acb", label: "ORO" },
+    "leb-plata": { base: "acb", label: "PLATA" },
+    eba: { base: "acb", label: "EBA" },
+  }
+
 export function getLeagueTheme(slug: string | null | undefined): LeagueTheme {
-  const key = (slug ?? "").toLowerCase() as LeagueThemeKey
-  return THEME[key] ?? THEME.nba
+  const s = (slug ?? "").toLowerCase()
+  const override = LABEL_OVERRIDES[s]
+  if (override) return { ...THEME[override.base], label: override.label }
+  return THEME[s as LeagueThemeKey] ?? THEME.nba
 }
