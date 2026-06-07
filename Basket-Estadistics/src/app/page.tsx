@@ -142,11 +142,11 @@ export default async function Home() {
         />
         <div
           aria-hidden
-          className="absolute -top-40 left-1/2 -z-10 h-[420px] w-[760px] -translate-x-1/2 rounded-full bg-brand-500/20 blur-3xl sm:h-[560px] sm:w-[1100px]"
+          className="absolute -top-40 left-1/2 -z-10 h-[420px] w-[760px] -translate-x-1/2 animate-aurora rounded-full bg-brand-500/20 blur-3xl sm:h-[560px] sm:w-[1100px]"
         />
         <div
           aria-hidden
-          className="absolute right-[5%] top-[30%] -z-10 hidden h-72 w-72 rounded-full bg-accent-magenta/15 blur-3xl md:block"
+          className="absolute right-[5%] top-[30%] -z-10 hidden h-72 w-72 animate-aurora rounded-full bg-accent-cyan/15 blur-3xl [animation-delay:-8s] md:block"
         />
 
         <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-12">
@@ -162,7 +162,7 @@ export default async function Home() {
             </FadeIn>
 
             <FadeIn delay={0.08} y={28}>
-              <h1 className="mt-5 font-display text-[2.6rem] font-bold leading-[0.95] tracking-[-0.02em] text-ink-50 sm:mt-6 sm:text-6xl md:text-7xl xl:text-[5.5rem]">
+              <h1 className="mt-5 font-display text-[2.9rem] font-bold leading-[0.92] tracking-[-0.03em] text-ink-50 sm:mt-6 sm:text-[4.5rem] md:text-[5.5rem] xl:text-[6.25rem]">
                 Hoops, <span className="text-gradient-shimmer">decoded.</span>
               </h1>
             </FadeIn>
@@ -180,7 +180,7 @@ export default async function Home() {
               <div className="mt-7 flex flex-wrap items-center gap-3 sm:mt-8 sm:gap-4">
                 <Link
                   href="/compare"
-                  className="group inline-flex items-center gap-2 rounded-md bg-brand-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400 sm:px-6 sm:text-base"
+                  className="group inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition duration-200 hover:bg-brand-400 active:translate-y-px sm:px-6 sm:text-base"
                 >
                   Open the console
                   <svg
@@ -198,7 +198,7 @@ export default async function Home() {
                 </Link>
                 <Link
                   href="/players"
-                  className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200 sm:text-base"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition duration-200 hover:border-brand-400/60 hover:bg-white/[0.07] hover:text-brand-200 active:translate-y-px sm:text-base"
                 >
                   Browse the database
                 </Link>
@@ -206,20 +206,20 @@ export default async function Home() {
             </FadeIn>
 
             <FadeIn delay={0.4}>
-              <dl className="mt-9 grid max-w-lg grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-4 sm:gap-6">
+              <dl className="mt-9 grid max-w-lg grid-cols-2 gap-x-4 gap-y-5 sm:mt-12 sm:grid-cols-4 sm:gap-6">
                 {stats.map((s) => (
                   <div
                     key={s.label}
-                    className="border-l border-white/10 pl-3 sm:pl-4"
+                    className="border-l-2 border-brand-500/40 pl-3 sm:pl-4"
                   >
-                    <dt className="font-display text-2xl font-bold text-ink-50 sm:text-3xl">
+                    <dt className="font-display text-2xl font-bold tabular-nums text-ink-50 sm:text-3xl">
                       <CountUp
                         to={s.v}
                         suffix={s.suffix}
                         decimals={"decimals" in s ? s.decimals : 0}
                       />
                     </dt>
-                    <dd className="mt-1 text-[10px] uppercase tracking-wider text-ink-300 sm:text-[11px]">
+                    <dd className="mt-1 text-[10px] uppercase tracking-wider text-ink-400 sm:text-[11px]">
                       {s.label}
                     </dd>
                   </div>
@@ -334,27 +334,27 @@ export default async function Home() {
             </p>
           </FadeIn>
         </div>
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-5 sm:mt-14 md:grid-cols-3 md:gap-6">
           {PILLARS.map((pillar, i) => (
-            <FadeIn key={pillar.n} delay={0.05 * i}>
-              <article className="group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-brand-400/50 hover:bg-white/[0.05] sm:p-6">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-mono text-xs uppercase tracking-widest text-brand-300">
+            <FadeIn key={pillar.n} delay={0.06 * i}>
+              <article className="gh-card gh-card-interactive group relative flex h-full flex-col overflow-hidden p-6 sm:p-7">
+                <div className="flex items-start justify-between">
+                  <span className="text-outline font-display text-6xl font-bold leading-none tabular-nums sm:text-7xl">
                     {pillar.n}
                   </span>
-                  <span className="font-display text-2xl font-bold text-ink-700 transition group-hover:text-ink-500">
-                    {pillar.title}
+                  <span className="rounded-md bg-white/[0.04] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400 ring-1 ring-white/10">
+                    step {i + 1}
                   </span>
                 </div>
-                <h3 className="mt-4 font-display text-lg font-semibold text-ink-50 sm:text-xl">
+                <h3 className="mt-7 font-display text-xl font-bold tracking-tight text-ink-50 sm:text-2xl">
                   {pillar.title}
                 </h3>
-                <p className="mt-2 text-sm text-ink-200 sm:mt-3">
+                <p className="mt-2 text-sm leading-relaxed text-ink-300">
                   {pillar.body}
                 </p>
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute -bottom-12 -right-12 h-32 w-32 rounded-full bg-brand-500/0 blur-2xl transition group-hover:bg-brand-500/30"
+                  className="pointer-events-none absolute -bottom-16 -right-16 h-40 w-40 rounded-full bg-brand-500/0 blur-3xl transition duration-500 group-hover:bg-brand-500/25"
                 />
               </article>
             </FadeIn>
@@ -397,11 +397,11 @@ export default async function Home() {
       <section className="relative my-12 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-court-800/80 via-ink-900/90 to-ink-950 p-6 sm:my-20 sm:p-10 md:p-14">
         <div
           aria-hidden
-          className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-500/30 blur-3xl"
+          className="absolute -left-24 -top-24 h-72 w-72 animate-aurora rounded-full bg-brand-500/30 blur-3xl"
         />
         <div
           aria-hidden
-          className="absolute -right-16 -bottom-16 h-64 w-64 rounded-full bg-accent-cyan/20 blur-3xl"
+          className="absolute -right-16 -bottom-16 h-64 w-64 animate-aurora rounded-full bg-accent-cyan/20 blur-3xl [animation-delay:-10s]"
         />
         <div
           aria-hidden
@@ -433,11 +433,11 @@ export default async function Home() {
           <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
             <Link
               href="/ai-advisor"
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-500 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
+              className="group inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition duration-200 hover:bg-brand-400 active:translate-y-px"
             >
               Try the AI Advisor
               <svg
-                className="h-4 w-4"
+                className="h-4 w-4 transition group-hover:translate-x-1"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -451,7 +451,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/players"
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 bg-white/5 px-6 py-3.5 text-base font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-6 py-3.5 text-base font-semibold text-ink-50 transition duration-200 hover:border-brand-400/60 hover:bg-white/[0.07] hover:text-brand-200 active:translate-y-px"
             >
               Browse players
             </Link>

@@ -154,7 +154,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <header className="sticky top-0 z-40 border-b border-white/5 bg-ink-950/80 backdrop-blur supports-[backdrop-filter]:bg-ink-950/50">
+        <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-ink-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-ink-950/55">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
             <Link
               href="/"
@@ -204,7 +204,7 @@ export default function RootLayout({
               <UserMenu />
               <Link
                 href="/compare"
-                className="hidden rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400 md:inline-flex"
+                className="hidden rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition duration-200 hover:bg-brand-400 active:translate-y-px md:inline-flex"
               >
                 Open console
               </Link>

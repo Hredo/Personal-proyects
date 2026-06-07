@@ -73,12 +73,30 @@ export function PlayersInfiniteView({
     rootMargin: "0px 0px 400px 0px",
   })
 
+  const ranked = sort !== "name"
+
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-16 text-center">
-        <p className="text-ink-100">No players match your filters.</p>
-        <p className="mt-1 text-sm text-ink-400">
-          Try a different league or a partial name.
+      <div className="gh-card flex flex-col items-center justify-center px-6 py-20 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.04] ring-1 ring-white/10">
+          <svg
+            className="h-5 w-5 text-ink-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="m21 21-4.3-4.3M16.65 10.65a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z" />
+          </svg>
+        </div>
+        <p className="mt-4 font-display text-lg font-semibold text-ink-50">
+          No players match your filters
+        </p>
+        <p className="mt-1 max-w-xs text-sm text-ink-400">
+          Try a different league or search a partial name.
         </p>
       </div>
     )
@@ -93,9 +111,9 @@ export function PlayersInfiniteView({
           hidden: {},
           show: { transition: { staggerChildren: 0.02, delayChildren: 0.05 } },
         }}
-        className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
       >
-        {items.map((p) => (
+        {items.map((p, i) => (
           <motion.li
             key={p.id}
             variants={{
@@ -104,7 +122,7 @@ export function PlayersInfiniteView({
             }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <PlayerCardElegant player={p} />
+            <PlayerCardElegant player={p} rank={ranked ? i + 1 : undefined} />
           </motion.li>
         ))}
       </motion.ul>

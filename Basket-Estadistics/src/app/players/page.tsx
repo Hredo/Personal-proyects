@@ -12,7 +12,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: "Players",
   description:
-    "Browse every player across the NBA, EuroLeague and Liga ACB. Filter by league, sort by points/rebounds/assists and dig into advanced profiles.",
+    "Browse every player across all covered leagues. Filter by league, sort by points, rebounds or assists and dig into advanced profiles.",
 }
 
 const SORT_VALUES = new Set(["points", "rebounds", "assists", "name"])
@@ -53,29 +53,36 @@ export default async function PlayersPage(props: {
 
   return (
     <div className="py-10 sm:py-14">
-      <header className="mb-8 sm:mb-10">
-        <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
-          Directory
-        </p>
-        <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl md:text-6xl">
-          Players
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-ink-300 sm:text-base">
-          <span className="font-mono font-semibold text-ink-100">
-            {result.total.toLocaleString("en-US")}
-          </span>{" "}
-          player{result.total === 1 ? "" : "s"} across the NBA, EuroLeague and
-          Liga ACB.
-        </p>
+      <header className="mb-7 sm:mb-9">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+          <div>
+            <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-brand-300">
+              <span className="h-px w-6 bg-brand-400/60" />
+              Directory
+            </p>
+            <h1 className="mt-3 font-display text-5xl font-bold leading-[0.95] tracking-[-0.02em] text-ink-50 sm:text-6xl md:text-7xl">
+              Players
+            </h1>
+          </div>
+          <p className="max-w-xs text-sm leading-relaxed text-ink-300">
+            <span className="font-display text-2xl font-bold tabular-nums text-ink-50">
+              {result.total.toLocaleString("en-US")}
+            </span>{" "}
+            player{result.total === 1 ? "" : "s"} indexed across every covered
+            league — searchable and rankable in one place.
+          </p>
+        </div>
       </header>
 
-      <div className="mb-8">
-        <DirectoryControls
-          basePath="/players"
-          kind="players"
-          total={result.total}
-          showing={result.items.length}
-        />
+      <div className="sticky top-[68px] z-30 -mx-4 mb-7 px-4 py-3 sm:top-[76px] sm:-mx-6 sm:px-6">
+        <div className="gh-glass rounded-2xl px-3 py-2.5 sm:px-4">
+          <DirectoryControls
+            basePath="/players"
+            kind="players"
+            total={result.total}
+            showing={result.items.length}
+          />
+        </div>
       </div>
 
       <PlayersInfiniteView
