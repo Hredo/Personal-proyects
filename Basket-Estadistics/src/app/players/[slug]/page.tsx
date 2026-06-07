@@ -9,6 +9,9 @@ import { getPlayerBySlug } from "@/lib/data/players"
 import { FadeIn } from "@/components/animations/fade-in"
 import { StatBar } from "@/components/players/stat-bar"
 import { SmartImage } from "@/components/ui/smart-image"
+import { JsonLd } from "@/components/marketing/json-ld"
+import { breadcrumbJsonLd, playerJsonLd } from "@/lib/seo/structured-data"
+import { SITE } from "@/lib/site"
 import { HighlightsSection } from "./highlights"
 
 type Props = { params: Promise<{ slug: string }> }
@@ -27,6 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: profile.fullName,
     description,
+    alternates: { canonical: `${SITE.url}/players/${slug}` },
   }
 }
 
@@ -113,8 +117,28 @@ export default async function PlayerPage({ params }: Props) {
 
   const season = profile.seasons[0]
 
+  const structuredData = [
+    playerJsonLd({
+      fullName: profile.fullName,
+      slug: profile.slug,
+      position: profile.position,
+      nationality: profile.nationality,
+      birthdate: profile.birthdate,
+      heightCm: profile.heightCm,
+      weightKg: profile.weightKg,
+      photoUrl: profile.photoUrl,
+      teamName: profile.team?.name ?? null,
+      leagueName: profile.league.name,
+    }),
+    breadcrumbJsonLd([
+      { name: "Players", path: "/players" },
+      { name: profile.fullName, path: `/players/${profile.slug}` },
+    ]),
+  ]
+
   return (
     <div className="py-6 sm:py-10">
+      <JsonLd data={structuredData} />
       <FadeIn>
         <Link
           href="/players"
