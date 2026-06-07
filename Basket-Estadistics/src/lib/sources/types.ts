@@ -1,4 +1,10 @@
-export type SourceId = "nba" | "acb" | "euroleague"
+export type SourceId =
+  | "nba"
+  | "acb"
+  | "euroleague"
+  | "leb-oro"
+  | "leb-plata"
+  | "eba"
 
 export const CURRENT_SEASON = 2025
 
@@ -25,6 +31,24 @@ export const SOURCE_META: Record<
   },
   acb: {
     displayName: "Liga Endesa",
+    country: "ES",
+    seasonCode: "2025-26",
+    season: 2025,
+  },
+  "leb-oro": {
+    displayName: "LEB Oro",
+    country: "ES",
+    seasonCode: "2025-26",
+    season: 2025,
+  },
+  "leb-plata": {
+    displayName: "LEB Plata",
+    country: "ES",
+    seasonCode: "2025-26",
+    season: 2025,
+  },
+  eba: {
+    displayName: "Liga EBA",
     country: "ES",
     seasonCode: "2025-26",
     season: 2025,

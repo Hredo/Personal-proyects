@@ -18,6 +18,10 @@
     "sync:nba": "tsx scripts/sync.ts nba",
     "sync:euroleague": "tsx scripts/sync.ts euroleague",
     "sync:acb": "tsx scripts/sync.ts acb",
+    "sync:leb-oro": "tsx scripts/sync.ts leb-oro",
+    "sync:leb-plata": "tsx scripts/sync.ts leb-plata",
+    "sync:eba": "tsx scripts/sync.ts eba",
+    "sync:feb": "tsx scripts/sync.ts leb-oro leb-plata eba",
     "backfill:colors": "tsx scripts/backfill-team-colors.ts",
     "backfill:players": "tsx scripts/backfill-players.ts",
     "db:dedupe-players": "tsx scripts/dedupe-players.ts"

@@ -48,14 +48,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  const teamEntries: MetadataRoute.Sitemap = teamOptions
-    .filter((t) => ["nba", "euroleague", "acb"].includes(t.leagueSlug))
-    .map((t) => ({
-      url: `${SITE.url}/teams/${t.leagueSlug}/${t.slug}`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.8,
-    }))
+  const teamEntries: MetadataRoute.Sitemap = teamOptions.map((t) => ({
+    url: `${SITE.url}/teams/${t.leagueSlug}/${t.slug}`,
+    lastModified: now,
+    changeFrequency: "daily",
+    priority: 0.8,
+  }))
 
   const coachEntries: MetadataRoute.Sitemap = coachSlugs.map((c) => ({
     url: `${SITE.url}/coaches/${c.slug}`,

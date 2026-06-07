@@ -116,17 +116,18 @@ async function main() {
   console.log(`\nPOST (switch to Liga Regular ${LIGA_REGULAR})`)
   const post = await getText(url, { method: "POST", body: body.toString() })
   const lr = countData(post)
-  console.log(`  liga regular -> players=${lr.players} teams=${lr.teams}`)
+  console.log(`  liga regular -> uniquePlayers=${lr.players} teams=${lr.teams}`)
   console.log(`  header: ${lr.header}`)
 
-  // Show a few player rows to confirm parse quality.
-  const rows = post.match(
-    /Jugador\.aspx\?i=\d+&(?:amp;)?c=\d+'>\s*([^<]+?)\s*<\/a>/gi,
-  )
-  console.log("\n  sample players:")
-  for (const r of (rows ?? []).slice(0, 8)) {
-    console.log("   - " + r.replace(/<[^>]+>/g, "").replace(/'?>?$/, "").trim())
-  }
+  const rawPlayerLinks = (post.match(/Jugador\.aspx\?i=\d+&(?:amp;)?c=\d+/gi) ?? [])
+    .length
+  console.log(`  raw player links (row count): ${rawPlayerLinks}`)
+  const pager = post.match(/(Pagina|p[aá]gina|pager|siguiente|>>|_ctl0[^"']*[Pp]ag[^"']*)/g)
+  console.log(`  pagination hints: ${pager ? pager.slice(0, 4).join(" | ") : "none"}`)
+
+  const { writeFileSync } = await import("node:fs")
+  writeFileSync("C:/Users/Hrval/AppData/Local/Temp/feb_lr.html", post)
+  console.log("  wrote response to %TEMP%/feb_lr.html")
 }
 
 main().catch((e) => {

@@ -8,8 +8,6 @@ import { JsonLd } from "@/components/marketing/json-ld"
 import { breadcrumbJsonLd, teamJsonLd } from "@/lib/seo/structured-data"
 import { SITE } from "@/lib/site"
 
-const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
-
 type Params = { league: string; slug: string }
 
 export const dynamicParams = true
@@ -17,10 +15,8 @@ export const dynamicParams = true
 export async function generateStaticParams(): Promise<
   Array<{ league: string; slug: string }>
 > {
-  const options = await listTeamOptions(500)
-  return options
-    .filter((t) => LEAGUE_VALUES.has(t.leagueSlug))
-    .map((t) => ({ league: t.leagueSlug, slug: t.slug }))
+  const options = await listTeamOptions(2000)
+  return options.map((t) => ({ league: t.leagueSlug, slug: t.slug }))
 }
 
 export async function generateMetadata({
@@ -29,7 +25,6 @@ export async function generateMetadata({
   params: Promise<Params>
 }): Promise<Metadata> {
   const { league, slug } = await params
-  if (!LEAGUE_VALUES.has(league)) return { title: "Team not found" }
   const team = await getTeamBySlug(league, slug)
   if (!team) return { title: "Team not found" }
   const record = team.seasonStats
@@ -49,7 +44,6 @@ export default async function TeamDetailPage({
   params: Promise<Params>
 }) {
   const { league, slug } = await params
-  if (!LEAGUE_VALUES.has(league)) notFound()
   const team = await getTeamBySlug(league, slug)
   if (!team) notFound()
 
