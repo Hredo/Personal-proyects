@@ -266,6 +266,121 @@ export const shortlistPlayers = sqliteTable(
   ],
 )
 
+export const users = sqliteTable(
+  "users",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    email: text("email").notNull(),
+    name: text("name").notNull(),
+    passwordHash: text("password_hash"),
+    plan: text("plan", { enum: ["free", "pro"] })
+      .notNull()
+      .default("free"),
+    role: text("role", { enum: ["user", "admin"] })
+      .notNull()
+      .default("user"),
+    authProvider: text("auth_provider", { enum: ["email", "google"] })
+      .notNull()
+      .default("email"),
+    googleSub: text("google_sub"),
+    proSince: integer("pro_since", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [
+    uniqueIndex("users_email_idx").on(t.email),
+    uniqueIndex("users_google_sub_idx").on(t.googleSub),
+  ],
+)
+
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    userAgent: text("user_agent"),
+    ip: text("ip"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [
+    index("sessions_user_idx").on(t.userId),
+    index("sessions_expires_idx").on(t.expiresAt),
+  ],
+)
+
+export const conversations = sqliteTable(
+  "conversations",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    teamId: text("team_id"),
+    teamSlug: text("team_slug").notNull(),
+    teamName: text("team_name").notNull(),
+    leagueSlug: text("league_slug").notNull(),
+    title: text("title").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [index("conversations_user_idx").on(t.userId, t.updatedAt)],
+)
+
+export const messages = sqliteTable(
+  "messages",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["user", "assistant"] }).notNull(),
+    content: text("content").notNull(),
+    model: text("model"),
+    mode: text("mode"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt)],
+)
+
+export const compareUses = sqliteTable(
+  "compare_uses",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    usedAt: integer("used_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [index("compare_uses_user_idx").on(t.userId)],
+)
+
+export type Plan = "free" | "pro" | "admin"
+
+export function userPlan(
+  u: { plan: string; role: string } | null | undefined,
+): Plan {
+  if (!u) return "free"
+  if (u.role === "admin") return "admin"
+  return u.plan === "pro" ? "pro" : "free"
+}
+
 export type League = typeof leagues.$inferSelect
 export type Season = typeof seasons.$inferSelect
 export type Team = typeof teams.$inferSelect
@@ -277,6 +392,10 @@ export type Video = typeof videos.$inferSelect
 export type SyncRun = typeof syncRuns.$inferSelect
 export type Shortlist = typeof shortlists.$inferSelect
 export type WaitlistEntry = typeof waitlistEntries.$inferSelect
+export type User = typeof users.$inferSelect
+export type Session = typeof sessions.$inferSelect
+export type Conversation = typeof conversations.$inferSelect
+export type Message = typeof messages.$inferSelect
 
 export const ftsPlayers = sql`
   CREATE VIRTUAL TABLE IF NOT EXISTS players_fts USING fts5(

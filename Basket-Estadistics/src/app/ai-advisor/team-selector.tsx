@@ -35,14 +35,18 @@ function storeCachedTeams(data: TeamOption[]): void {
 
 export function TeamSelector({
   onTeamChange,
+  initialTeam,
 }: {
   onTeamChange: (team: TeamOption) => void
+  initialTeam?: TeamOption | null
 }) {
   const [teams, setTeams] = useState<TeamOption[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
   const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState<TeamOption | null>(null)
+  const [selected, setSelected] = useState<TeamOption | null>(
+    initialTeam ?? null,
+  )
   const [highlightIdx, setHighlightIdx] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -111,6 +115,13 @@ export function TeamSelector({
   useEffect(() => {
     setHighlightIdx(-1)
   }, [query])
+
+  useEffect(() => {
+    if (initialTeam) {
+      setSelected(initialTeam)
+      setQuery(initialTeam.name)
+    }
+  }, [initialTeam])
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (!open) {

@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer"
 import { SearchTrigger } from "@/components/players/search-trigger"
 import { PlayerCommandPalette } from "@/components/players/player-command-palette"
 import { JsonLd } from "@/components/marketing/json-ld"
+import { UserMenu } from "@/components/auth/user-menu"
 import { SITE, SEO_KEYWORDS } from "@/lib/site"
 import "./globals.css"
 
@@ -200,6 +201,7 @@ export default function RootLayout({
             </nav>
             <div className="flex items-center gap-2 sm:gap-3">
               <SearchTrigger />
+              <UserMenu />
               <Link
                 href="/compare"
                 className="hidden rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400 md:inline-flex"

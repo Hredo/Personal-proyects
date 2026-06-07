@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server"
+import { and, eq } from "drizzle-orm"
+import { getDb } from "@/lib/db/client"
+import { conversations, messages } from "@/lib/db/schema"
 import { getTeamBySlug } from "@/lib/data/teams"
 import {
   buildLocalAdvice,
@@ -10,6 +13,9 @@ import {
   isLlmEnabled,
   lastLlmError,
 } from "@/lib/ai/llm"
+import { getCurrentUser } from "@/lib/auth/current-user"
+import { getAdvisorFreeUsage } from "@/lib/auth/free-usage"
+import { userPlan } from "@/lib/db/schema"
 import {
   audit,
   clientIp,
@@ -33,6 +39,8 @@ export type AdvisorRequest = {
   leagueSlug: string
   userMessage: string
   history?: Array<{ role: "user" | "assistant"; content: string }>
+  conversationId?: string
+  conversationTitle?: string
 }
 
 export async function POST(request: Request) {
@@ -40,13 +48,20 @@ export async function POST(request: Request) {
   const origin = request.headers.get("origin")
   const referer = request.headers.get("referer")
 
+  // 0. Auth — middleware already gates this but defense in depth.
+  const user = await getCurrentUser(request.headers.get("cookie"))
+  if (!user) {
+    return jsonError("Authentication required.", 401)
+  }
+  const plan = userPlan(user)
+
   // 1. Rate limit per IP.
   const limit = rateLimit(ip)
   if (!limit.ok) {
     audit("rate-limit", { ip, retryAfterSec: limit.retryAfterSec })
     return new NextResponse(
       JSON.stringify({
-        content: `Demasiadas solicitudes. Intenta de nuevo en ${limit.retryAfterSec}s.`,
+        content: `Too many requests. Try again in ${limit.retryAfterSec}s.`,
         error: true,
       }),
       {
@@ -62,14 +77,14 @@ export async function POST(request: Request) {
   const ct = request.headers.get("content-type") ?? ""
   if (!ct.toLowerCase().includes("application/json")) {
     audit("bad-content-type", { ip, ct })
-    return jsonError("Tipo de contenido no soportado.", 415)
+    return jsonError("Unsupported content type.", 415)
   }
 
   // 3. Body size cap (defence in depth on top of Next's own limits).
   const rawLen = Number(request.headers.get("content-length") ?? 0)
   if (Number.isFinite(rawLen) && rawLen > 0 && rawLen > 64 * 1024) {
     audit("oversized-body", { ip, bytes: rawLen })
-    return jsonError("Solicitud demasiado grande.", 413)
+    return jsonError("Request too large.", 413)
   }
 
   // 4. Origin / referer check (same-origin only).
@@ -102,7 +117,7 @@ export async function POST(request: Request) {
       sameOrigin,
       refererOk,
     })
-    return jsonError("Origen no permitido.", 403)
+    return jsonError("Origin not allowed.", 403)
   }
 
   // 5. Parse body.
@@ -111,7 +126,58 @@ export async function POST(request: Request) {
     body = (await request.json()) as AdvisorRequest
   } catch {
     audit("invalid-json", { ip })
-    return jsonError("JSON inválido.", 400)
+    return jsonError("Invalid JSON.", 400)
+  }
+
+  // 5b. Resolve / create conversation for this user.
+  const db = getDb()
+  let conversationId: string | null =
+    typeof body.conversationId === "string" && body.conversationId.length <= 60
+      ? body.conversationId
+      : null
+  let conversationTitle: string | null = null
+  if (conversationId) {
+    const rows = await db
+      .select({
+        id: conversations.id,
+        userId: conversations.userId,
+        title: conversations.title,
+      })
+      .from(conversations)
+      .where(
+        and(
+          eq(conversations.id, conversationId),
+          eq(conversations.userId, user.id),
+        ),
+      )
+      .limit(1)
+    if (rows.length === 0) {
+      return jsonError("Conversation not found.", 404)
+    }
+  } else {
+    // Check free-quota before creating a new conversation.
+    if (plan === "free") {
+      const usage = await getAdvisorFreeUsage(user.id, user.plan, user.role)
+      if (usage.remaining <= 0) {
+        return NextResponse.json(
+          {
+            error: "free_quota_exceeded",
+            message:
+              "You used your free advisor preview. Upgrade to Pro for unlimited conversations.",
+          },
+          { status: 403, headers: securityHeaders() },
+        )
+      }
+    }
+    conversationId = crypto.randomUUID()
+    const rawTitle =
+      typeof body.conversationTitle === "string"
+        ? body.conversationTitle.trim().slice(0, 160)
+        : ""
+    conversationTitle =
+      rawTitle.length > 0
+        ? rawTitle
+        : `${body.teamSlug} - ${cleanUserText(body.userMessage).slice(0, 60)}`
   }
 
   // 6. Required fields.
@@ -122,10 +188,10 @@ export async function POST(request: Request) {
     typeof body.userMessage !== "string"
   ) {
     audit("missing-fields", { ip })
-    return jsonError("Faltan datos del equipo o la pregunta.", 400)
+    return jsonError("Missing team or question data.", 400)
   }
   if (!body.teamSlug.trim() || !body.leagueSlug.trim()) {
-    return jsonError("Equipo o liga no válidos.", 400)
+    return jsonError("Invalid team or league.", 400)
   }
 
   // 7. Sanitise and bound user input.
@@ -134,7 +200,7 @@ export async function POST(request: Request) {
     MAX_USER_MESSAGE_LEN,
   )
   if (userMessage.length === 0) {
-    return jsonError("La pregunta no puede estar vacía.", 400)
+    return jsonError("The question cannot be empty.", 400)
   }
 
   // 8. Prompt-injection detection.
@@ -146,7 +212,7 @@ export async function POST(request: Request) {
       sample: userMessage.slice(0, 120),
     })
     return jsonError(
-      "Tu mensaje contiene patrones no permitidos. Reformúlalo en una pregunta normal sobre fichajes.",
+      "Your message contains patterns that are not allowed. Rephrase it as a normal scouting question.",
       400,
     )
   }
@@ -175,13 +241,42 @@ export async function POST(request: Request) {
     team = await getTeamBySlug(body.leagueSlug, body.teamSlug)
   } catch (err) {
     audit("team-lookup-error", { ip, err: String(err) })
-    return jsonError("Error al cargar el equipo.", 500)
+    return jsonError("Failed to load team.", 500)
   }
   if (!team) {
     return NextResponse.json(
-      { content: `No se encontró el equipo en ${body.leagueSlug}.` },
+      { content: `Team not found in ${body.leagueSlug}.` },
       { headers: securityHeaders() },
     )
+  }
+
+  // 10b. Persist the new conversation (if not already existing).
+  if (conversationTitle) {
+    try {
+      await db.insert(conversations).values({
+        id: conversationId!,
+        userId: user.id,
+        teamSlug: body.teamSlug,
+        teamName: team.name,
+        leagueSlug: body.leagueSlug,
+        title: conversationTitle,
+      })
+    } catch (err) {
+      audit("conversation-insert-failed", { ip, err: String(err) })
+      return jsonError("Failed to start conversation.", 500)
+    }
+  }
+
+  // 10c. Insert user message into conversation.
+  try {
+    await db.insert(messages).values({
+      id: crypto.randomUUID(),
+      conversationId: conversationId!,
+      role: "user",
+      content: userMessage,
+    })
+  } catch (err) {
+    audit("message-insert-failed", { ip, err: String(err) })
   }
 
   // 11. Optional: find player profile for richer context.
@@ -203,7 +298,7 @@ export async function POST(request: Request) {
     if (ollamaBaseUrl && !safeOllamaBaseUrl(ollamaBaseUrl)) {
       audit("unsafe-ollama-url", { ip, ollamaBaseUrl })
       return jsonError(
-        "OLLAMA_BASE_URL apunta a un destino no permitido (loopback o red privada).",
+        "OLLAMA_BASE_URL points to a destination that is not allowed (loopback or private network).",
         500,
       )
     }
@@ -217,14 +312,20 @@ export async function POST(request: Request) {
       })
       if (llm) {
         const safe = cleanLlmOutput(llm.content)
+        await persistAssistant(db, conversationId!, safe, llm.model, "llm")
         return NextResponse.json(
-          { content: safe, model: llm.model, mode: "llm" as const },
+          {
+            content: safe,
+            model: llm.model,
+            mode: "llm" as const,
+            conversationId,
+          },
           { headers: securityHeaders() },
         )
       }
       console.warn(
-        "AI advisor: LLM habilitado pero la llamada devolvió null. " +
-          `Motivo: ${lastLlmError() ?? "desconocido"}. Usando fallback.`,
+        "AI advisor: LLM enabled but the call returned null. " +
+          `Reason: ${lastLlmError() ?? "unknown"}. Using fallback.`,
       )
     } catch (err) {
       audit("llm-threw", { ip, err: String(err) })
@@ -237,23 +338,51 @@ export async function POST(request: Request) {
   // 13. Fallback (rule-based).
   try {
     const fallback: AdvisorOutput = await buildLocalAdvice(team, userMessage)
+    const safe = cleanLlmOutput(fallback.analysis)
+    await persistAssistant(db, conversationId!, safe, null, "local")
     return NextResponse.json(
       {
-        content: cleanLlmOutput(fallback.analysis),
+        content: safe,
         data: fallback,
         mode: "local" as const,
+        conversationId,
       },
       { headers: securityHeaders() },
     )
   } catch (err) {
     audit("fallback-failed", { ip, err: String(err) })
     return jsonError(
-      "Ocurrió un error al procesar la consulta. Inténtalo de nuevo.",
+      "Something went wrong while processing your query. Please try again.",
       500,
     )
   }
 }
 
+async function persistAssistant(
+  db: ReturnType<typeof getDb>,
+  conversationId: string,
+  content: string,
+  model: string | null,
+  mode: "llm" | "local",
+): Promise<void> {
+  try {
+    await db.insert(messages).values({
+      id: crypto.randomUUID(),
+      conversationId,
+      role: "assistant",
+      content,
+      model,
+      mode,
+    })
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, conversationId))
+  } catch {
+    // Best-effort persistence.
+  }
+}
+
 export async function GET() {
-  return jsonError("Método no permitido.", 405, { Allow: "POST" })
+  return jsonError("Method not allowed.", 405, { Allow: "POST" })
 }
