@@ -3,7 +3,7 @@ export const SITE = {
   shortName: "GHS",
   url: "https://globalhoopstats.com",
   description:
-    "Global basketball intelligence. Box scores, advanced splits, side-by-side comparisons and highlight reels from the NBA, EuroLeague and Liga ACB — all in one console.",
+    "Global basketball intelligence. Box scores, advanced splits, side-by-side comparisons and highlight reels from the NBA, EuroLeague, Liga ACB and Spain's FEB leagues (LEB Oro, LEB Plata, EBA) — all in one console.",
   tagline: "Hoops, decoded.",
   taglineShort: "Global basketball intelligence",
   locale: "en",

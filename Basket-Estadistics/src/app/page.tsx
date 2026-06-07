@@ -38,7 +38,7 @@ const TICKER_RIGHT = [
 ]
 
 const STATS = [
-  { v: 3, suffix: "", label: "Leagues live" },
+  { v: 0, suffix: "", label: "Leagues live", dynamic: "leagues" as const },
   { v: 0, suffix: "+", label: "Players indexed", dynamic: "players" as const },
   { v: 24, suffix: "", label: "Advanced metrics" },
   { v: 2, suffix: "s", label: "To compare any two", decimals: 0 },
@@ -48,7 +48,7 @@ const PILLARS = [
   {
     n: "01",
     title: "Ingest",
-    body: "Public box scores from the NBA, ACB and EuroLeague pipelines. Refreshed after every tip-off.",
+    body: "Public box scores from the NBA, EuroLeague, ACB and FEB pipelines. Refreshed after every tip-off.",
   },
   {
     n: "02",
@@ -83,9 +83,13 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   const counts = await getGlobalLeagueCounts()
-  const stats = STATS.map((s) =>
-    "dynamic" in s && s.dynamic === "players" ? { ...s, v: counts.players } : s,
-  )
+  const stats = STATS.map((s) => {
+    if ("dynamic" in s && s.dynamic === "players")
+      return { ...s, v: counts.players }
+    if ("dynamic" in s && s.dynamic === "leagues")
+      return { ...s, v: counts.leagues }
+    return s
+  })
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -153,7 +157,7 @@ export default async function Home() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-400" />
                 </span>
-                v0.3 — NBA · ACB · EuroLeague
+                v0.4 — NBA · EuroLeague · ACB · FEB
               </span>
             </FadeIn>
 
@@ -166,8 +170,9 @@ export default async function Home() {
             <FadeIn delay={0.18} y={20}>
               <p className="mt-5 max-w-xl text-base text-ink-200 sm:mt-6 sm:text-lg">
                 The basketball operating system for serious scouts. Box scores,
-                advanced splits and side-by-side comparisons from the NBA, ACB
-                and EuroLeague — all in one console, all in the same language.
+                advanced splits and side-by-side comparisons from the NBA,
+                EuroLeague, ACB and Spain&apos;s FEB leagues — all in one
+                console, all in the same language.
               </p>
             </FadeIn>
 
@@ -298,13 +303,14 @@ export default async function Home() {
               How it works
             </span>
             <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              Three leagues,{" "}
+              Six leagues,{" "}
               <span className="text-gradient-brand">one engine.</span>
             </h2>
             <p className="mt-4 text-base text-ink-200 sm:text-lg">
-              We ingest box scores from the NBA, ACB and EuroLeague, normalize
-              pace and possessions, then surface side-by-side comparisons in
-              seconds. No spreadsheets, no film sessions at 3am.
+              We ingest box scores from the NBA, EuroLeague, ACB and the
+              Spanish FEB ladder, normalize pace and possessions, then surface
+              side-by-side comparisons in seconds. No spreadsheets, no film
+              sessions at 3am.
             </p>
           </FadeIn>
         </div>
