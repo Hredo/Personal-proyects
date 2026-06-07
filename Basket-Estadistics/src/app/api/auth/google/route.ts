@@ -5,6 +5,7 @@ import {
   isGoogleConfigured,
   newOauthState,
 } from "@/lib/auth/google"
+import { safeNextPath } from "@/lib/auth/safe-redirect"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -20,8 +21,7 @@ export async function GET(request: Request) {
     )
   }
   const url = new URL(request.url)
-  const nextRaw = url.searchParams.get("next") ?? "/ai-advisor"
-  const next = nextRaw.startsWith("/") ? nextRaw : "/ai-advisor"
+  const next = safeNextPath(url.searchParams.get("next"))
   const state = newOauthState()
   const authUrl = buildAuthUrl(state)
   const res = NextResponse.redirect(authUrl, { status: 302 })

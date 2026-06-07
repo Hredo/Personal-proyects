@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AuthCourt } from "@/components/auth/auth-court"
+import { safeNextPath } from "@/lib/auth/safe-redirect"
 
 type FieldProps = {
   id: string
@@ -136,7 +137,7 @@ type AuthFormProps = {
 export function AuthForm({ variant }: AuthFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get("next") || (variant === "register" ? "/ai-advisor" : "/ai-advisor")
+  const next = safeNextPath(searchParams.get("next"))
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -202,7 +203,7 @@ export function AuthForm({ variant }: AuthFormProps) {
         return
       }
       router.refresh()
-      router.push(next.startsWith("/") ? next : "/ai-advisor")
+      router.push(next)
     } catch {
       setFormError("We couldn't reach the server. Check your connection and retry.")
     } finally {

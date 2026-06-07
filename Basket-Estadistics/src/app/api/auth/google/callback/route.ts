@@ -15,6 +15,7 @@ import {
   newSessionId,
   signSessionToken,
 } from "@/lib/auth/session"
+import { safeNextPath } from "@/lib/auth/safe-redirect"
 import { getServerEnv } from "@/lib/env"
 
 export const runtime = "nodejs"
@@ -56,8 +57,9 @@ export async function GET(request: Request) {
       302,
     )
   }
-  const nextRaw = nextEncoded ? decodeURIComponent(nextEncoded) : "/ai-advisor"
-  const next = nextRaw.startsWith("/") ? nextRaw : "/ai-advisor"
+  const next = safeNextPath(
+    nextEncoded ? decodeURIComponent(nextEncoded) : "/ai-advisor",
+  )
 
   let profile
   try {
