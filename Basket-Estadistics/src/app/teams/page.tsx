@@ -10,10 +10,10 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: "Teams",
   description:
-    "Browse every team across the NBA, EuroLeague and Liga ACB. Filter by league, sort by name, wins or net rating and open the full roster with a click.",
+    "Browse every team across all covered leagues. Filter by league, sort by name or roster size and open the full roster and staff with a click.",
 }
 
-const SORT_VALUES = new Set(["name", "players", "wins", "netRtg"])
+const SORT_VALUES = new Set(["name", "players"])
 const ORDER_VALUES = new Set(["asc", "desc"])
 const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
 const PAGE_SIZE = 24
@@ -58,8 +58,7 @@ export default async function TeamsPage(props: {
           <span className="font-mono font-semibold text-ink-100">
             {result.total.toLocaleString("en-US")}
           </span>{" "}
-          team{result.total === 1 ? "" : "s"} across the NBA, EuroLeague and
-          Liga ACB.
+          team{result.total === 1 ? "" : "s"} across all covered leagues.
         </p>
       </header>
 

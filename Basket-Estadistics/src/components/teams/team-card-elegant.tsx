@@ -20,22 +20,11 @@ type Props = {
     primaryColor: string | null
     league: { id: string; name: string; slug: string; country: string }
     playerCount: number
-    seasonStats: {
-      year: number
-      wins: number | null
-      losses: number | null
-      netRtg: number | null
-    } | null
   }
 }
 
 export function TeamCardElegant({ team }: Props) {
   const initials = getInitials(team.name, 3)
-  const s = team.seasonStats
-  const wins = s?.wins ?? 0
-  const losses = s?.losses ?? 0
-  const netRtg =
-    s?.netRtg != null ? `${s.netRtg > 0 ? "+" : ""}${s.netRtg.toFixed(1)}` : "—"
   const badge = LEAGUE_BADGE[team.league.slug] ?? LEAGUE_BADGE.nba
   const accent = team.primaryColor ?? "var(--color-brand-500)"
 
@@ -90,39 +79,16 @@ export function TeamCardElegant({ team }: Props) {
           ) : null}
         </div>
 
-        <div className="mt-auto flex items-end gap-4">
+        <div className="mt-auto flex items-end">
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-ink-500">
-              Record
-            </p>
-            <p className="font-mono text-lg font-semibold text-ink-50">
-              {s ? `${wins}-${losses}` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-ink-500">
-              Net
-            </p>
-            <p
-              className={`font-mono text-lg font-semibold ${
-                s?.netRtg == null
-                  ? "text-ink-200"
-                  : s.netRtg > 0
-                    ? "text-emerald-300"
-                    : s.netRtg < 0
-                      ? "text-rose-300"
-                      : "text-ink-100"
-              }`}
-            >
-              {netRtg}
-            </p>
-          </div>
-          <div className="ml-auto text-right">
             <p className="font-mono text-[9px] uppercase tracking-widest text-ink-500">
               Roster
             </p>
-            <p className="font-mono text-sm font-semibold text-ink-200">
-              {team.playerCount}
+            <p className="font-mono text-lg font-semibold text-ink-50">
+              {team.playerCount}{" "}
+              <span className="text-sm font-normal text-ink-400">
+                {team.playerCount === 1 ? "player" : "players"}
+              </span>
             </p>
           </div>
         </div>

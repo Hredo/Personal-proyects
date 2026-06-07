@@ -58,7 +58,7 @@ export class AIAdvisorService {
    */
   private static buildPrompt(team: TeamProfile, userMessage: string): string {
     // Extract key information about the team
-    const { name, league, roster, seasonStats } = team
+    const { name, league, roster } = team
 
     // Build roster summary
     const rosterSummary = roster
@@ -71,11 +71,6 @@ export class AIAdvisorService {
         ? `${rosterSummary} y ${roster.length - 5} más`
         : rosterSummary
 
-    // Build season stats summary
-    const statsSummary = seasonStats
-      ? `Temporada actual: ${seasonStats.wins}-${seasonStats.losses} (${(seasonStats.winPct ?? 0) * 100}% de victorias)`
-      : "Estadísticas de temporada no disponibles"
-
     return `
 Eres un asesor experto en fichajes de baloncesto con conocimiento profundo de las ligas NBA, EuroLeague y ACB. 
 Tu tarea es analizar las necesidades de un equipo y proporcionar recomendaciones específicas de fichajes.
@@ -84,7 +79,6 @@ INFORMACIÓN DEL EQUIPO:
 - Nombre: ${name}
 - Liga: ${league.name} (${league.country})
 - Plantilla actual: ${rosterNote}
-- Rendimiento reciente: ${statsSummary}
 
 CONSULTA DEL USUARIO:
 "${userMessage}"

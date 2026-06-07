@@ -24,15 +24,6 @@ type Props = {
     league: { name: string; slug: string; country: string }
     roster: Parameters<typeof TeamRosterGrid>[0]["players"]
     staff: Parameters<typeof TeamStaffList>[0]["staff"]
-    seasonStats: {
-      year: number
-      gamesPlayed: number
-      wins: number | null
-      losses: number | null
-      position: number | null
-      pointsFor: number | null
-      pointsAgainst: number | null
-    } | null
   }
 }
 
@@ -78,7 +69,6 @@ export function TeamDetailView({ team }: Props) {
             arena={team.arena}
             arenaCapacity={team.arenaCapacity}
             websiteUrl={team.websiteUrl}
-            seasonStats={team.seasonStats}
           />
         </FadeIn>
 

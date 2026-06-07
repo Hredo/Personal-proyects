@@ -8,7 +8,7 @@ import {
 
 export const dynamic = "force-dynamic"
 
-const SORTS = new Set(["name", "players", "wins", "netRtg"])
+const SORTS = new Set(["name", "players"])
 const ORDERS = new Set(["asc", "desc"])
 const LEAGUES = new Set(["nba", "euroleague", "acb"])
 const MAX_PAGE_SIZE = 50

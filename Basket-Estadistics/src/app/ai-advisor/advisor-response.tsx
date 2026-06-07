@@ -46,12 +46,6 @@ export function AdvisorResponse({ data }: { data: AdvisorOutput }) {
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink-300">
           <span className="rounded-md bg-ink-700/40 px-2 py-1">
-            <span className="text-ink-500">Récord</span> ·{" "}
-            <span className="font-mono font-semibold text-ink-100">
-              {data.team.record}
-            </span>
-          </span>
-          <span className="rounded-md bg-ink-700/40 px-2 py-1">
             <span className="text-ink-500">Plantilla</span> ·{" "}
             <span className="font-mono font-semibold text-ink-100">
               {data.team.rosterSize} jug

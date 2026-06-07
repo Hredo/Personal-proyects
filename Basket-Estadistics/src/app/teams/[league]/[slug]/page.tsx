@@ -27,10 +27,7 @@ export async function generateMetadata({
   const { league, slug } = await params
   const team = await getTeamBySlug(league, slug)
   if (!team) return { title: "Team not found" }
-  const record = team.seasonStats
-    ? ` ${team.seasonStats.wins}-${team.seasonStats.losses} this season.`
-    : ""
-  const description = `${team.name} — ${team.league.name} roster with ${team.roster.length} players and ${team.staff.length} staff members.${record}`
+  const description = `${team.name} — ${team.league.name} roster with ${team.roster.length} players and ${team.staff.length} staff members.`
   return {
     title: team.name,
     description,
