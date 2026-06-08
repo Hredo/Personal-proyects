@@ -2,33 +2,8 @@
 
 import Link from "next/link"
 import { SmartImage } from "@/components/ui/smart-image"
+import { leagueAccent } from "@/components/ui/league-badge"
 import { getInitials } from "@/lib/format"
-
-type LeagueAccent = { badge: string; color: string; text: string }
-
-const LEAGUE_ACCENT: Record<string, LeagueAccent> = {
-  nba: {
-    badge: "bg-brand-500/15 text-brand-200 ring-brand-500/30",
-    color: "var(--color-league-nba-500)",
-    text: "var(--color-league-nba-300)",
-  },
-  euroleague: {
-    badge: "bg-accent-cyan/10 text-accent-cyan ring-accent-cyan/30",
-    color: "var(--color-league-euro-500)",
-    text: "var(--color-accent-cyan)",
-  },
-  acb: {
-    badge: "bg-league-acb-500/15 text-league-acb-300 ring-league-acb-500/30",
-    color: "var(--color-league-acb-500)",
-    text: "var(--color-league-acb-300)",
-  },
-}
-
-const FALLBACK_ACCENT: LeagueAccent = {
-  badge: "bg-white/8 text-ink-200 ring-white/15",
-  color: "var(--color-brand-500)",
-  text: "var(--color-brand-300)",
-}
 
 type Props = {
   player: {
@@ -61,7 +36,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
   const ppg = s?.points != null ? s.points.toFixed(1) : "—"
   const rpg = s?.rebounds != null ? s.rebounds.toFixed(1) : "—"
   const apg = s?.assists != null ? s.assists.toFixed(1) : "—"
-  const accent = LEAGUE_ACCENT[player.league.slug] ?? FALLBACK_ACCENT
+  const accent = leagueAccent(player.league.slug)
 
   return (
     <Link
@@ -74,33 +49,41 @@ export function PlayerCardElegant({ player, rank }: Props) {
     >
       <span
         aria-hidden
-        className="absolute inset-x-0 top-0 z-10 h-[3px] opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+        className="absolute inset-x-0 top-0 z-10 h-[3px] opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: "var(--lg)" }}
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-12 -top-12 z-0 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-40"
         style={{ background: "var(--lg)" }}
       />
 
       <div className="relative aspect-[4/5] w-full overflow-hidden">
         <div
           aria-hidden
-          className="absolute inset-0 z-[1] bg-gradient-to-t from-surface-1 via-surface-1/40 to-transparent"
+          className="absolute inset-0 z-[1] bg-gradient-to-t from-surface-1 via-surface-1/30 to-transparent"
         />
         <SmartImage
           src={player.photoUrl}
           alt={player.fullName}
           fit="cover"
-          className="h-full w-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.05]"
-          fallbackClassName="bg-gradient-to-br from-court-800 via-court-900 to-ink-900 text-4xl font-bold text-ink-500"
+          className="h-full w-full object-cover transition-transform duration-[700ms] ease-fluid group-hover:scale-[1.06]"
+          fallbackClassName="bg-gradient-to-br from-court-800 via-court-900 to-ink-900 text-4xl font-bold text-ink-600"
           fallback={initials}
         />
 
         {rank != null ? (
-          <span className="absolute left-3 top-3 z-[2] flex h-7 min-w-7 items-center justify-center rounded-md bg-ink-950/70 px-1.5 font-mono text-xs font-bold tabular-nums text-ink-100 ring-1 ring-white/10 backdrop-blur">
+          <span className="absolute left-3 top-3 z-[2] flex h-7 min-w-7 items-center justify-center rounded-lg bg-ink-950/70 px-1.5 font-mono text-xs font-bold tabular-nums text-ink-100 ring-1 ring-hairline backdrop-blur">
             {rank}
           </span>
         ) : null}
 
-        <span
-          className={`absolute right-3 top-3 z-[2] rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 backdrop-blur ${accent.badge}`}
-        >
+        <span className="absolute right-3 top-3 z-[2] inline-flex items-center gap-1.5 rounded-full bg-ink-950/55 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-100 ring-1 ring-hairline backdrop-blur">
+          <span
+            aria-hidden
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: "var(--lg)" }}
+          />
           {player.league.name}
         </span>
 
@@ -111,7 +94,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
                 {player.position}
               </p>
             ) : null}
-            <h3 className="truncate font-display text-lg font-bold leading-tight tracking-tight text-ink-50">
+            <h3 className="truncate font-display text-lg font-bold leading-tight tracking-[-0.01em] text-ink-50">
               {player.fullName}
             </h3>
             <p className="mt-0.5 truncate text-xs text-ink-300">
@@ -119,7 +102,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
             </p>
           </div>
           {player.team?.logoUrl ? (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ink-950/70 p-1 ring-1 ring-white/10 backdrop-blur">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-ink-950/70 p-1 ring-1 ring-hairline backdrop-blur">
               <SmartImage
                 src={player.team.logoUrl}
                 alt={player.team.name}
@@ -132,7 +115,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-white/[0.06] border-t border-white/[0.06]">
+      <div className="grid grid-cols-3 divide-x divide-hairline hairline-t">
         <Stat label="PPG" value={ppg} primary />
         <Stat label="RPG" value={rpg} />
         <Stat label="APG" value={apg} />
@@ -160,7 +143,7 @@ function Stat({
       >
         {value}
       </p>
-      <p className="mt-0.5 font-mono text-[9px] uppercase tracking-widest text-ink-500">
+      <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-ink-500">
         {label}
       </p>
     </div>

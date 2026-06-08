@@ -1,6 +1,7 @@
-import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
 import { WaitlistForm } from "@/components/marketing/waitlist-form"
+import { SectionHeading } from "@/components/ui/section-heading"
+import { ButtonLink } from "@/components/ui/button"
 
 const TIERS = [
   {
@@ -9,33 +10,30 @@ const TIERS = [
     cadence: "during the beta",
     description:
       "Full directory, every comparison, every league hub. Open to everyone.",
-    cta: { href: "/players", label: "Browse the database" },
+    cta: { href: "/players", label: "Browse the database", variant: "secondary" as const },
     features: [
       "Players, teams and coaches",
       "Cross-league compare",
       "League hubs with leaders",
       "AI advisor in read-only mode",
     ],
-    accent: "border-white/15",
-    ctaStyle:
-      "border border-white/10 bg-white/5 text-ink-50 hover:border-brand-400/60",
+    featured: false,
   },
   {
     name: "Pro",
     price: "Early access",
     cadence: "closed beta",
     description:
-      "Shortlists, exports and persistent AI advisor sessions. We&apos;re onboarding one cohort at a time.",
-    cta: { href: "#waitlist-form", label: "Request access" },
+      "Shortlists, exports and persistent AI advisor sessions. We're onboarding one cohort at a time.",
+    cta: { href: "#waitlist-form", label: "Request access", variant: "primary" as const },
     features: [
       "Everything in Public",
       "Shortlists with notes and share links",
       "PDF / Excel / Word exports",
       "Priority sync, no rate limits",
     ],
-    accent: "border-brand-400/50",
+    featured: true,
     badge: "Most useful",
-    ctaStyle: "bg-brand-500 text-ink-950 hover:bg-brand-400",
   },
 ]
 
@@ -44,63 +42,58 @@ export function PricingCta() {
     <section
       id="waitlist"
       aria-labelledby="pricing-heading"
-      className="relative border-t border-white/5 py-16 sm:py-24"
+      className="relative hairline-t py-20 sm:py-28"
     >
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-grid-fade opacity-25"
+        className="absolute inset-0 -z-10 bg-grid-fade opacity-20"
       />
-      <div className="mx-auto max-w-2xl text-center">
-        <FadeIn>
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent-magenta/30 bg-accent-magenta/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-magenta sm:text-xs">
-            Access
-          </span>
-          <h2
-            id="pricing-heading"
-            className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl"
-          >
-            Free forever.{" "}
-            <span className="text-gradient-brand">Pro when you need it.</span>
-          </h2>
-          <p className="mt-4 text-sm text-ink-200 sm:text-base">
-            We&apos;ll never paywall the data. The Pro tier is for the people
-            who want to work faster, save shortlists and export reports.
-          </p>
-        </FadeIn>
-      </div>
+      <FadeIn>
+        <SectionHeading
+          align="center"
+          eyebrow="Access"
+          title={
+            <span id="pricing-heading">
+              Free forever.{" "}
+              <span className="text-gradient-brand">Pro when you need it.</span>
+            </span>
+          }
+          description="We'll never paywall the data. The Pro tier is for people who want to work faster — save shortlists and export reports."
+        />
+      </FadeIn>
 
-      <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:mt-12 sm:gap-6 md:grid-cols-2">
+      <div className="mx-auto mt-12 grid max-w-4xl gap-4 sm:gap-6 md:grid-cols-2">
         {TIERS.map((t, i) => (
           <FadeIn key={t.name} delay={0.05 * (i + 1)}>
             <article
-              className={`relative flex h-full flex-col rounded-2xl border bg-white/[0.03] p-5 ring-1 ring-inset ring-white/5 sm:p-7 ${t.accent}`}
+              className={`gh-card relative flex h-full flex-col p-6 sm:p-8 ${
+                t.featured ? "ring-1 ring-brand-500/40" : ""
+              }`}
             >
               {t.badge ? (
-                <span className="absolute -top-2.5 right-5 rounded-full bg-brand-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-ink-950 shadow-[var(--shadow-brand-glow)]">
+                <span className="absolute -top-2.5 right-6 rounded-full bg-brand-500 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-950 shadow-[var(--shadow-brand-glow)]">
                   {t.badge}
                 </span>
               ) : null}
-              <header>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-300 sm:text-[11px]">
+              <header className="hairline-b pb-5">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-400">
                   {t.name}
                 </p>
-                <p className="mt-2 font-display text-3xl font-bold leading-none text-ink-50 sm:text-4xl">
+                <p className="mt-3 font-display text-4xl font-bold leading-none tracking-[-0.02em] text-ink-50">
                   {t.price}
                 </p>
-                <p className="mt-1 text-xs text-ink-400 sm:text-sm">
-                  {t.cadence}
-                </p>
+                <p className="mt-1.5 text-sm text-ink-400">{t.cadence}</p>
               </header>
-              <p className="mt-4 text-sm text-ink-200">{t.description}</p>
-              <ul className="mt-5 space-y-2.5">
+              <p className="mt-5 text-sm text-ink-300">{t.description}</p>
+              <ul className="mt-5 space-y-3">
                 {t.features.map((f) => (
                   <li
                     key={f}
-                    className="flex items-start gap-2 text-sm text-ink-100"
+                    className="flex items-start gap-2.5 text-sm text-ink-200"
                   >
                     <svg
                       aria-hidden
-                      className="mt-0.5 h-4 w-4 shrink-0 text-brand-300"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-brand-400"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -114,25 +107,16 @@ export function PricingCta() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-auto pt-6">
-                <Link
+              <div className="mt-auto pt-7">
+                <ButtonLink
                   href={t.cta.href}
-                  className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition sm:text-base ${t.ctaStyle}`}
+                  variant={t.cta.variant}
+                  size="md"
+                  arrow
+                  className="w-full"
                 >
                   {t.cta.label}
-                  <svg
-                    className="h-3.5 w-3.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <path d="M5 12h14M13 5l7 7-7 7" />
-                  </svg>
-                </Link>
+                </ButtonLink>
               </div>
             </article>
           </FadeIn>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
 import { Float } from "@/components/animations/float"
 import { CourtPerspective } from "@/components/svg/court-perspective"
@@ -12,6 +11,9 @@ import { TrustBar } from "@/components/marketing/trust-bar"
 import { Faq } from "@/components/marketing/faq"
 import { FAQ_DATA } from "@/components/marketing/faq-data"
 import { PricingCta } from "@/components/marketing/pricing-cta"
+import { Eyebrow } from "@/components/ui/eyebrow"
+import { SectionHeading } from "@/components/ui/section-heading"
+import { ButtonLink } from "@/components/ui/button"
 import { SITE } from "@/lib/site"
 import { getGlobalLeagueCounts } from "@/lib/data/leagues"
 
@@ -135,83 +137,60 @@ export default async function Home() {
     <div className="relative">
       <JsonLd data={[faqJsonLd, softwareJsonLd]} />
 
-      <section className="relative isolate overflow-hidden pb-12 pt-8 sm:pb-20 sm:pt-14 md:pt-20">
+      <section className="relative isolate overflow-hidden pb-14 pt-10 sm:pb-24 sm:pt-16 md:pt-24">
         <div
           aria-hidden
-          className="absolute inset-0 -z-20 bg-grid-fade opacity-70"
+          className="absolute inset-0 -z-20 bg-grid-fade opacity-60"
         />
         <div
           aria-hidden
           className="absolute -top-40 left-1/2 -z-10 h-[420px] w-[760px] -translate-x-1/2 animate-aurora rounded-full bg-brand-500/20 blur-3xl sm:h-[560px] sm:w-[1100px]"
         />
-        <div
-          aria-hidden
-          className="absolute right-[5%] top-[30%] -z-10 hidden h-72 w-72 animate-aurora rounded-full bg-accent-cyan/15 blur-3xl [animation-delay:-8s] md:block"
-        />
 
-        <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-12">
+        <div className="grid items-center gap-12 md:grid-cols-[1.05fr_0.95fr]">
           <div>
             <FadeIn>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-ink-200 sm:text-xs">
+              <Eyebrow>
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-400" />
                 </span>
-                v0.4 — NBA · EuroLeague · ACB · FEB
-              </span>
+                v0.4 — six leagues, one engine
+              </Eyebrow>
             </FadeIn>
 
             <FadeIn delay={0.08} y={28}>
-              <h1 className="mt-5 font-display text-[2.9rem] font-bold leading-[0.92] tracking-[-0.03em] text-ink-50 sm:mt-6 sm:text-[4.5rem] md:text-[5.5rem] xl:text-[6.25rem]">
-                Hoops, <span className="text-gradient-shimmer">decoded.</span>
+              <h1 className="mt-6 font-display text-[3.25rem] font-bold leading-[0.88] tracking-[-0.04em] text-ink-50 sm:text-[4.75rem] md:text-[5.75rem] xl:text-[6.5rem]">
+                Hoops,
+                <br />
+                <span className="text-gradient-shimmer">decoded.</span>
               </h1>
             </FadeIn>
 
             <FadeIn delay={0.18} y={20}>
-              <p className="mt-5 max-w-xl text-base text-ink-200 sm:mt-6 sm:text-lg">
-                The basketball operating system for serious scouts. Box scores,
-                advanced splits and side-by-side comparisons from the NBA,
-                EuroLeague, ACB and Spain&apos;s FEB leagues — all in one
-                console, all in the same language.
+              <p className="mt-6 max-w-xl text-pretty text-base leading-relaxed text-ink-300 sm:text-lg">
+                The scouting console for serious analysts. Box scores, advanced
+                splits and side-by-side comparisons from the NBA, EuroLeague,
+                ACB and Spain&apos;s FEB ladder — every player on one scale, in
+                one language.
               </p>
             </FadeIn>
 
             <FadeIn delay={0.28} y={16}>
-              <div className="mt-7 flex flex-wrap items-center gap-3 sm:mt-8 sm:gap-4">
-                <Link
-                  href="/compare"
-                  className="group inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition duration-200 hover:bg-brand-400 active:translate-y-px sm:px-6 sm:text-base"
-                >
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <ButtonLink href="/compare" size="lg" arrow>
                   Open the console
-                  <svg
-                    className="h-4 w-4 transition group-hover:translate-x-1"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <path d="M5 12h14M13 5l7 7-7 7" />
-                  </svg>
-                </Link>
-                <Link
-                  href="/players"
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-50 transition duration-200 hover:border-brand-400/60 hover:bg-white/[0.07] hover:text-brand-200 active:translate-y-px sm:text-base"
-                >
+                </ButtonLink>
+                <ButtonLink href="/players" size="lg" variant="secondary">
                   Browse the database
-                </Link>
+                </ButtonLink>
               </div>
             </FadeIn>
 
             <FadeIn delay={0.4}>
-              <dl className="mt-9 grid max-w-lg grid-cols-2 gap-x-4 gap-y-5 sm:mt-12 sm:grid-cols-4 sm:gap-6">
+              <dl className="mt-12 grid max-w-lg grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
                 {stats.map((s) => (
-                  <div
-                    key={s.label}
-                    className="border-l-2 border-brand-500/40 pl-3 sm:pl-4"
-                  >
+                  <div key={s.label} className="border-l-2 border-brand-500/40 pl-4">
                     <dt className="font-display text-2xl font-bold tabular-nums text-ink-50 sm:text-3xl">
                       <CountUp
                         to={s.v}
@@ -219,7 +198,7 @@ export default async function Home() {
                         decimals={"decimals" in s ? s.decimals : 0}
                       />
                     </dt>
-                    <dd className="mt-1 text-[10px] uppercase tracking-wider text-ink-400 sm:text-[11px]">
+                    <dd className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-400 sm:text-[11px]">
                       {s.label}
                     </dd>
                   </div>
@@ -228,63 +207,68 @@ export default async function Home() {
             </FadeIn>
           </div>
 
-          <div className="relative">
+          <FadeIn delay={0.2} className="relative">
             <div
               aria-hidden
-              className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-br from-brand-500/25 via-transparent to-accent-cyan/15 blur-2xl"
+              className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-500/25 via-transparent to-court-700/20 blur-2xl"
             />
-            <div className="relative aspect-[5/4] w-full">
-              <CourtPerspective className="absolute inset-0 h-full w-full" />
-              <Float
-                className="absolute right-[2%] top-[2%] h-3 w-3 sm:h-4 sm:w-4"
-                duration={3}
-                y={6}
-              >
-                <div className="h-full w-full rounded-full bg-accent-cyan/80 shadow-[0_0_20px_4px_rgba(125,200,255,0.45)]" />
-              </Float>
-              <Float
-                className="absolute left-[4%] top-[44%] h-2 w-2 sm:h-3 sm:w-3"
-                duration={4}
-                y={4}
-              >
-                <div className="h-full w-full rounded-full bg-accent-magenta/80 shadow-[0_0_20px_4px_rgba(255,100,200,0.45)]" />
-              </Float>
+            <div className="gh-bezel">
+              <div className="gh-bezel-inner relative overflow-hidden">
+                <div aria-hidden className="absolute inset-0 bg-court-grid opacity-40" />
+                <div className="relative aspect-[5/4] w-full">
+                  <CourtPerspective className="absolute inset-0 h-full w-full" />
+                  <Float
+                    className="absolute right-[6%] top-[8%] h-3 w-3 sm:h-3.5 sm:w-3.5"
+                    duration={3}
+                    y={6}
+                  >
+                    <div className="h-full w-full rounded-full bg-brand-400 shadow-[0_0_20px_4px_oklch(0.7_0.2_51_/_0.5)]" />
+                  </Float>
+                  <Float
+                    className="absolute left-[8%] top-[46%] h-2 w-2 sm:h-2.5 sm:w-2.5"
+                    duration={4}
+                    y={4}
+                  >
+                    <div className="h-full w-full rounded-full bg-ink-100/80 shadow-[0_0_16px_3px_oklch(1_0_0_/_0.3)]" />
+                  </Float>
+                </div>
+                <div className="flex items-center justify-between hairline-t px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500 sm:text-[11px]">
+                  <span>shot chart · live</span>
+                  <span>trajectory @scroll</span>
+                </div>
+              </div>
             </div>
-            <div className="pointer-events-none absolute -bottom-3 left-4 right-4 flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-ink-400 sm:text-[11px]">
-              <span>shot chart · live</span>
-              <span>trajectory @scroll</span>
-            </div>
-          </div>
+          </FadeIn>
         </div>
       </section>
 
       <section
         aria-label="Top performers"
-        className="border-y border-white/5 bg-ink-950/40 py-3"
+        className="hairline-t hairline-b bg-surface-0/40 py-3.5"
       >
         <Marquee duration={55} className="text-sm">
           {TICKER_LEFT.map((t) => (
             <div
               key={t.name}
-              className="flex items-center gap-3 whitespace-nowrap font-mono text-[11px] uppercase tracking-wider text-ink-300 sm:text-xs"
+              className="flex items-center gap-3 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.12em] text-ink-300 sm:text-xs"
             >
               <span className="h-1 w-1 rounded-full bg-brand-400" />
               <span className="text-ink-100">{t.name}</span>
-              <span className="text-ink-400">{t.team}</span>
+              <span className="text-ink-500">{t.team}</span>
               <span className="text-brand-300">{t.stat}</span>
             </div>
           ))}
         </Marquee>
-        <Marquee duration={70} reverse className="mt-2 text-sm">
+        <Marquee duration={70} reverse className="mt-2.5 text-sm">
           {TICKER_RIGHT.map((t) => (
             <div
               key={t.name}
-              className="flex items-center gap-3 whitespace-nowrap font-mono text-[11px] uppercase tracking-wider text-ink-300 sm:text-xs"
+              className="flex items-center gap-3 whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.12em] text-ink-300 sm:text-xs"
             >
-              <span className="h-1 w-1 rounded-full bg-accent-cyan" />
+              <span className="h-1 w-1 rounded-full bg-ink-400" />
               <span className="text-ink-100">{t.name}</span>
-              <span className="text-ink-400">PTS · REB · AST</span>
-              <span className="text-accent-cyan">{t.stat}</span>
+              <span className="text-ink-500">PTS · REB · AST</span>
+              <span className="text-ink-200">{t.stat}</span>
             </div>
           ))}
         </Marquee>
@@ -292,61 +276,42 @@ export default async function Home() {
 
       <TrustedBy />
 
-      <section className="relative border-t border-white/5 py-16 sm:py-24">
+      <section id="product" className="relative hairline-t py-20 sm:py-28">
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-grid-fade opacity-40"
+          className="absolute inset-0 -z-10 bg-grid-fade opacity-30"
         />
-        <div className="mx-auto max-w-2xl text-center">
-          <FadeIn>
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand-200 sm:text-xs">
-              How it works
-            </span>
-            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              Six leagues,{" "}
-              <span className="text-gradient-brand">one engine.</span>
-            </h2>
-            <p className="mt-4 text-base text-ink-200 sm:text-lg">
-              We ingest box scores from the NBA, EuroLeague, ACB and the
-              Spanish FEB ladder, normalize pace and possessions, then surface
-              side-by-side comparisons in seconds. No spreadsheets, no film
-              sessions at 3am.
-            </p>
-          </FadeIn>
-        </div>
-      </section>
+        <FadeIn>
+          <SectionHeading
+            align="center"
+            eyebrow="How it works"
+            title={
+              <>
+                From tip-off to{" "}
+                <span className="text-gradient-brand">terminal.</span>
+              </>
+            }
+            description="We ingest public box scores from six leagues, normalize pace and possessions, then surface side-by-side comparisons in seconds. No spreadsheets, no 3am film sessions."
+          />
+        </FadeIn>
 
-      <section
-        id="product"
-        className="relative border-t border-white/5 py-16 sm:py-24"
-      >
-        <div className="mx-auto max-w-2xl text-center">
-          <FadeIn>
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent-magenta/30 bg-accent-magenta/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-magenta sm:text-xs">
-              Pipeline
-            </span>
-            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              From tip-off to terminal.
-            </h2>
-            <p className="mt-3 text-sm text-ink-200 sm:mt-4 sm:text-base">
-              Three stages, fully automated. Every match feeds the same model so
-              the numbers stay sharp and the rankings stay honest.
-            </p>
-          </FadeIn>
-        </div>
-        <div className="mt-10 grid gap-5 sm:mt-14 md:grid-cols-3 md:gap-6">
+        <div className="relative mt-14 grid gap-5 md:grid-cols-3 md:gap-6">
+          <div
+            aria-hidden
+            className="absolute inset-x-8 top-[3.4rem] hidden h-px bg-gradient-to-r from-transparent via-hairline-strong to-transparent md:block"
+          />
           {PILLARS.map((pillar, i) => (
             <FadeIn key={pillar.n} delay={0.06 * i}>
               <article className="gh-card gh-card-interactive group relative flex h-full flex-col overflow-hidden p-6 sm:p-7">
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-outline font-display text-6xl font-bold leading-none tabular-nums sm:text-7xl">
                     {pillar.n}
                   </span>
-                  <span className="rounded-md bg-white/[0.04] px-2 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400 ring-1 ring-white/10">
+                  <span className="rounded-full bg-surface-0 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400 ring-1 ring-hairline">
                     step {i + 1}
                   </span>
                 </div>
-                <h3 className="mt-7 font-display text-xl font-bold tracking-tight text-ink-50 sm:text-2xl">
+                <h3 className="mt-7 font-display text-xl font-bold tracking-[-0.01em] text-ink-50 sm:text-2xl">
                   {pillar.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-300">
@@ -368,93 +333,52 @@ export default async function Home() {
 
       <section
         aria-labelledby="faq-heading"
-        className="relative border-t border-white/5 py-16 sm:py-24"
+        className="relative hairline-t py-20 sm:py-28"
       >
-        <div className="mx-auto max-w-2xl text-center">
-          <FadeIn>
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent-lime/30 bg-accent-lime/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-lime sm:text-xs">
-              FAQ
-            </span>
-            <h2
-              id="faq-heading"
-              className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl"
-            >
-              The questions scouts ask first.
-            </h2>
-            <p className="mt-4 text-sm text-ink-200 sm:text-base">
-              Data sources, freshness, what&apos;s free, what isn&apos;t. If
-              something&apos;s missing, ping us.
-            </p>
-          </FadeIn>
-        </div>
-        <div className="mt-10">
+        <FadeIn>
+          <SectionHeading
+            align="center"
+            eyebrow="FAQ"
+            title="The questions scouts ask first."
+            description="Data sources, freshness, what's free and what isn't. If something's missing, ping us."
+          />
+        </FadeIn>
+        <div id="faq-heading" className="mt-12">
           <Faq />
         </div>
       </section>
 
       <PricingCta />
 
-      <section className="relative my-12 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-court-800/80 via-ink-900/90 to-ink-950 p-6 sm:my-20 sm:p-10 md:p-14">
-        <div
-          aria-hidden
-          className="absolute -left-24 -top-24 h-72 w-72 animate-aurora rounded-full bg-brand-500/30 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="absolute -right-16 -bottom-16 h-64 w-64 animate-aurora rounded-full bg-accent-cyan/20 blur-3xl [animation-delay:-10s]"
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-0 opacity-50"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px), linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-            maskImage:
-              "radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%)",
-          }}
-        />
-        <div className="relative grid items-center gap-8 md:grid-cols-[1.1fr_1fr]">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand-200 sm:text-xs">
-              Open to everyone
-            </span>
-            <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              The data is live.{" "}
-              <span className="text-gradient-brand">No invite needed.</span>
-            </h2>
-            <p className="mt-4 max-w-md text-base text-ink-200 sm:text-lg">
-              Every player, every stat, every highlight — free during the public
-              beta. Open the console, drop two names, run the math.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
-            <Link
-              href="/ai-advisor"
-              className="group inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-6 py-3.5 text-base font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition duration-200 hover:bg-brand-400 active:translate-y-px"
-            >
-              Try the AI Advisor
-              <svg
-                className="h-4 w-4 transition group-hover:translate-x-1"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M5 12h14M13 5l7 7-7 7" />
-              </svg>
-            </Link>
-            <Link
-              href="/players"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-6 py-3.5 text-base font-semibold text-ink-50 transition duration-200 hover:border-brand-400/60 hover:bg-white/[0.07] hover:text-brand-200 active:translate-y-px"
-            >
-              Browse players
-            </Link>
+      <section className="relative my-16 sm:my-24">
+        <div className="gh-bezel overflow-hidden">
+          <div className="gh-bezel-inner relative overflow-hidden bg-gradient-to-br from-court-800/70 via-surface-1 to-surface-0 p-7 sm:p-12 md:p-16">
+            <div
+              aria-hidden
+              className="absolute -left-24 -top-24 h-72 w-72 animate-aurora rounded-full bg-brand-500/30 blur-3xl"
+            />
+            <div aria-hidden className="absolute inset-0 bg-hatch opacity-50" />
+            <div className="relative grid items-center gap-8 md:grid-cols-[1.1fr_1fr]">
+              <div>
+                <Eyebrow>Open to everyone</Eyebrow>
+                <h2 className="mt-5 font-display text-3xl font-bold leading-[0.98] tracking-[-0.03em] text-balance sm:text-4xl md:text-[3.25rem]">
+                  The data is live.{" "}
+                  <span className="text-gradient-brand">No invite needed.</span>
+                </h2>
+                <p className="mt-4 max-w-md text-pretty text-base text-ink-300 sm:text-lg">
+                  Every player, every stat, every highlight — free during the
+                  public beta. Open the console, drop two names, run the math.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
+                <ButtonLink href="/ai-advisor" size="lg" arrow>
+                  Try the AI Advisor
+                </ButtonLink>
+                <ButtonLink href="/players" size="lg" variant="secondary">
+                  Browse players
+                </ButtonLink>
+              </div>
+            </div>
           </div>
         </div>
       </section>

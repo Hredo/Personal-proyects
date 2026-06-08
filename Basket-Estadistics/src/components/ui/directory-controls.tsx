@@ -8,6 +8,9 @@ const LEAGUES = [
   { slug: "nba", label: "NBA" },
   { slug: "euroleague", label: "EuroLeague" },
   { slug: "acb", label: "ACB" },
+  { slug: "leb-oro", label: "LEB Oro" },
+  { slug: "leb-plata", label: "LEB Plata" },
+  { slug: "eba", label: "EBA" },
 ] as const
 
 const SORTS_PLAYERS = [
@@ -80,8 +83,8 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-      <div className="relative sm:flex-1">
+    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-3">
+      <div className="relative lg:flex-1">
         <svg
           aria-hidden
           className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
@@ -109,7 +112,7 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
                 : "Search coaches…"
           }
           aria-label="Search"
-          className="w-full rounded-full border border-white/10 bg-white/[0.03] py-2.5 pl-11 pr-4 text-sm text-ink-50 placeholder:text-ink-400 outline-none transition focus:border-brand-400/50 focus:bg-white/[0.06]"
+          className="h-11 w-full rounded-full border border-hairline bg-white/[0.03] pl-11 pr-4 text-sm text-ink-50 outline-none transition duration-200 placeholder:text-ink-400 focus:border-brand-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-brand-500/20"
         />
       </div>
 
@@ -122,10 +125,10 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
               type="button"
               onClick={() => apply({ league: l.slug || null })}
               aria-pressed={active}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-200 ${
                 active
-                  ? "bg-ink-50 text-ink-950"
-                  : "text-ink-300 hover:text-ink-50"
+                  ? "border-brand-500 bg-brand-500 text-ink-950"
+                  : "border-hairline bg-white/[0.02] text-ink-300 hover:border-hairline-strong hover:text-ink-50"
               }`}
             >
               {l.label}
@@ -144,10 +147,10 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
                 type="button"
                 onClick={() => apply({ role: r.value || null })}
                 aria-pressed={active}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-200 ${
                   active
-                    ? "bg-ink-50 text-ink-950"
-                    : "text-ink-300 hover:text-ink-50"
+                    ? "border-brand-500 bg-brand-500 text-ink-950"
+                    : "border-hairline bg-white/[0.02] text-ink-300 hover:border-hairline-strong hover:text-ink-50"
                 }`}
               >
                 {r.label}
@@ -157,13 +160,13 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
         </div>
       ) : null}
 
-      <div className="flex items-center gap-1.5 sm:ml-auto">
+      <div className="flex items-center gap-2 lg:ml-auto">
         <div className="relative">
           <select
             aria-label="Sort by"
             value={urlSort}
             onChange={(e) => apply({ sort: e.target.value })}
-            className="appearance-none rounded-full border border-white/10 bg-white/[0.03] py-2.5 pl-4 pr-9 text-xs font-medium text-ink-100 outline-none transition hover:border-white/20 focus:border-brand-400/50"
+            className="h-11 appearance-none rounded-full border border-hairline bg-white/[0.03] pl-4 pr-9 text-xs font-semibold text-ink-100 outline-none transition duration-200 hover:border-hairline-strong focus:border-brand-400/50"
           >
             {sorts.map((s) => (
               <option key={s.value} value={s.value}>
@@ -173,7 +176,7 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
           </select>
           <svg
             aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 text-ink-400"
+            className="pointer-events-none absolute right-3.5 top-1/2 h-3 w-3 -translate-y-1/2 text-ink-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -191,15 +194,26 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
               apply({ order: urlOrder === "asc" ? "desc" : "asc" })
             }
             aria-label={`Sort ${urlOrder === "asc" ? "descending" : "ascending"}`}
-            className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-ink-200 transition hover:border-white/20 hover:text-ink-50"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-white/[0.03] text-ink-200 transition-colors duration-200 hover:border-hairline-strong hover:text-ink-50"
           >
-            {urlOrder === "asc" ? "↑" : "↓"}
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`h-4 w-4 transition-transform duration-300 ease-fluid ${urlOrder === "asc" ? "rotate-180" : ""}`}
+            >
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
           </button>
         ) : null}
       </div>
 
       <p
-        className={`font-mono text-[10px] uppercase tracking-widest text-ink-500 sm:hidden ${
+        className={`font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500 lg:hidden ${
           isPending ? "text-brand-300" : ""
         }`}
       >

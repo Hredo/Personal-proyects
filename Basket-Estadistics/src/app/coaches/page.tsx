@@ -15,7 +15,14 @@ export const metadata: Metadata = {
     "Browse every head coach, assistant and staff member across the NBA, EuroLeague and Liga ACB.",
 }
 
-const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
+const LEAGUE_VALUES = new Set([
+  "nba",
+  "euroleague",
+  "acb",
+  "leb-oro",
+  "leb-plata",
+  "eba",
+])
 const ROLE_VALUES = new Set(["head_coach", "assistant_coach", "staff"])
 const PAGE_SIZE = 48
 

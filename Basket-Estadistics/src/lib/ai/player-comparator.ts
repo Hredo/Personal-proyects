@@ -34,7 +34,7 @@ export type ComparisonOutput = {
     aScore: number
     bScore: number
     leader: "a" | "b" | "tie"
-    confidence: "alta" | "media" | "baja"
+    confidence: "high" | "medium" | "low"
   }
   insights: Insight[]
   verdict: string
@@ -79,7 +79,7 @@ function compareNumbers(
 }
 
 function detectArchetype(stats: Stats | null, position: string | null): string {
-  if (!stats) return position ?? "Sin perfil"
+  if (!stats) return position ?? "No profile"
   const pts = num(stats.points) ?? 0
   const ast = num(stats.assists) ?? 0
   const reb = num(stats.rebounds) ?? 0
@@ -88,17 +88,17 @@ function detectArchetype(stats: Stats | null, position: string | null): string {
   const tp = num(stats.threePct) ?? 0
   const fg = num(stats.fgPct) ?? 0
 
-  if (pts >= 24 && ast >= 6) return "Estrella generadora"
-  if (pts >= 22 && tp >= 0.38) return "Anotador exterior"
-  if (pts >= 20 && fg >= 0.5) return "Finalizador eficiente"
-  if (ast >= 7) return "Base director"
-  if (reb >= 10 && blk >= 1.2) return "Pívot defensivo"
-  if (reb >= 9 && pts >= 14) return "Interior dominante"
-  if (stl >= 1.5 && tp >= 0.36) return "3&D versátil"
-  if (blk >= 1.5) return "Protector de aro"
-  if (tp >= 0.4) return "Especialista tirador"
-  if (pts <= 8 && ast <= 3) return "Rotación / Suplente"
-  return "Rol equilibrado"
+  if (pts >= 24 && ast >= 6) return "Creating star"
+  if (pts >= 22 && tp >= 0.38) return "Perimeter scorer"
+  if (pts >= 20 && fg >= 0.5) return "Efficient finisher"
+  if (ast >= 7) return "Floor general"
+  if (reb >= 10 && blk >= 1.2) return "Defensive big"
+  if (reb >= 9 && pts >= 14) return "Dominant interior"
+  if (stl >= 1.5 && tp >= 0.36) return "Versatile 3&D"
+  if (blk >= 1.5) return "Rim protector"
+  if (tp >= 0.4) return "Shooting specialist"
+  if (pts <= 8 && ast <= 3) return "Rotation / Bench"
+  return "Balanced role"
 }
 
 function categoryScoring(a: ComparePlayer, b: ComparePlayer): CategoryResult {
@@ -107,7 +107,7 @@ function categoryScoring(a: ComparePlayer, b: ComparePlayer): CategoryResult {
   const cmp = compareNumbers(av, bv)
   return {
     key: "scoring",
-    label: "Anotación",
+    label: "Scoring",
     emoji: "🎯",
     winner: cmp.winner,
     margin: cmp.margin,
@@ -116,10 +116,10 @@ function categoryScoring(a: ComparePlayer, b: ComparePlayer): CategoryResult {
     formatted: { a: `${fmt1(av)} pts`, b: `${fmt1(bv)} pts` },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Producción anotadora muy similar."
+        ? "Very similar scoring output."
         : cmp.winner === "a"
-          ? `${a.fullName} promedia ${fmt1(av)} pts frente a ${fmt1(bv)} de ${b.fullName}.`
-          : `${b.fullName} promedia ${fmt1(bv)} pts frente a ${fmt1(av)} de ${a.fullName}.`,
+          ? `${a.fullName} averages ${fmt1(av)} pts to ${b.fullName}'s ${fmt1(bv)}.`
+          : `${b.fullName} averages ${fmt1(bv)} pts to ${a.fullName}'s ${fmt1(av)}.`,
   }
 }
 
@@ -132,7 +132,7 @@ function categoryPlaymaking(
   const cmp = compareNumbers(av, bv)
   return {
     key: "playmaking",
-    label: "Generación",
+    label: "Playmaking",
     emoji: "🎮",
     winner: cmp.winner,
     margin: cmp.margin,
@@ -141,10 +141,10 @@ function categoryPlaymaking(
     formatted: { a: `${fmt1(av)} ast`, b: `${fmt1(bv)} ast` },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Volumen de asistencias parejo."
+        ? "Even assist volume."
         : cmp.winner === "a"
-          ? `${a.fullName} reparte ${fmt1(av)} ast por partido.`
-          : `${b.fullName} reparte ${fmt1(bv)} ast por partido.`,
+          ? `${a.fullName} dishes ${fmt1(av)} ast per game.`
+          : `${b.fullName} dishes ${fmt1(bv)} ast per game.`,
   }
 }
 
@@ -157,7 +157,7 @@ function categoryRebounding(
   const cmp = compareNumbers(av, bv)
   return {
     key: "rebounding",
-    label: "Rebote",
+    label: "Rebounding",
     emoji: "🪣",
     winner: cmp.winner,
     margin: cmp.margin,
@@ -166,10 +166,10 @@ function categoryRebounding(
     formatted: { a: `${fmt1(av)} reb`, b: `${fmt1(bv)} reb` },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Captura de balones equilibrada."
+        ? "Balanced rebounding."
         : cmp.winner === "a"
-          ? `${a.fullName} domina el rebote con ${fmt1(av)} por partido.`
-          : `${b.fullName} domina el rebote con ${fmt1(bv)} por partido.`,
+          ? `${a.fullName} controls the glass with ${fmt1(av)} per game.`
+          : `${b.fullName} controls the glass with ${fmt1(bv)} per game.`,
   }
 }
 
@@ -185,7 +185,7 @@ function categoryDefense(a: ComparePlayer, b: ComparePlayer): CategoryResult {
   const cmp = compareNumbers(av2, bv2)
   return {
     key: "defense",
-    label: "Impacto defensivo",
+    label: "Defensive impact",
     emoji: "🛡️",
     winner: cmp.winner,
     margin: cmp.margin,
@@ -197,10 +197,10 @@ function categoryDefense(a: ComparePlayer, b: ComparePlayer): CategoryResult {
     },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Aportación defensiva similar en robos y tapones."
+        ? "Similar defensive output in steals and blocks."
         : cmp.winner === "a"
-          ? `${a.fullName} suma ${(av2 ?? 0).toFixed(1)} acciones defensivas/partido.`
-          : `${b.fullName} suma ${(bv2 ?? 0).toFixed(1)} acciones defensivas/partido.`,
+          ? `${a.fullName} adds ${(av2 ?? 0).toFixed(1)} defensive plays per game.`
+          : `${b.fullName} adds ${(bv2 ?? 0).toFixed(1)} defensive plays per game.`,
   }
 }
 
@@ -219,7 +219,7 @@ function categoryEfficiency(
   const cmp = compareNumbers(aAvg, bAvg)
   return {
     key: "efficiency",
-    label: "Eficiencia de tiro",
+    label: "Shooting efficiency",
     emoji: "📈",
     winner: cmp.winner,
     margin: cmp.margin,
@@ -231,10 +231,10 @@ function categoryEfficiency(
     },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Splits de tiro a un nivel parecido."
+        ? "Shooting splits at a similar level."
         : cmp.winner === "a"
-          ? `${a.fullName} es más eficiente combinando FG%/3P%/FT%.`
-          : `${b.fullName} es más eficiente combinando FG%/3P%/FT%.`,
+          ? `${a.fullName} is more efficient across FG%/3P%/FT%.`
+          : `${b.fullName} is more efficient across FG%/3P%/FT%.`,
   }
 }
 
@@ -251,7 +251,7 @@ function categoryAvailability(
   const cmp = compareNumbers(aLoad, bLoad)
   return {
     key: "availability",
-    label: "Carga / Minutaje",
+    label: "Workload / Minutes",
     emoji: "⏱️",
     winner: cmp.winner,
     margin: cmp.margin,
@@ -263,10 +263,10 @@ function categoryAvailability(
     },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Carga de trabajo equivalente."
+        ? "Comparable workload."
         : cmp.winner === "a"
-          ? `${a.fullName} asume más minutos totales en la temporada.`
-          : `${b.fullName} asume más minutos totales en la temporada.`,
+          ? `${a.fullName} takes on more total minutes this season.`
+          : `${b.fullName} takes on more total minutes this season.`,
   }
 }
 
@@ -292,14 +292,14 @@ function buildInsights(
     insights.push({
       kind: "edge",
       player: "a",
-      text: `Ventaja clara en ${biggestAEdge.label.toLowerCase()} (+${Math.round(biggestAEdge.margin * 100)}% sobre ${b.fullName}).`,
+      text: `Clear edge in ${biggestAEdge.label.toLowerCase()} (+${Math.round(biggestAEdge.margin * 100)}% over ${b.fullName}).`,
     })
   }
   if (biggestBEdge) {
     insights.push({
       kind: "edge",
       player: "b",
-      text: `Ventaja clara en ${biggestBEdge.label.toLowerCase()} (+${Math.round(biggestBEdge.margin * 100)}% sobre ${a.fullName}).`,
+      text: `Clear edge in ${biggestBEdge.label.toLowerCase()} (+${Math.round(biggestBEdge.margin * 100)}% over ${a.fullName}).`,
     })
   }
 
@@ -310,13 +310,13 @@ function buildInsights(
       insights.push({
         kind: "weakness",
         player: "a",
-        text: `Pierde más balones que ${b.fullName} (${aTo.toFixed(1)} vs ${bTo.toFixed(1)} pp).`,
+        text: `Turns it over more than ${b.fullName} (${aTo.toFixed(1)} vs ${bTo.toFixed(1)} per game).`,
       })
     } else if (bTo > aTo + 0.6) {
       insights.push({
         kind: "weakness",
         player: "b",
-        text: `Pierde más balones que ${a.fullName} (${bTo.toFixed(1)} vs ${aTo.toFixed(1)} pp).`,
+        text: `Turns it over more than ${a.fullName} (${bTo.toFixed(1)} vs ${aTo.toFixed(1)} per game).`,
       })
     }
   }
@@ -330,14 +330,14 @@ function buildInsights(
       insights.push({
         kind: "strength",
         player: "a",
-        text: `Ratio AST/TO ${aAstTo.toFixed(2)} — toma decisiones muy seguras.`,
+        text: `AST/TO ratio ${aAstTo.toFixed(2)} — very secure decision-maker.`,
       })
     }
     if (bAstTo >= 2.5) {
       insights.push({
         kind: "strength",
         player: "b",
-        text: `Ratio AST/TO ${bAstTo.toFixed(2)} — toma decisiones muy seguras.`,
+        text: `AST/TO ratio ${bAstTo.toFixed(2)} — very secure decision-maker.`,
       })
     }
   }
@@ -348,14 +348,14 @@ function buildInsights(
     insights.push({
       kind: "strength",
       player: "a",
-      text: `Tirador élite desde el perímetro (${(aTp * 100).toFixed(1)}% en triples).`,
+      text: `Elite perimeter shooter (${(aTp * 100).toFixed(1)}% from three).`,
     })
   }
   if (bTp != null && bTp >= 0.4) {
     insights.push({
       kind: "strength",
       player: "b",
-      text: `Tirador élite desde el perímetro (${(bTp * 100).toFixed(1)}% en triples).`,
+      text: `Elite perimeter shooter (${(bTp * 100).toFixed(1)}% from three).`,
     })
   }
 
@@ -363,7 +363,7 @@ function buildInsights(
     insights.push({
       kind: "context",
       player: "both",
-      text: `Juegan en ligas distintas (${a.league.name} vs ${b.league.name}). Pace y nivel competitivo varían — interpreta las cifras con esa lente.`,
+      text: `They play in different leagues (${a.league.name} vs ${b.league.name}). Pace and competition level vary — read the numbers through that lens.`,
     })
   }
 
@@ -379,7 +379,7 @@ function buildVerdict(
 ): string {
   const diff = Math.abs(aScore - bScore)
   if (diff < 0.5) {
-    return `${a.fullName} y ${b.fullName} están prácticamente al mismo nivel: ${aScore.toFixed(1)} vs ${bScore.toFixed(1)} sobre 6. La elección depende del rol y del encaje táctico.`
+    return `${a.fullName} and ${b.fullName} are essentially level: ${aScore.toFixed(1)} vs ${bScore.toFixed(1)} out of 6. The pick comes down to role and tactical fit.`
   }
   const leader = aScore > bScore ? a : b
   const trailing = aScore > bScore ? b : a
@@ -387,8 +387,8 @@ function buildVerdict(
     .filter((c) => (aScore > bScore ? c.winner === "a" : c.winner === "b"))
     .slice(0, 2)
     .map((c) => c.label.toLowerCase())
-    .join(" y ")
-  return `${leader.fullName} se impone globalmente (${Math.max(aScore, bScore).toFixed(1)} vs ${Math.min(aScore, bScore).toFixed(1)}), apoyado sobre todo en ${dominant || "varias áreas"}. ${trailing.fullName} mantiene su valor en perfiles complementarios.`
+    .join(" and ")
+  return `${leader.fullName} comes out ahead overall (${Math.max(aScore, bScore).toFixed(1)} vs ${Math.min(aScore, bScore).toFixed(1)}), driven mainly by ${dominant || "several areas"}. ${trailing.fullName} keeps value in complementary roles.`
 }
 
 function buildFitNotes(a: ComparePlayer, b: ComparePlayer): string[] {
@@ -396,37 +396,37 @@ function buildFitNotes(a: ComparePlayer, b: ComparePlayer): string[] {
   const aArch = detectArchetype(a.stats, a.position)
   const bArch = detectArchetype(b.stats, b.position)
 
-  if (aArch.includes("Anotador") && bArch.includes("director")) {
+  if (aArch.includes("scorer") && bArch.includes("general")) {
     notes.push(
-      `Combo ofensivo natural: ${a.fullName} crea su tiro y ${b.fullName} le organiza el juego.`,
+      `Natural offensive pairing: ${a.fullName} creates their own shot while ${b.fullName} runs the offense.`,
     )
-  } else if (bArch.includes("Anotador") && aArch.includes("director")) {
+  } else if (bArch.includes("scorer") && aArch.includes("general")) {
     notes.push(
-      `Combo ofensivo natural: ${b.fullName} crea su tiro y ${a.fullName} le organiza el juego.`,
-    )
-  }
-
-  if (aArch.includes("defensivo") || bArch.includes("defensivo")) {
-    notes.push(
-      "Al menos uno aporta un perfil defensivo claro — útil para cerrar partidos en defensa.",
+      `Natural offensive pairing: ${b.fullName} creates their own shot while ${a.fullName} runs the offense.`,
     )
   }
 
-  if (aArch.includes("tirador") && bArch.includes("tirador")) {
+  if (aArch.includes("Defensive") || bArch.includes("Defensive")) {
     notes.push(
-      "Ambos abren el campo desde el perímetro: alineaciones muy espaciadas pero con menos creación interior.",
+      "At least one brings a clear defensive profile — useful for closing games on that end.",
+    )
+  }
+
+  if (aArch.includes("Shooting") && bArch.includes("Shooting")) {
+    notes.push(
+      "Both stretch the floor: very spaced lineups but less interior creation.",
     )
   }
 
   if (a.position && b.position && a.position[0] === b.position[0]) {
     notes.push(
-      `Comparten posición base (${a.position}/${b.position}). Si juegan juntos, exige un sistema con dobles bases o ala-pívots versátiles.`,
+      `They share a primary position (${a.position}/${b.position}). Playing them together needs a two-guard or versatile-forward system.`,
     )
   }
 
   if (notes.length === 0) {
     notes.push(
-      "Perfiles complementarios en muchas áreas — fácil de combinar en rotación.",
+      "Complementary profiles across many areas — easy to pair in a rotation.",
     )
   }
   return notes
@@ -436,23 +436,23 @@ function buildWarnings(a: ComparePlayer, b: ComparePlayer): string[] {
   const warnings: string[] = []
   if (!a.stats)
     warnings.push(
-      `No hay stats de temporada para ${a.fullName}; el análisis se apoya en datos parciales.`,
+      `No season stats for ${a.fullName}; the analysis leans on partial data.`,
     )
   if (!b.stats)
     warnings.push(
-      `No hay stats de temporada para ${b.fullName}; el análisis se apoya en datos parciales.`,
+      `No season stats for ${b.fullName}; the analysis leans on partial data.`,
     )
   if (a.league.slug !== b.league.slug) {
     warnings.push(
-      "Comparar entre ligas distintas no normaliza pace ni nivel defensivo. Toma los rankings como orientativos.",
+      "Comparing across leagues doesn't normalize pace or defensive level. Treat the rankings as indicative.",
     )
   }
   const aGp = num(a.stats?.gamesPlayed ?? null) ?? 0
   const bGp = num(b.stats?.gamesPlayed ?? null) ?? 0
   if (aGp > 0 && aGp < 15)
-    warnings.push(`Muestra pequeña para ${a.fullName} (${aGp} GP).`)
+    warnings.push(`Small sample for ${a.fullName} (${aGp} GP).`)
   if (bGp > 0 && bGp < 15)
-    warnings.push(`Muestra pequeña para ${b.fullName} (${bGp} GP).`)
+    warnings.push(`Small sample for ${b.fullName} (${bGp} GP).`)
   return warnings
 }
 
@@ -486,8 +486,8 @@ export function comparePlayers(
     }
   }
 
-  const confidence: "alta" | "media" | "baja" =
-    valid >= 5 ? "alta" : valid >= 3 ? "media" : "baja"
+  const confidence: "high" | "medium" | "low" =
+    valid >= 5 ? "high" : valid >= 3 ? "medium" : "low"
 
   const insights = buildInsights(a, b, categories)
   const verdict = buildVerdict(a, b, categories, aScore, bScore)

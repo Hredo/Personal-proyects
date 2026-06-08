@@ -22,22 +22,22 @@ const INSIGHT_META: Record<
   edge: {
     color: "border-brand-500/40 bg-brand-500/5 text-brand-200",
     icon: "↑",
-    label: "Ventaja",
+    label: "Edge",
   },
   strength: {
     color: "border-emerald-500/40 bg-emerald-500/5 text-emerald-200",
     icon: "★",
-    label: "Fortaleza",
+    label: "Strength",
   },
   weakness: {
     color: "border-amber-500/40 bg-amber-500/5 text-amber-200",
     icon: "!",
-    label: "A vigilar",
+    label: "Watch",
   },
   context: {
     color: "border-ink-700 bg-ink-800/40 text-ink-300",
     icon: "i",
-    label: "Contexto",
+    label: "Context",
   },
 }
 
@@ -66,7 +66,7 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
       setData(payload.data as ComparisonOutput)
       lastKeyRef.current = requestKey
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al analizar.")
+      setError(e instanceof Error ? e.message : "Analysis failed.")
     } finally {
       setLoading(false)
     }
@@ -101,11 +101,11 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
           </div>
           <div>
             <h2 className="font-display text-lg font-bold text-ink-50 sm:text-xl">
-              Análisis con IA
+              AI analysis
             </h2>
             <p className="text-xs text-ink-300 sm:text-sm">
-              La IA del scout cruza categorías, detecta ventajas y suelta un
-              veredicto en segundos.
+              The scout AI weighs every category, flags edges and drops a
+              verdict in seconds.
             </p>
           </div>
         </div>

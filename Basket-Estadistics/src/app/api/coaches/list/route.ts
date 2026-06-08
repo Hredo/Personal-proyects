@@ -9,7 +9,14 @@ import {
 export const dynamic = "force-dynamic"
 
 const ROLES = new Set(["head_coach", "assistant_coach", "staff"])
-const LEAGUES = new Set(["nba", "euroleague", "acb"])
+const LEAGUES = new Set([
+  "nba",
+  "euroleague",
+  "acb",
+  "leb-oro",
+  "leb-plata",
+  "eba",
+])
 const MAX_PAGE_SIZE = 50
 const MAX_Q_LEN = 100
 const MAX_SLUG_LEN = 100

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Logo } from "@/components/svg/logo"
 import { SITE } from "@/lib/site"
 import { getLatestSyncTime } from "@/lib/data/sync"
 
@@ -15,68 +16,111 @@ function formatRelative(d: Date): string {
   return `${day}d ago`
 }
 
+const EXPLORE = [
+  { href: "/players", label: "Players" },
+  { href: "/teams", label: "Teams" },
+  { href: "/coaches", label: "Coaches" },
+]
+
+const TOOLS = [
+  { href: "/compare", label: "Compare" },
+  { href: "/leagues", label: "Leagues" },
+  { href: "/ai-advisor", label: "AI Advisor" },
+]
+
+const LEGAL = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+]
+
 export async function Footer() {
   const lastSync = await getLatestSyncTime()
   return (
-    <footer className="mt-16 border-t border-white/5 sm:mt-24">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-ink-300 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
-        <div className="flex flex-col gap-1">
-          <p>
-            © {new Date().getFullYear()} {SITE.name}
-          </p>
-          <p className="flex items-center gap-2 text-xs text-ink-400">
-            <span
-              aria-hidden
-              className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
-                lastSync ? "bg-accent-lime" : "bg-ink-500"
-              }`}
+    <footer className="relative mt-20 hairline-t sm:mt-28">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="flex flex-col gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 text-ink-50"
+              aria-label={`${SITE.name} — Home`}
             >
-              {lastSync ? (
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-lime opacity-60" />
-              ) : null}
-            </span>
-            {lastSync
-              ? `Last sync: ${formatRelative(lastSync)}`
-              : "Data sync not yet observed"}
+              <Logo className="h-8 w-8" />
+              <span className="font-display text-lg font-bold tracking-[-0.02em]">
+                globalhoopstats<span className="text-brand-500">.</span>
+              </span>
+            </Link>
+            <p className="max-w-xs text-sm leading-relaxed text-ink-400">
+              Cross-league basketball intelligence. Players, rosters and staff
+              from the NBA, EuroLeague, ACB and Spain&apos;s FEB ladder — one
+              language, one console.
+            </p>
+            <p className="mt-1 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-500">
+              <span
+                aria-hidden
+                className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
+                  lastSync ? "bg-positive" : "bg-ink-600"
+                }`}
+              >
+                {lastSync ? (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-60" />
+                ) : null}
+              </span>
+              {lastSync ? `Synced ${formatRelative(lastSync)}` : "Sync pending"}
+            </p>
+          </div>
+
+          <FooterColumn title="Explore" links={EXPLORE} />
+          <FooterColumn title="Tools" links={TOOLS} />
+          <FooterColumn title="Company" links={LEGAL} contact={SITE.contact} />
+        </div>
+
+        <div className="mt-12 flex flex-col gap-3 hairline-t pt-6 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} {SITE.name}. All rights reserved.
+          </p>
+          <p className="font-mono uppercase tracking-[0.16em]">
+            NBA · EuroLeague · ACB · LEB Oro · LEB Plata · EBA
           </p>
         </div>
-        <nav
-          aria-label="Footer"
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5"
-        >
-          <Link href="/players" className="transition hover:text-brand-300">
-            Players
+      </div>
+    </footer>
+  )
+}
+
+function FooterColumn({
+  title,
+  links,
+  contact,
+}: {
+  title: string
+  links: { href: string; label: string }[]
+  contact?: string
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-500">
+        {title}
+      </p>
+      <nav className="flex flex-col gap-2.5 text-sm text-ink-300" aria-label={title}>
+        {links.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="w-fit transition-colors duration-200 hover:text-brand-300"
+          >
+            {l.label}
           </Link>
-          <Link href="/teams" className="transition hover:text-brand-300">
-            Teams
-          </Link>
-          <Link href="/coaches" className="transition hover:text-brand-300">
-            Coaches
-          </Link>
-          <Link href="/compare" className="transition hover:text-brand-300">
-            Compare
-          </Link>
-          <Link href="/leagues" className="transition hover:text-brand-300">
-            Leagues
-          </Link>
-          <Link href="/ai-advisor" className="transition hover:text-brand-300">
-            AI Advisor
-          </Link>
-          <span className="hidden h-4 w-px bg-white/10 sm:inline-block" />
-          <Link href="/terms" className="transition hover:text-brand-300">
-            Terms
-          </Link>
-          <Link href="/privacy" className="transition hover:text-brand-300">
-            Privacy
-          </Link>
+        ))}
+        {contact ? (
           <a
-            href={`mailto:${SITE.contact}`}
-            className="transition hover:text-brand-300"
+            href={`mailto:${contact}`}
+            className="w-fit transition-colors duration-200 hover:text-brand-300"
           >
             Contact
           </a>
-        </nav>
-      </div>
-    </footer>
+        ) : null}
+      </nav>
+    </div>
   )
 }

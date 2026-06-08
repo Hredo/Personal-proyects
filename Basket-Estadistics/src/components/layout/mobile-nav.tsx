@@ -48,7 +48,7 @@ export function MobileNav({ leagues }: Props) {
         aria-label="Open menu"
         aria-expanded={open}
         aria-controls="mobile-nav-panel"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] text-ink-200 transition hover:border-brand-400/40 hover:text-ink-50 md:hidden"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-hairline bg-white/[0.04] text-ink-200 transition-colors duration-200 hover:border-brand-400/40 hover:text-ink-50 md:hidden"
       >
         <svg
           className="h-5 w-5"
@@ -76,7 +76,7 @@ export function MobileNav({ leagues }: Props) {
           type="button"
           aria-label="Close menu"
           onClick={() => setOpen(false)}
-          className={`absolute inset-0 bg-ink-950/70 backdrop-blur-sm transition-opacity duration-200 ${
+          className={`absolute inset-0 bg-ink-950/75 backdrop-blur-md transition-opacity duration-300 ${
             open ? "opacity-100" : "opacity-0"
           }`}
           tabIndex={open ? 0 : -1}
@@ -86,19 +86,19 @@ export function MobileNav({ leagues }: Props) {
           role="dialog"
           aria-modal="true"
           aria-label="Site navigation"
-          className={`absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col overflow-y-auto border-l border-white/10 bg-ink-950 shadow-2xl shadow-black/60 transition-transform duration-200 ease-out ${
+          className={`absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col overflow-y-auto border-l border-hairline bg-surface-0 shadow-2xl shadow-black/60 transition-transform duration-300 ease-fluid ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="flex items-center justify-between border-b border-white/5 px-5 py-4">
-            <span className="font-display text-sm font-bold uppercase tracking-widest text-ink-200">
+          <div className="flex items-center justify-between hairline-b px-5 py-4">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-300">
               Menu
             </span>
             <button
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close menu"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/5 text-ink-200 transition hover:border-brand-400/40 hover:text-ink-50"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-hairline bg-white/5 text-ink-200 transition-colors duration-200 hover:border-brand-400/40 hover:text-ink-50"
             >
               <svg
                 className="h-4 w-4"
@@ -126,28 +126,32 @@ export function MobileNav({ leagues }: Props) {
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className={`block rounded-lg px-3 py-2.5 text-base font-medium transition ${
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200 ${
                         active
                           ? "bg-brand-500/10 text-brand-200"
-                          : "text-ink-100 hover:bg-white/[0.04] hover:text-brand-200"
+                          : "text-ink-100 hover:bg-white/[0.04] hover:text-ink-50"
                       }`}
                     >
                       {l.label}
+                      {active ? (
+                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+                      ) : null}
                     </Link>
                   </li>
                 )
               })}
             </ul>
 
-            <p className="mt-6 px-3 text-[10px] font-semibold uppercase tracking-widest text-ink-400">
-              Leagues
+            <p className="mt-6 px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-500">
+              By league
             </p>
             <ul className="mt-2 space-y-1">
               {leagues.map((lg) => (
                 <li key={lg.slug}>
                   <Link
                     href={`/players?league=${lg.slug}`}
-                    className="block rounded-lg px-3 py-2 text-sm text-ink-200 transition hover:bg-white/[0.04] hover:text-brand-200"
+                    className="block rounded-xl px-3 py-2 text-sm text-ink-200 transition-colors duration-200 hover:bg-white/[0.04] hover:text-ink-50"
                   >
                     {lg.name}
                   </Link>
@@ -156,14 +160,14 @@ export function MobileNav({ leagues }: Props) {
             </ul>
           </nav>
 
-          <div className="border-t border-white/5 px-5 py-4">
-            <a
-              href="#waitlist"
+          <div className="hairline-t px-5 py-4">
+            <Link
+              href="/compare"
               onClick={() => setOpen(false)}
-              className="block w-full rounded-md bg-brand-500 px-4 py-2.5 text-center text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-4 py-3 text-center text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition-colors duration-200 hover:bg-brand-400"
             >
-              Request access
-            </a>
+              Open the console
+            </Link>
           </div>
         </aside>
       </div>

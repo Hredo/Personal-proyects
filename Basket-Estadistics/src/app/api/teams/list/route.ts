@@ -10,7 +10,14 @@ export const dynamic = "force-dynamic"
 
 const SORTS = new Set(["name", "players"])
 const ORDERS = new Set(["asc", "desc"])
-const LEAGUES = new Set(["nba", "euroleague", "acb"])
+const LEAGUES = new Set([
+  "nba",
+  "euroleague",
+  "acb",
+  "leb-oro",
+  "leb-plata",
+  "eba",
+])
 const MAX_PAGE_SIZE = 50
 const MAX_Q_LEN = 100
 

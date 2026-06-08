@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { useRouter } from "next/navigation"
 
 type MeResponse = {
   user: {
@@ -27,21 +26,20 @@ function planBadge(plan: string, role: string): {
   if (role === "admin")
     return {
       label: "Admin",
-      color: "border-accent-magenta/50 bg-accent-magenta/10 text-accent-magenta",
+      color: "border-brand-400/50 bg-brand-500/15 text-brand-200",
     }
   if (plan === "pro")
     return {
       label: "Pro",
-      color: "border-accent-cyan/50 bg-accent-cyan/10 text-accent-cyan",
+      color: "border-positive/50 bg-positive/10 text-positive",
     }
   return {
     label: "Free",
-    color: "border-white/15 bg-white/[0.04] text-ink-300",
+    color: "border-hairline bg-white/[0.04] text-ink-300",
   }
 }
 
 export function UserMenu() {
-  const router = useRouter()
   const [me, setMe] = useState<MeResponse["user"] | null>(null)
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -122,9 +120,11 @@ export function UserMenu() {
     } catch {
       // ignore
     }
+    setMe(null)
     setOpen(false)
-    router.refresh()
-    router.push("/")
+    // Hard navigation guarantees the cleared cookie is honored and all
+    // client state (including this menu) is rebuilt as a signed-out session.
+    window.location.assign("/")
   }
 
   return (

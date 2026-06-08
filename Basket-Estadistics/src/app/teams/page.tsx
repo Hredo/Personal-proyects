@@ -15,7 +15,14 @@ export const metadata: Metadata = {
 
 const SORT_VALUES = new Set(["name", "players"])
 const ORDER_VALUES = new Set(["asc", "desc"])
-const LEAGUE_VALUES = new Set(["nba", "euroleague", "acb"])
+const LEAGUE_VALUES = new Set([
+  "nba",
+  "euroleague",
+  "acb",
+  "leb-oro",
+  "leb-plata",
+  "eba",
+])
 const PAGE_SIZE = 24
 
 function parseInput(sp: SearchParams): ListTeamsInput {

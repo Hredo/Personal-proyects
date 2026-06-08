@@ -1,5 +1,6 @@
-import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
+import { SectionHeading } from "@/components/ui/section-heading"
+import { ButtonLink } from "@/components/ui/button"
 
 type Feature = {
   n: string
@@ -8,14 +9,13 @@ type Feature = {
   cta: { href: string; label: string }
   bullets: string[]
   visual: "compare" | "radar" | "shot"
-  accent: "brand" | "cyan" | "magenta"
 }
 
 const FEATURES: Feature[] = [
   {
     n: "01",
     title: "Cross-league compare",
-    body: "Drop two names from any combination of NBA, EuroLeague or ACB and get radar, splits and per-game lines in the same scale.",
+    body: "Drop two names from any combination of NBA, EuroLeague or ACB and get radar, splits and per-game lines on the same scale.",
     cta: { href: "/compare", label: "Open the console" },
     bullets: [
       "Pace and possession normalized",
@@ -23,20 +23,18 @@ const FEATURES: Feature[] = [
       "Shooting splits, advanced metrics and per-game",
     ],
     visual: "compare",
-    accent: "brand",
   },
   {
     n: "02",
     title: "League hubs with leaders",
-    body: "Three leagues, three dashboards. Top scorers, standings leader and direct jumps to the roster and team stats.",
+    body: "Six leagues, one shelf. Current-season scoring leaders, roster and staff counts, and direct jumps into every directory.",
     cta: { href: "/leagues", label: "Browse leagues" },
     bullets: [
-      "Top 3 scorers per league, current season",
-      "Standings leader with win% and net rating",
+      "Top scorers per league, current season",
+      "Roster and coaching-staff counts at a glance",
       "Quick links to the player and team directories",
     ],
     visual: "radar",
-    accent: "cyan",
   },
   {
     n: "03",
@@ -49,30 +47,8 @@ const FEATURES: Feature[] = [
       "Export to PDF, Excel and Word",
     ],
     visual: "shot",
-    accent: "magenta",
   },
 ]
-
-const ACCENT: Record<
-  Feature["accent"],
-  { text: string; chip: string; bar: string }
-> = {
-  brand: {
-    text: "text-brand-300",
-    chip: "bg-brand-500/10 text-brand-200 border-brand-500/30",
-    bar: "from-transparent via-brand-500/60 to-transparent",
-  },
-  cyan: {
-    text: "text-accent-cyan",
-    chip: "bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30",
-    bar: "from-transparent via-accent-cyan/60 to-transparent",
-  },
-  magenta: {
-    text: "text-accent-magenta",
-    chip: "bg-accent-magenta/10 text-accent-magenta border-accent-magenta/30",
-    bar: "from-transparent via-accent-magenta/60 to-transparent",
-  },
-}
 
 function CompareVisual() {
   return (
@@ -310,65 +286,56 @@ export function FeatureShowcase() {
   return (
     <section
       aria-label="Product features"
-      className="relative border-t border-white/5 py-16 sm:py-24"
+      className="relative hairline-t py-20 sm:py-28"
     >
-      <div className="mx-auto max-w-2xl text-center">
-        <FadeIn>
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-brand-200 sm:text-xs">
-            What&apos;s inside
-          </span>
-          <h2 className="mt-4 font-display text-3xl font-bold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-            One console.{" "}
-            <span className="text-gradient-brand">Three workflows.</span>
-          </h2>
-          <p className="mt-4 text-sm text-ink-200 sm:text-base">
-            Whether you&apos;re scouting a target, comparing cross-league
-            prospects or just looking up the box score, the data is the same and
-            the math is the same.
-          </p>
-        </FadeIn>
-      </div>
+      <FadeIn>
+        <SectionHeading
+          align="center"
+          eyebrow="What's inside"
+          title={
+            <>
+              One console.{" "}
+              <span className="text-gradient-brand">Three workflows.</span>
+            </>
+          }
+          description="Whether you're scouting a target, comparing cross-league prospects or just looking up a box score — same data, same math."
+        />
+      </FadeIn>
 
-      <div className="mt-10 space-y-6 sm:mt-12 sm:space-y-8">
+      <div className="mt-12 space-y-5 sm:space-y-6">
         {FEATURES.map((f, i) => {
-          const a = ACCENT[f.accent]
+          const reversed = i % 2 === 1
           return (
             <FadeIn key={f.n} delay={0.05 * (i + 1)} y={24}>
-              <article
-                className={`relative grid items-stretch overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] ring-1 ring-inset ring-white/5 md:grid-cols-2`}
-              >
-                <div
+              <article className="gh-card relative grid items-stretch overflow-hidden md:grid-cols-2">
+                <span
                   aria-hidden
-                  className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${a.bar}`}
+                  className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/60 to-transparent"
                 />
-                <div className="order-2 p-5 sm:p-7 md:order-1 md:p-9">
+                <div
+                  className={`p-6 sm:p-8 md:p-10 ${reversed ? "md:order-2" : "md:order-1"}`}
+                >
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`font-mono text-xs uppercase tracking-widest ${a.text}`}
-                    >
+                    <span className="font-mono text-xs uppercase tracking-[0.18em] text-brand-300">
                       {f.n}
                     </span>
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${a.chip}`}
-                    >
-                      Highlight
-                    </span>
+                    <span className="h-px w-8 bg-hairline-strong" />
                   </div>
-                  <h3 className="mt-3 font-display text-2xl font-bold leading-tight tracking-tight text-ink-50 sm:text-3xl">
+                  <h3 className="mt-4 font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-ink-50 sm:text-3xl">
                     {f.title}
                   </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-ink-200 sm:text-base">
+                  <p className="mt-3 text-pretty text-sm leading-relaxed text-ink-300 sm:text-base">
                     {f.body}
                   </p>
-                  <ul className="mt-5 space-y-2">
+                  <ul className="mt-5 space-y-2.5">
                     {f.bullets.map((b) => (
                       <li
                         key={b}
-                        className="flex items-start gap-2 text-sm text-ink-100"
+                        className="flex items-start gap-2.5 text-sm text-ink-200"
                       >
                         <svg
                           aria-hidden
-                          className={`mt-0.5 h-4 w-4 shrink-0 ${a.text}`}
+                          className="mt-0.5 h-4 w-4 shrink-0 text-brand-400"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -382,27 +349,24 @@ export function FeatureShowcase() {
                       </li>
                     ))}
                   </ul>
-                  <Link
+                  <ButtonLink
                     href={f.cta.href}
-                    className="mt-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-ink-50 transition hover:border-brand-400/60 hover:text-brand-200"
+                    variant="secondary"
+                    size="sm"
+                    arrow
+                    className="mt-7"
                   >
                     {f.cta.label}
-                    <svg
-                      className="h-3.5 w-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                    >
-                      <path d="M5 12h14M13 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                  </ButtonLink>
                 </div>
-                <div className="order-1 flex items-center justify-center border-b border-white/5 bg-gradient-to-br from-white/[0.04] to-transparent p-6 sm:p-8 md:order-2 md:border-b-0 md:border-l md:p-10">
-                  <div className="aspect-[16/10] w-full max-w-md rounded-xl border border-white/10 bg-ink-950/60 p-3">
+                <div
+                  className={`flex items-center justify-center bg-gradient-to-br from-white/[0.04] to-transparent p-6 hairline-b sm:p-8 md:p-10 md:border-b-0 ${
+                    reversed
+                      ? "md:order-1 md:border-r md:border-hairline"
+                      : "md:order-2 md:border-l md:border-hairline"
+                  }`}
+                >
+                  <div className="aspect-[16/10] w-full max-w-md rounded-xl border border-hairline bg-surface-0/60 p-3">
                     <Visual kind={f.visual} />
                   </div>
                 </div>

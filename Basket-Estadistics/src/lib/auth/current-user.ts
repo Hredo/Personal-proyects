@@ -8,6 +8,14 @@ import {
 
 export type SessionUser = Pick<User, "id" | "email" | "name" | "plan" | "role">
 
+// Accounts that are always treated as admins (unlimited AI, full access),
+// regardless of what the database row says. Compared case-insensitively.
+const ADMIN_EMAILS = new Set<string>(["hrvaldes22@gmail.com"])
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  return !!email && ADMIN_EMAILS.has(email.trim().toLowerCase())
+}
+
 export async function getCurrentUser(
   cookieHeader: string | null,
 ): Promise<SessionUser | null> {
@@ -39,7 +47,7 @@ export async function getCurrentUser(
     email: row.email,
     name: row.name,
     plan: row.plan,
-    role: row.role,
+    role: isAdminEmail(row.email) ? "admin" : row.role,
   }
 }
 

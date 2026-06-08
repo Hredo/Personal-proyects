@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import Link from "next/link"
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google"
+import { Archivo, Geist, JetBrains_Mono } from "next/font/google"
 import { Logo } from "@/components/svg/logo"
 import { NavDropdown } from "@/components/layout/nav-dropdown"
 import { MobileNav } from "@/components/layout/mobile-nav"
@@ -9,6 +9,7 @@ import { SearchTrigger } from "@/components/players/search-trigger"
 import { PlayerCommandPalette } from "@/components/players/player-command-palette"
 import { JsonLd } from "@/components/marketing/json-ld"
 import { UserMenu } from "@/components/auth/user-menu"
+import { ButtonLink } from "@/components/ui/button"
 import { SITE, SEO_KEYWORDS } from "@/lib/site"
 import "./globals.css"
 
@@ -18,13 +19,13 @@ const NAV_LEAGUES = [
   { slug: "acb", name: "ACB" },
 ]
 
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans-loaded",
   display: "swap",
 })
 
-const spaceGrotesk = Space_Grotesk({
+const archivo = Archivo({
   subsets: ["latin"],
   variable: "--font-display-loaded",
   display: "swap",
@@ -111,7 +112,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+      className={`${geist.variable} ${archivo.variable} ${jetbrainsMono.variable}`}
     >
       <body className="font-sans" suppressHydrationWarning>
         <JsonLd
@@ -154,20 +155,21 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-ink-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-ink-950/55">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+        <header className="sticky top-0 z-40 hairline-b bg-surface-0/70 backdrop-blur-xl supports-[backdrop-filter]:bg-surface-0/55">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-3.5">
             <Link
               href="/"
-              className="flex items-center gap-2 text-ink-50 sm:gap-3"
+              className="group flex items-center gap-2.5 text-ink-50"
               aria-label={`${SITE.name} — Home`}
             >
-              <Logo className="h-7 w-7 sm:h-8 sm:w-8" />
-              <span className="font-display text-base font-bold tracking-tight sm:text-lg">
+              <Logo className="h-7 w-7 transition-transform duration-500 ease-fluid group-hover:rotate-[10deg] sm:h-8 sm:w-8" />
+              <span className="font-display text-[15px] font-bold tracking-[-0.02em] sm:text-base">
                 globalhoopstats
+                <span className="text-brand-500">.</span>
               </span>
             </Link>
             <nav
-              className="hidden items-center gap-6 text-sm text-ink-200 md:flex lg:gap-8"
+              className="hidden items-center gap-7 text-sm font-medium text-ink-300 md:flex lg:gap-9"
               aria-label="Primary"
             >
               <NavDropdown
@@ -176,38 +178,45 @@ export default function RootLayout({
                 leagues={NAV_LEAGUES}
               />
               <NavDropdown label="Teams" href="/teams" leagues={NAV_LEAGUES} />
-              <Link href="/coaches" className="transition hover:text-brand-300">
+              <Link
+                href="/coaches"
+                className="transition-colors duration-200 hover:text-ink-50"
+              >
                 Coaches
               </Link>
-              <Link href="/compare" className="transition hover:text-brand-300">
+              <Link
+                href="/compare"
+                className="transition-colors duration-200 hover:text-ink-50"
+              >
                 Compare
               </Link>
-              <Link href="/leagues" className="transition hover:text-brand-300">
+              <Link
+                href="/leagues"
+                className="transition-colors duration-200 hover:text-ink-50"
+              >
                 Leagues
               </Link>
               <Link
                 href="/ai-advisor"
-                className="group inline-flex items-center gap-1.5 transition hover:text-brand-300"
+                className="inline-flex items-center gap-1.5 transition-colors duration-200 hover:text-ink-50"
               >
                 AI Advisor
-                <span className="inline-flex items-center gap-1 rounded-full border border-accent-cyan/40 bg-accent-cyan/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-accent-cyan">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-cyan opacity-75" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent-cyan" />
-                  </span>
+                <span className="inline-flex items-center rounded-full border border-brand-500/40 bg-brand-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-brand-300">
                   Pro
                 </span>
               </Link>
             </nav>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <SearchTrigger />
               <UserMenu />
-              <Link
+              <ButtonLink
                 href="/compare"
-                className="hidden rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition duration-200 hover:bg-brand-400 active:translate-y-px md:inline-flex"
+                size="sm"
+                arrow
+                className="hidden md:inline-flex"
               >
                 Open console
-              </Link>
+              </ButtonLink>
               <MobileNav leagues={NAV_LEAGUES} />
             </div>
           </div>
