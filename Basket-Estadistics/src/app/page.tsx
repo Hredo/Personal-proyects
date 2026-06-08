@@ -247,7 +247,7 @@ export default async function Home() {
       {/* ── TICKER ─────────────────────────────────────────────── */}
       <section
         aria-label="Top performers"
-        className="relative left-1/2 w-screen -translate-x-1/2 hairline-t hairline-b bg-surface-0/40 py-3.5"
+        className="relative -mx-4 hairline-t hairline-b bg-surface-0/40 py-3.5 sm:-mx-6"
       >
         <Marquee duration={55} className="text-sm">
           {TICKER_LEFT.map((t) => (
@@ -280,7 +280,7 @@ export default async function Home() {
       {/* ── IMMERSIVE SCROLL SCENE (the shot, scrubbed to scroll) ── */}
       <section
         aria-label="From ingest to decoded"
-        className="relative left-1/2 w-screen -translate-x-1/2"
+        className="relative -mx-4 sm:-mx-6"
       >
         <div aria-hidden className="absolute inset-0 -z-10 bg-grid-fade opacity-30" />
         <CourtScrollScene />

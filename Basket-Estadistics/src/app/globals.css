@@ -286,6 +286,7 @@
     color-scheme: dark;
     scroll-behavior: smooth;
     scroll-padding-top: 6rem;
+    overflow-x: clip;
     -webkit-tap-highlight-color: transparent;
   }
   body {
