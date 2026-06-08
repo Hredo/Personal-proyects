@@ -1,6 +1,6 @@
-import { nbaAdapter } from "../src/lib/sources/nba"
-import { NBA_TEAM_CODES } from "../src/lib/sources/nba-teams"
-import { closeDb } from "../src/lib/db/client"
+import { nbaAdapter } from "../../src/lib/sources/nba"
+import { NBA_TEAM_CODES } from "../../src/lib/sources/nba-teams"
+import { closeDb } from "../../src/lib/db/client"
 
 async function main() {
   const stats = await nbaAdapter.fetchTeamStats()

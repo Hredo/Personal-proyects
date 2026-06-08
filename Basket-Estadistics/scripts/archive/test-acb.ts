@@ -1,4 +1,4 @@
-import { acbAdapter } from "../src/lib/sources/acb"
+import { acbAdapter } from "../../src/lib/sources/acb"
 
 async function main() {
   console.log("Fetching ACB players (this hits 18 team pages)...")

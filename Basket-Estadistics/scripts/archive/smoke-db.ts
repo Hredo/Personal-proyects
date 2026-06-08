@@ -1,5 +1,5 @@
-import { getDb, closeDb } from "../src/lib/db/client"
-import { leagues } from "../src/lib/db/schema"
+import { getDb, closeDb } from "../../src/lib/db/client"
+import { leagues } from "../../src/lib/db/schema"
 
 async function main() {
   const db = getDb()

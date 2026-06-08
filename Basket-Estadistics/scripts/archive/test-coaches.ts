@@ -1,4 +1,4 @@
-import { listCoaches, groupCoachesByTeam } from "../src/lib/data/staff"
+import { listCoaches, groupCoachesByTeam } from "../../src/lib/data/staff"
 
 async function main() {
   const all = await listCoaches({ pageSize: 5000 })

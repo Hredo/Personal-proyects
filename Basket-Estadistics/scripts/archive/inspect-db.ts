@@ -1,4 +1,4 @@
-import { getDb, closeDb } from "../src/lib/db/client"
+import { getDb, closeDb } from "../../src/lib/db/client"
 import {
   coaches,
   players,
@@ -6,7 +6,7 @@ import {
   teams,
   leagues,
   teamSeasonStats,
-} from "../src/lib/db/schema"
+} from "../../src/lib/db/schema"
 import { eq, sql } from "drizzle-orm"
 
 async function main() {

@@ -1,5 +1,5 @@
-import { nbaAdapter } from "../src/lib/sources/nba"
-import { closeDb } from "../src/lib/db/client"
+import { nbaAdapter } from "../../src/lib/sources/nba"
+import { closeDb } from "../../src/lib/db/client"
 
 async function main() {
   console.log("Fetching NBA team stats...")
