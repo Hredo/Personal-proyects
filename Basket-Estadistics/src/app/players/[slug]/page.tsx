@@ -408,6 +408,6 @@ function StatTile({
 
 function HighlightsSkeleton() {
   return (
-    <div className="aspect-video w-full animate-pulse rounded-xl border border-white/5 bg-white/[0.02]" />
+    <div className="h-[84px] w-full animate-pulse rounded-lg border border-white/5 bg-white/[0.03]" />
   )
 }
