@@ -8,6 +8,7 @@ import {
   teams,
 } from "@/lib/db/schema"
 import { cached } from "@/lib/data/cache"
+import { leagueSlugsFor } from "@/lib/league-groups"
 
 export type PlayerListItem = {
   id: string
@@ -92,8 +93,12 @@ export async function listPlayers(
   const queryFilter = input.query
     ? sql`lower(p.full_name) like ${`%${input.query.toLowerCase()}%`}`
     : sql`1=1`
-  const leagueFilter = input.league
-    ? sql`l.slug = ${input.league}`
+  const leagueSlugs = leagueSlugsFor(input.league)
+  const leagueFilter = leagueSlugs
+    ? sql`l.slug in (${sql.join(
+        leagueSlugs.map((s) => sql`${s}`),
+        sql`, `,
+      )})`
     : sql`1=1`
 
   const fullSql = sql`

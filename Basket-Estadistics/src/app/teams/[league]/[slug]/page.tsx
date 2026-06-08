@@ -60,14 +60,14 @@ export default async function TeamDetailPage({
   ]
 
   return (
-    <div className="py-8">
+    <div className="pt-6 sm:pt-8">
       <JsonLd data={structuredData} />
       <FadeIn>
         <Link
           href="/teams"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-ink-300 transition hover:text-[var(--brand-300,#f8c98a)]"
+          className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-300 transition hover:text-brand-300"
         >
-          ← Back to teams
+          <span aria-hidden>←</span> Back to teams
         </Link>
       </FadeIn>
       <TeamDetailView team={team} />

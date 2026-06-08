@@ -1,15 +1,9 @@
 import type { Metadata, Viewport } from "next"
-import Link from "next/link"
 import { Archivo, Geist, JetBrains_Mono } from "next/font/google"
-import { Logo } from "@/components/svg/logo"
-import { NavDropdown } from "@/components/layout/nav-dropdown"
-import { MobileNav } from "@/components/layout/mobile-nav"
+import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
-import { SearchTrigger } from "@/components/players/search-trigger"
 import { PlayerCommandPalette } from "@/components/players/player-command-palette"
 import { JsonLd } from "@/components/marketing/json-ld"
-import { UserMenu } from "@/components/auth/user-menu"
-import { ButtonLink } from "@/components/ui/button"
 import { SITE, SEO_KEYWORDS } from "@/lib/site"
 import "./globals.css"
 
@@ -155,72 +149,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <header className="sticky top-0 z-40 hairline-b bg-surface-0/70 backdrop-blur-xl supports-[backdrop-filter]:bg-surface-0/55">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-3.5">
-            <Link
-              href="/"
-              className="group flex items-center gap-2.5 text-ink-50"
-              aria-label={`${SITE.name} — Home`}
-            >
-              <Logo className="h-7 w-7 transition-transform duration-500 ease-fluid group-hover:rotate-[10deg] sm:h-8 sm:w-8" />
-              <span className="font-display text-[15px] font-bold tracking-[-0.02em] sm:text-base">
-                globalhoopstats
-                <span className="text-brand-500">.</span>
-              </span>
-            </Link>
-            <nav
-              className="hidden items-center gap-7 text-sm font-medium text-ink-300 md:flex lg:gap-9"
-              aria-label="Primary"
-            >
-              <NavDropdown
-                label="Players"
-                href="/players"
-                leagues={NAV_LEAGUES}
-              />
-              <NavDropdown label="Teams" href="/teams" leagues={NAV_LEAGUES} />
-              <Link
-                href="/coaches"
-                className="transition-colors duration-200 hover:text-ink-50"
-              >
-                Coaches
-              </Link>
-              <Link
-                href="/compare"
-                className="transition-colors duration-200 hover:text-ink-50"
-              >
-                Compare
-              </Link>
-              <Link
-                href="/leagues"
-                className="transition-colors duration-200 hover:text-ink-50"
-              >
-                Leagues
-              </Link>
-              <Link
-                href="/ai-advisor"
-                className="inline-flex items-center gap-1.5 transition-colors duration-200 hover:text-ink-50"
-              >
-                AI Advisor
-                <span className="inline-flex items-center rounded-full border border-brand-500/40 bg-brand-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-brand-300">
-                  Pro
-                </span>
-              </Link>
-            </nav>
-            <div className="flex items-center gap-2 sm:gap-2.5">
-              <SearchTrigger />
-              <UserMenu />
-              <ButtonLink
-                href="/compare"
-                size="sm"
-                arrow
-                className="hidden md:inline-flex"
-              >
-                Open console
-              </ButtonLink>
-              <MobileNav leagues={NAV_LEAGUES} />
-            </div>
-          </div>
-        </header>
+        <Navbar leagues={NAV_LEAGUES} />
         <main id="main" className="mx-auto max-w-7xl px-4 sm:px-6">
           {children}
         </main>

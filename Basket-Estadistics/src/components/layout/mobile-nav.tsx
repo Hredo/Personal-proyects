@@ -3,12 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { LEAGUE_FILTER_TREE } from "@/lib/league-groups"
 
-type LeagueOption = { slug: string; name: string }
-
-type Props = {
-  leagues: LeagueOption[]
-}
+const FEB_CHILDREN =
+  LEAGUE_FILTER_TREE.find((n) => n.children)?.children ?? []
 
 const PRIMARY_LINKS = [
   { href: "/players", label: "Players" },
@@ -16,9 +15,12 @@ const PRIMARY_LINKS = [
   { href: "/coaches", label: "Coaches" },
   { href: "/compare", label: "Compare" },
   { href: "/leagues", label: "Leagues" },
+  { href: "/ai-advisor", label: "AI Advisor" },
 ] as const
 
-export function MobileNav({ leagues }: Props) {
+const EASE = [0.19, 1, 0.22, 1] as const
+
+export function MobileNav() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
@@ -44,133 +46,135 @@ export function MobileNav({ leagues }: Props) {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Open menu"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         aria-controls="mobile-nav-panel"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-hairline bg-white/[0.04] text-ink-200 transition-colors duration-200 hover:border-brand-400/40 hover:text-ink-50 md:hidden"
+        className="relative z-[110] inline-flex h-10 w-10 items-center justify-center rounded-full border border-hairline bg-white/[0.05] text-ink-100 transition-colors duration-300 hover:border-brand-400/40 md:hidden"
       >
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          stroke="currentColor"
-          aria-hidden
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+        <span className="relative block h-3 w-5">
+          <span
+            className={`absolute left-0 block h-[2px] w-5 rounded-full bg-current transition-all duration-300 ease-fluid ${
+              open ? "top-1.5 rotate-45" : "top-0"
+            }`}
           />
-        </svg>
+          <span
+            className={`absolute bottom-0 left-0 block h-[2px] w-5 rounded-full bg-current transition-all duration-300 ease-fluid ${
+              open ? "bottom-1.5 -rotate-45" : ""
+            }`}
+          />
+        </span>
       </button>
 
-      <div
-        className={`fixed inset-0 z-[90] md:hidden ${
-          open ? "pointer-events-auto" : "pointer-events-none"
-        }`}
-        aria-hidden={!open}
-      >
-        <button
-          type="button"
-          aria-label="Close menu"
-          onClick={() => setOpen(false)}
-          className={`absolute inset-0 bg-ink-950/75 backdrop-blur-md transition-opacity duration-300 ${
-            open ? "opacity-100" : "opacity-0"
-          }`}
-          tabIndex={open ? 0 : -1}
-        />
-        <aside
-          id="mobile-nav-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Site navigation"
-          className={`absolute right-0 top-0 flex h-full w-[88%] max-w-sm flex-col overflow-y-auto border-l border-hairline bg-surface-0 shadow-2xl shadow-black/60 transition-transform duration-300 ease-fluid ${
-            open ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="flex items-center justify-between hairline-b px-5 py-4">
-            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-300">
-              Menu
-            </span>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-hairline bg-white/5 text-ink-200 transition-colors duration-200 hover:border-brand-400/40 hover:text-ink-50"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18 18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id="mobile-nav-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site navigation"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: EASE }}
+            className="fixed inset-0 z-[100] flex flex-col bg-surface-0/85 backdrop-blur-2xl md:hidden"
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -left-1/4 top-0 h-[60vh] w-[150%] animate-aurora rounded-full bg-brand-500/15 blur-3xl"
+            />
+            <div aria-hidden className="absolute inset-0 bg-dot-field opacity-50" />
 
-          <nav className="flex-1 px-3 py-4">
-            <ul className="space-y-1">
-              {PRIMARY_LINKS.map((l) => {
-                const active =
-                  pathname === l.href || pathname.startsWith(`${l.href}/`)
-                return (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-base font-medium transition-colors duration-200 ${
-                        active
-                          ? "bg-brand-500/10 text-brand-200"
-                          : "text-ink-100 hover:bg-white/[0.04] hover:text-ink-50"
-                      }`}
+            <nav className="relative flex flex-1 flex-col justify-center px-7">
+              <ul className="space-y-1">
+                {PRIMARY_LINKS.map((l, i) => {
+                  const active =
+                    pathname === l.href || pathname.startsWith(`${l.href}/`)
+                  return (
+                    <motion.li
+                      key={l.href}
+                      initial={{ opacity: 0, y: 26, filter: "blur(8px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: 12 }}
+                      transition={{
+                        duration: 0.6,
+                        delay: 0.06 * i + 0.08,
+                        ease: EASE,
+                      }}
                     >
-                      {l.label}
-                      {active ? (
-                        <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
-                      ) : null}
+                      <Link
+                        href={l.href}
+                        aria-current={active ? "page" : undefined}
+                        className="group flex items-baseline gap-3"
+                      >
+                        <span className="font-mono text-[11px] tabular-nums text-brand-400/70">
+                          0{i + 1}
+                        </span>
+                        <span
+                          className={`font-display text-4xl font-bold tracking-[-0.03em] transition-colors duration-300 ${
+                            active
+                              ? "text-gradient-brand"
+                              : "text-ink-100 group-hover:text-ink-50"
+                          }`}
+                        >
+                          {l.label}
+                        </span>
+                      </Link>
+                    </motion.li>
+                  )
+                })}
+              </ul>
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
+                className="mt-10"
+              >
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-500">
+                  By league
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {LEAGUE_FILTER_TREE.map((node) => (
+                    <Link
+                      key={node.slug}
+                      href={`/players?league=${node.slug}`}
+                      className="gh-chip text-ink-200 transition-colors duration-200 hover:border-brand-400/40 hover:text-brand-200"
+                    >
+                      {node.label}
                     </Link>
-                  </li>
-                )
-              })}
-            </ul>
+                  ))}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 border-l-2 border-brand-500/30 pl-2.5">
+                  {FEB_CHILDREN.map((c) => (
+                    <Link
+                      key={c.slug}
+                      href={`/players?league=${c.slug}`}
+                      className="gh-chip text-xs text-ink-300 transition-colors duration-200 hover:border-brand-400/40 hover:text-brand-200"
+                    >
+                      {c.label}
+                    </Link>
+                  ))}
+                </div>
+              </motion.div>
+            </nav>
 
-            <p className="mt-6 px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-500">
-              By league
-            </p>
-            <ul className="mt-2 space-y-1">
-              {leagues.map((lg) => (
-                <li key={lg.slug}>
-                  <Link
-                    href={`/players?league=${lg.slug}`}
-                    className="block rounded-xl px-3 py-2 text-sm text-ink-200 transition-colors duration-200 hover:bg-white/[0.04] hover:text-ink-50"
-                  >
-                    {lg.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="hairline-t px-5 py-4">
-            <Link
-              href="/compare"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-4 py-3 text-center text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition-colors duration-200 hover:bg-brand-400"
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.58, ease: EASE }}
+              className="relative hairline-t px-7 py-6"
             >
-              Open the console
-            </Link>
-          </div>
-        </aside>
-      </div>
+              <Link
+                href="/compare"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-4 py-3.5 text-center text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition-colors duration-300 hover:bg-brand-400"
+              >
+                Open the console
+              </Link>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

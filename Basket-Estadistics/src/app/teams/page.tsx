@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { listTeams, type ListTeamsInput } from "@/lib/data/teams"
 import { DirectoryControls } from "@/components/ui/directory-controls"
 import { TeamsInfiniteView } from "@/components/teams/teams-infinite-view"
+import { DirectoryHero } from "@/components/ui/directory-hero"
 
 type SearchParams = Partial<Record<keyof ListTeamsInput | "q" | "page", string>>
 
@@ -53,29 +54,29 @@ export default async function TeamsPage(props: {
   const result = await listTeams(input)
 
   return (
-    <div className="py-10 sm:py-14">
-      <header className="mb-8 sm:mb-10">
-        <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
-          Directory
-        </p>
-        <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl md:text-6xl">
-          Teams
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-ink-300 sm:text-base">
-          <span className="font-mono font-semibold text-ink-100">
-            {result.total.toLocaleString("en-US")}
-          </span>{" "}
-          team{result.total === 1 ? "" : "s"} across all covered leagues.
-        </p>
-      </header>
+    <div className="pb-10 sm:pb-14">
+      <DirectoryHero
+        eyebrow="Directory · Teams"
+        title="Teams"
+        description="Every club across the NBA, EuroLeague, ACB and Spain's FEB ladder — open any crest for its full roster and staff."
+        stats={[
+          {
+            value: result.total.toLocaleString("en-US"),
+            label: "Teams covered",
+          },
+          { value: "6", label: "Leagues" },
+        ]}
+      />
 
-      <div className="mb-8">
-        <DirectoryControls
-          basePath="/teams"
-          kind="teams"
-          total={result.total}
-          showing={result.items.length}
-        />
+      <div className="sticky top-[68px] z-30 -mx-4 mb-7 mt-7 px-4 py-3 sm:-mx-6 sm:px-6">
+        <div className="gh-glass rounded-2xl px-3 py-2.5 sm:px-4">
+          <DirectoryControls
+            basePath="/teams"
+            kind="teams"
+            total={result.total}
+            showing={result.items.length}
+          />
+        </div>
       </div>
 
       <TeamsInfiniteView

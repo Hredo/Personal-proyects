@@ -7,7 +7,10 @@ import { CompareRadar } from "@/components/players/compare-radar"
 import { CompareShootingSplits } from "@/components/players/compare-shooting-splits"
 import { CompareAi } from "@/components/players/compare-ai"
 import { FadeIn } from "@/components/animations/fade-in"
+import { Reveal } from "@/components/animations/reveal"
+import { Eyebrow } from "@/components/ui/eyebrow"
 import { SmartImage } from "@/components/ui/smart-image"
+import { leagueAccent } from "@/components/ui/league-badge"
 
 export const metadata: Metadata = {
   title: "Compare",
@@ -18,36 +21,11 @@ export const metadata: Metadata = {
 type Search = { a?: string; b?: string }
 
 const STAT_KEYS = [
-  {
-    key: "points",
-    label: "Points / G",
-    fmt: (n: number) => n.toFixed(1),
-    max: 35,
-  },
-  {
-    key: "rebounds",
-    label: "Rebounds / G",
-    fmt: (n: number) => n.toFixed(1),
-    max: 15,
-  },
-  {
-    key: "assists",
-    label: "Assists / G",
-    fmt: (n: number) => n.toFixed(1),
-    max: 12,
-  },
-  {
-    key: "steals",
-    label: "Steals / G",
-    fmt: (n: number) => n.toFixed(1),
-    max: 3,
-  },
-  {
-    key: "blocks",
-    label: "Blocks / G",
-    fmt: (n: number) => n.toFixed(1),
-    max: 3,
-  },
+  { key: "points", label: "Points / G", fmt: (n: number) => n.toFixed(1), max: 35 },
+  { key: "rebounds", label: "Rebounds / G", fmt: (n: number) => n.toFixed(1), max: 15 },
+  { key: "assists", label: "Assists / G", fmt: (n: number) => n.toFixed(1), max: 12 },
+  { key: "steals", label: "Steals / G", fmt: (n: number) => n.toFixed(1), max: 3 },
+  { key: "blocks", label: "Blocks / G", fmt: (n: number) => n.toFixed(1), max: 3 },
   {
     key: "turnovers",
     label: "Turnovers / G",
@@ -55,177 +33,118 @@ const STAT_KEYS = [
     max: 5,
     lowerBetter: true,
   },
-  {
-    key: "fgPct",
-    label: "FG%",
-    fmt: (n: number) => `${(n * 100).toFixed(1)}%`,
-    max: 1,
-  },
-  {
-    key: "threePct",
-    label: "3P%",
-    fmt: (n: number) => `${(n * 100).toFixed(1)}%`,
-    max: 1,
-  },
-  {
-    key: "ftPct",
-    label: "FT%",
-    fmt: (n: number) => `${(n * 100).toFixed(1)}%`,
-    max: 1,
-  },
+  { key: "fgPct", label: "FG%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
+  { key: "threePct", label: "3P%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
+  { key: "ftPct", label: "FT%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
 ] as const
 
 export default async function ComparePage(props: {
   searchParams: Promise<Search>
 }) {
   const sp = await props.searchParams
-  const aSlug = (sp.a ?? "").trim() || "nikola-jokic"
-  const bSlug = (sp.b ?? "").trim() || "lebron-james"
+  const aSlug = (sp.a ?? "").trim() || "nba-luka-doncic"
+  const bSlug = (sp.b ?? "").trim() || "nba-nikola-jokic"
   const [playerA, playerB] = await Promise.all([
     getPlayerForCompare(aSlug),
     getPlayerForCompare(bSlug),
   ])
 
   return (
-    <div className="py-8 sm:py-10">
-      <FadeIn>
-        <header className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
-            Matchup
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-ink-50 sm:text-4xl md:text-5xl">
-            Side-by-side <span className="text-gradient-brand">scouting</span>
+    <div className="relative pb-12 pt-10 sm:pt-14">
+      <div
+        aria-hidden
+        className="absolute -top-24 left-1/2 -z-10 h-72 w-[680px] -translate-x-1/2 animate-aurora rounded-full bg-brand-500/12 blur-3xl"
+      />
+      <div aria-hidden className="absolute inset-x-0 -top-10 -z-10 h-64 bg-dot-field opacity-50" />
+
+      <Reveal>
+        <header className="mb-8">
+          <Eyebrow>Matchup</Eyebrow>
+          <h1 className="mt-4 font-display text-5xl font-bold leading-[0.86] tracking-[-0.045em] text-ink-50 sm:text-6xl md:text-7xl">
+            Side-by-side <span className="text-gradient-brand">scouting.</span>
           </h1>
-          <p className="mt-3 max-w-2xl text-sm text-ink-300 sm:text-base">
-            Pick any two players and compare their production on a per-game and
-            efficiency basis. Green bar = leader for that line.
+          <p className="mt-5 max-w-2xl text-pretty text-sm leading-relaxed text-ink-300 sm:text-base">
+            Pick any two players and compare their production per game and per
+            possession. The green bar flags the leader on every line.
           </p>
         </header>
-      </FadeIn>
+      </Reveal>
 
       <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
-        <FadeIn>
+        <Reveal direction="right">
           <CompareSearch side="a" current={playerA} otherSlug={bSlug} />
-        </FadeIn>
-        <FadeIn>
+        </Reveal>
+        <Reveal direction="left">
           <CompareSearch side="b" current={playerB} otherSlug={aSlug} />
-        </FadeIn>
+        </Reveal>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:gap-6 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+      <div className="mt-6 grid grid-cols-1 items-stretch gap-4 sm:mt-8 sm:gap-5 md:grid-cols-[1fr_auto_1fr]">
         <ComparePlayerCard side="a" player={playerA} requested={aSlug} />
-        <div
-          className="flex items-center justify-center md:flex-col"
-          aria-hidden
-        >
-          <span className="hidden h-px w-full bg-white/10 md:block" />
-          <span className="font-display text-xl font-bold text-ink-400 sm:text-2xl">
-            VS
+        <div className="flex items-center justify-center md:flex-col" aria-hidden>
+          <span className="hidden h-full w-px bg-gradient-to-b from-transparent via-hairline-strong to-transparent md:block" />
+          <span className="gh-bezel flex h-14 w-14 items-center justify-center">
+            <span className="gh-bezel-inner flex h-full w-full items-center justify-center font-display text-base font-bold text-ink-200">
+              VS
+            </span>
           </span>
-          <span className="hidden h-px w-full bg-white/10 md:block" />
+          <span className="hidden h-full w-px bg-gradient-to-b from-transparent via-hairline-strong to-transparent md:block" />
         </div>
         <ComparePlayerCard side="b" player={playerB} requested={bSlug} />
       </div>
 
       {playerA && playerB ? (
-        <FadeIn>
-          <section className="mt-6 rounded-2xl border border-accent-cyan/20 bg-gradient-to-br from-accent-cyan/5 via-white/[0.02] to-brand-500/5 p-4 sm:mt-8 sm:p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="max-w-xl">
-                <span className="inline-flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-cyan sm:text-xs">
-                  02 / Compare
-                </span>
-                <h2 className="mt-3 font-display text-2xl font-bold leading-[1.1] tracking-tight sm:text-3xl">
-                  Two players,{" "}
-                  <span className="text-gradient-brand">one screen.</span>
-                </h2>
-                <p className="mt-2 text-sm text-ink-200 sm:text-base">
-                  El radar se rellena solo, las barras destacan al líder en
-                  verde y los splits de tiro entran en formato donut. Y si
-                  quieres una segunda opinión, la IA del scout te firma el
-                  veredicto.
-                </p>
-              </div>
-              <Link
-                href="#ai-analysis"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-brand-500/40 bg-brand-500/10 px-4 py-2.5 text-sm font-semibold text-brand-200 transition hover:border-brand-500/60 hover:bg-brand-500/20"
-              >
-                Ir al análisis IA
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M5 12h14M13 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-          </section>
-        </FadeIn>
-      ) : null}
-
-      {playerA && playerB ? (
-        <FadeIn>
-          <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-[1.05fr_1fr]">
-            <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5">
-              <h2 className="mb-3 font-display text-sm uppercase tracking-widest text-ink-300">
-                Multi-stat radar
-              </h2>
-              <div className="aspect-square w-full">
+        <Reveal>
+          <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[1.05fr_1fr]">
+            <div className="gh-card p-5 sm:p-6">
+              <h2 className="gh-eyebrow">Multi-stat radar</h2>
+              <div className="mt-4 aspect-square w-full">
                 <CompareRadar a={playerA} b={playerB} />
               </div>
-              <p className="mt-3 text-xs text-ink-400">
-                Cada eje se escala contra un máximo de élite — más superficie
-                cubierta = perfil más completo.
+              <p className="mt-3 text-xs leading-relaxed text-ink-400">
+                Each axis is scaled against an elite ceiling — more area covered
+                means a more complete profile.
               </p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5">
-              <h2 className="mb-3 font-display text-sm uppercase tracking-widest text-ink-300">
-                Shooting splits
-              </h2>
-              <CompareShootingSplits
-                aName={playerA.fullName}
-                bName={playerB.fullName}
-                splits={[
-                  {
-                    label: "FG%",
-                    a: playerA.stats?.fgPct ?? null,
-                    b: playerB.stats?.fgPct ?? null,
-                  },
-                  {
-                    label: "3P%",
-                    a: playerA.stats?.threePct ?? null,
-                    b: playerB.stats?.threePct ?? null,
-                  },
-                  {
-                    label: "FT%",
-                    a: playerA.stats?.ftPct ?? null,
-                    b: playerB.stats?.ftPct ?? null,
-                  },
-                ]}
-              />
-              <p className="mt-3 text-xs text-ink-400">
-                Anillo exterior {playerA.fullName} (naranja), interior{" "}
-                {playerB.fullName} (cyan). El número grande es el de{" "}
-                {playerA.fullName}.
+            <div className="gh-card p-5 sm:p-6">
+              <h2 className="gh-eyebrow">Shooting splits</h2>
+              <div className="mt-4">
+                <CompareShootingSplits
+                  aName={playerA.fullName}
+                  bName={playerB.fullName}
+                  splits={[
+                    {
+                      label: "FG%",
+                      a: playerA.stats?.fgPct ?? null,
+                      b: playerB.stats?.fgPct ?? null,
+                    },
+                    {
+                      label: "3P%",
+                      a: playerA.stats?.threePct ?? null,
+                      b: playerB.stats?.threePct ?? null,
+                    },
+                    {
+                      label: "FT%",
+                      a: playerA.stats?.ftPct ?? null,
+                      b: playerB.stats?.ftPct ?? null,
+                    },
+                  ]}
+                />
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-ink-400">
+                Outer ring is {playerA.fullName} (orange), inner ring is{" "}
+                {playerB.fullName} (cyan).
               </p>
             </div>
           </section>
-        </FadeIn>
+        </Reveal>
       ) : null}
 
       {playerA && playerB ? (
-        <FadeIn>
-          <section className="mt-6 rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:mt-8 sm:p-6">
-            <h2 className="mb-4 font-display text-sm uppercase tracking-widest text-ink-300">
-              Per-game production
-            </h2>
-            <div className="space-y-5">
+        <Reveal>
+          <section className="mt-6 gh-card p-5 sm:mt-8 sm:p-6">
+            <h2 className="gh-eyebrow">Per-game production</h2>
+            <div className="mt-5 space-y-5">
               {STAT_KEYS.map((s) => {
                 const av = playerA.stats?.[s.key as keyof typeof playerA.stats]
                 const bv = playerB.stats?.[s.key as keyof typeof playerB.stats]
@@ -247,12 +166,12 @@ export default async function ComparePage(props: {
               })}
             </div>
           </section>
-        </FadeIn>
+        </Reveal>
       ) : null}
 
       {playerA && playerB ? (
         <FadeIn>
-          <div id="ai-analysis" className="mt-6 scroll-mt-20 sm:mt-8">
+          <div id="ai-analysis" className="mt-6 scroll-mt-24 sm:mt-8">
             <CompareAi
               aSlug={playerA.slug}
               bSlug={playerB.slug}
@@ -277,8 +196,8 @@ function ComparePlayerCard({
 }) {
   if (!player) {
     return (
-      <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center sm:p-8">
-        <p className="text-sm text-ink-200 sm:text-base">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-hairline-strong p-8 text-center">
+        <p className="text-sm text-ink-200">
           No player found for &quot;{requested}&quot;.
         </p>
         <p className="mt-1 text-xs text-ink-400">
@@ -293,53 +212,60 @@ function ComparePlayerCard({
     .slice(0, 2)
     .join("")
     .toUpperCase()
+  const accent = leagueAccent(player.league.slug)
   return (
-    <FadeIn>
-      <article
-        className={`rounded-2xl border border-white/5 bg-white/[0.02] p-4 sm:p-5 ${
-          side === "a" ? "md:text-left" : "md:text-right"
+    <article
+      className="gh-card relative overflow-hidden p-5"
+      style={{ ["--lg" as string]: accent.color }}
+    >
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[3px] opacity-70"
+        style={{ background: "var(--lg)" }}
+      />
+      <div
+        className={`flex items-center gap-4 ${
+          side === "b" ? "md:flex-row-reverse md:text-right" : ""
         }`}
       >
-        <div
-          className={`flex items-center gap-3 sm:gap-4 ${
-            side === "b" ? "md:flex-row-reverse" : ""
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-court-800 ring-1 ring-hairline">
+          <SmartImage
+            src={player.photoUrl}
+            alt={player.fullName}
+            fit="cover"
+            eager
+            fallbackClassName="text-sm font-bold text-ink-300"
+            fallback={initials}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-lg font-bold tracking-[-0.01em] text-ink-50">
+            <Link
+              href={`/players/${player.slug}`}
+              className="transition-colors hover:text-brand-300"
+            >
+              {player.fullName}
+            </Link>
+          </p>
+          <p className="mt-0.5 truncate text-xs text-ink-300">
+            {player.team?.name ?? "Free agent"} · {player.league.name}
+          </p>
+          <p className="mt-1 truncate font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500">
+            {player.position ?? "—"} · {player.nationality ?? "—"}
+          </p>
+        </div>
+      </div>
+      {player.stats ? (
+        <p
+          className={`mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-400 ${
+            side === "b" ? "md:text-right" : ""
           }`}
         >
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-court-800 ring-1 ring-white/5 sm:h-16 sm:w-16">
-            <SmartImage
-              src={player.photoUrl}
-              alt={player.fullName}
-              fit="cover"
-              eager
-              fallbackClassName="text-sm font-bold text-brand-300"
-              fallback={initials}
-            />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display text-base font-bold text-ink-50 sm:text-lg">
-              <Link
-                href={`/players/${player.slug}`}
-                className="transition hover:text-brand-300"
-              >
-                {player.fullName}
-              </Link>
-            </p>
-            <p className="truncate text-[11px] text-ink-300 sm:text-xs">
-              {player.team?.name ?? "Free agent"} · {player.league.name}
-            </p>
-            <p className="mt-1 truncate text-[10px] uppercase tracking-widest text-ink-400">
-              {player.position ?? "—"} · {player.nationality ?? "—"}
-            </p>
-          </div>
-        </div>
-        {player.stats ? (
-          <p className="mt-3 font-mono text-[11px] text-ink-300 sm:text-xs">
-            Season {player.stats.year} · {player.stats.gamesPlayed} GP
-          </p>
-        ) : (
-          <p className="mt-3 text-xs text-ink-400">No stats available.</p>
-        )}
-      </article>
-    </FadeIn>
+          Season {player.stats.year} · {player.stats.gamesPlayed} GP
+        </p>
+      ) : (
+        <p className="mt-4 text-xs text-ink-400">No stats available.</p>
+      )}
+    </article>
   )
 }

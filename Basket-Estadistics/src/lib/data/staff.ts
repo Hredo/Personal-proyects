@@ -1,6 +1,7 @@
-import { and, asc, eq, like, sql } from "drizzle-orm"
+import { and, asc, eq, inArray, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import { coaches, leagues, teams } from "@/lib/db/schema"
+import { leagueSlugsFor } from "@/lib/league-groups"
 
 export type CoachListItem = {
   id: string
@@ -47,7 +48,8 @@ export async function listCoaches(
   const offset = (page - 1) * pageSize
 
   const conditions = []
-  if (input.league) conditions.push(eq(leagues.slug, input.league))
+  const leagueSlugs = leagueSlugsFor(input.league)
+  if (leagueSlugs) conditions.push(inArray(leagues.slug, leagueSlugs))
   if (input.team) {
     const tq = `%${input.team.toLowerCase()}%`
     conditions.push(like(sql`lower(${teams.name})`, tq))

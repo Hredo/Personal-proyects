@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { SmartImage } from "@/components/ui/smart-image"
 import { leagueAccent } from "@/components/ui/league-badge"
+import { useSpotlight } from "@/components/animations/spotlight-card"
 import { getInitials } from "@/lib/format"
 
 type Props = {
@@ -37,11 +38,14 @@ export function PlayerCardElegant({ player, rank }: Props) {
   const rpg = s?.rebounds != null ? s.rebounds.toFixed(1) : "—"
   const apg = s?.assists != null ? s.assists.toFixed(1) : "—"
   const accent = leagueAccent(player.league.slug)
+  const { ref, onPointerMove } = useSpotlight<HTMLAnchorElement>()
 
   return (
     <Link
+      ref={ref}
+      onPointerMove={onPointerMove}
       href={`/players/${player.slug}`}
-      className="gh-card gh-card-interactive group relative flex h-full flex-col overflow-hidden"
+      className="gh-card gh-card-interactive gh-spotlight group relative flex h-full flex-col overflow-hidden"
       style={{
         ["--lg" as string]: accent.color,
         ["--lg-text" as string]: accent.text,

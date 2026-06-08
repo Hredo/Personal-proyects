@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { SmartImage } from "@/components/ui/smart-image"
+import { leagueAccent } from "@/components/ui/league-badge"
+import { useSpotlight } from "@/components/animations/spotlight-card"
 import { getInitials } from "@/lib/format"
 
 const ROLE_LABEL: Record<string, string> = {
@@ -32,43 +34,45 @@ export function CoachCardElegant({ coach }: Props) {
   const initials = getInitials(coach.fullName)
   const label = ROLE_LABEL[coach.role] ?? coach.role
   const dot = ROLE_DOT[coach.role] ?? ROLE_DOT.staff
+  const accent = leagueAccent(coach.league.slug)
+  const { ref, onPointerMove } = useSpotlight<HTMLAnchorElement>()
 
   return (
     <Link
+      ref={ref}
+      onPointerMove={onPointerMove}
       href={`/teams/${coach.league.slug}/${coach.team.slug}`}
-      className="group relative flex h-full items-center gap-4 overflow-hidden rounded-2xl bg-white/[0.02] p-3 ring-1 ring-transparent transition duration-150 hover:ring-brand-500/50 sm:p-4"
+      className="gh-card gh-card-interactive gh-spotlight group relative flex h-full items-center gap-4 overflow-hidden p-3 sm:p-4"
+      style={{ ["--lg" as string]: accent.color }}
     >
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-court-900 sm:h-20 sm:w-20">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-court-900 ring-1 ring-hairline sm:h-[72px] sm:w-[72px]">
         <SmartImage
           src={coach.photoUrl}
           alt={coach.fullName}
           fit="cover"
-          className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          fallbackClassName="bg-gradient-to-br from-court-800 to-ink-900 text-base font-bold text-brand-300 sm:text-lg"
+          className="h-full w-full transition-transform duration-700 ease-fluid group-hover:scale-[1.07]"
+          fallbackClassName="bg-gradient-to-br from-court-800 to-ink-900 text-base font-bold text-ink-300 sm:text-lg"
           fallback={initials}
         />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`}
-          />
-          <span className="font-mono text-[9px] uppercase tracking-widest text-ink-400">
+          <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-ink-400">
             {label}
           </span>
         </div>
-        <h3 className="mt-1 truncate font-display text-base font-semibold text-ink-50 sm:text-lg">
+        <h3 className="mt-1 truncate font-display text-base font-bold tracking-[-0.01em] text-ink-50 sm:text-lg">
           {coach.fullName}
         </h3>
         <div className="mt-1 flex items-center gap-2">
           {coach.team.logoUrl ? (
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-court-900 p-0.5 ring-1 ring-white/10">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded bg-court-900 p-0.5 ring-1 ring-hairline">
               <SmartImage
                 src={coach.team.logoUrl}
                 alt={coach.team.name}
                 fit="contain"
-                fallbackClassName="text-[7px] font-bold text-brand-300"
+                fallbackClassName="text-[7px] font-bold text-ink-300"
                 fallback={getInitials(coach.team.name, 2)}
               />
             </span>
