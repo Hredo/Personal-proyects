@@ -2,16 +2,11 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useTransition } from "react"
-
-const LEAGUES = [
-  { slug: "", label: "All" },
-  { slug: "nba", label: "NBA" },
-  { slug: "euroleague", label: "EuroLeague" },
-  { slug: "acb", label: "ACB" },
-  { slug: "leb-oro", label: "LEB Oro" },
-  { slug: "leb-plata", label: "LEB Plata" },
-  { slug: "eba", label: "EBA" },
-] as const
+import {
+  FEB_GROUP_SLUG,
+  isFebFilter,
+  LEAGUE_FILTER_TREE,
+} from "@/lib/league-groups"
 
 const SORTS_PLAYERS = [
   { value: "points", label: "Points" },
@@ -116,25 +111,44 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {LEAGUES.map((l) => {
-          const active = urlLeague === l.slug
-          return (
-            <button
-              key={l.slug || "all"}
-              type="button"
-              onClick={() => apply({ league: l.slug || null })}
-              aria-pressed={active}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-200 ${
-                active
-                  ? "border-brand-500 bg-brand-500 text-ink-950"
-                  : "border-hairline bg-white/[0.02] text-ink-300 hover:border-hairline-strong hover:text-ink-50"
-              }`}
-            >
-              {l.label}
-            </button>
-          )
-        })}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FilterChip
+            label="All"
+            active={urlLeague === ""}
+            onClick={() => apply({ league: null })}
+          />
+          {LEAGUE_FILTER_TREE.map((node) => (
+            <FilterChip
+              key={node.slug}
+              label={node.label}
+              hasChildren={!!node.children}
+              active={
+                node.children
+                  ? isFebFilter(urlLeague)
+                  : urlLeague === node.slug
+              }
+              onClick={() => apply({ league: node.slug })}
+            />
+          ))}
+        </div>
+        {isFebFilter(urlLeague) ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-l-2 border-brand-500/30 pl-2.5">
+            <FilterChip
+              label="All FEB"
+              active={urlLeague === FEB_GROUP_SLUG}
+              onClick={() => apply({ league: FEB_GROUP_SLUG })}
+            />
+            {LEAGUE_FILTER_TREE.find((n) => n.children)?.children?.map((c) => (
+              <FilterChip
+                key={c.slug}
+                label={c.label}
+                active={urlLeague === c.slug}
+                onClick={() => apply({ league: c.slug })}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {kind === "coaches" ? (
@@ -227,4 +241,36 @@ function defaultSort(kind: Props["kind"]): string {
   if (kind === "teams") return "name"
   if (kind === "coaches") return "name"
   return "points"
+}
+
+function FilterChip({
+  label,
+  active,
+  hasChildren,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  hasChildren?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors duration-200 ${
+        active
+          ? "border-brand-500 bg-brand-500 text-ink-950"
+          : "border-hairline bg-white/[0.02] text-ink-300 hover:border-hairline-strong hover:text-ink-50"
+      }`}
+    >
+      {label}
+      {hasChildren ? (
+        <span aria-hidden className="text-[9px] opacity-70">
+          ▾
+        </span>
+      ) : null}
+    </button>
+  )
 }

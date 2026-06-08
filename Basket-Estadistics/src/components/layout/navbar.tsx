@@ -13,12 +13,9 @@ import { Logo } from "@/components/svg/logo"
 import { SearchTrigger } from "@/components/players/search-trigger"
 import { UserMenu } from "@/components/auth/user-menu"
 import { MobileNav } from "@/components/layout/mobile-nav"
-import { ButtonLink } from "@/components/ui/button"
-import { Magnetic } from "@/components/animations/magnetic"
 import { SITE } from "@/lib/site"
 import { cn } from "@/components/ui/cn"
-
-type LeagueOption = { slug: string; name: string }
+import { LEAGUE_FILTER_TREE } from "@/lib/league-groups"
 
 const LINKS: {
   href: string
@@ -38,7 +35,7 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
+export function Navbar() {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
 
@@ -97,7 +94,7 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
                     label={l.label}
                     pro={l.pro}
                     active={isActive(pathname, l.href)}
-                    leagues={l.leagues ? leagues : undefined}
+                    withLeagues={l.leagues}
                   />
                 ))}
               </ul>
@@ -107,12 +104,7 @@ export function Navbar({ leagues }: { leagues: LeagueOption[] }) {
           <div className="flex items-center gap-2 sm:gap-2.5">
             <SearchTrigger />
             <UserMenu />
-            <Magnetic strength={0.4} className="hidden md:block">
-              <ButtonLink href="/compare" size="sm" arrow>
-                Open console
-              </ButtonLink>
-            </Magnetic>
-            <MobileNav leagues={leagues} />
+            <MobileNav />
           </div>
         </div>
       </div>

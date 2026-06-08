@@ -5,9 +5,8 @@ import { Reveal, Stagger, StaggerItem } from "@/components/animations/reveal"
 import { Parallax } from "@/components/animations/parallax"
 import { Magnetic } from "@/components/animations/magnetic"
 import { SpotlightCard } from "@/components/animations/spotlight-card"
-import { CourtScrollScene } from "@/components/animations/court-scroll-scene"
-import { Float } from "@/components/animations/float"
-import { CourtPerspective } from "@/components/svg/court-perspective"
+import { ScrollGallery } from "@/components/animations/scroll-gallery"
+import { LiveScoutCard } from "@/components/marketing/live-scout-card"
 import { CountUp } from "@/components/marketing/count-up"
 import { Marquee } from "@/components/marketing/marquee"
 import { JsonLd } from "@/components/marketing/json-ld"
@@ -207,38 +206,7 @@ export default async function Home() {
                 aria-hidden
                 className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-500/25 via-transparent to-league-euro-600/20 blur-2xl"
               />
-              <div className="gh-bezel gh-sheen">
-                <div className="gh-bezel-inner relative overflow-hidden">
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 bg-court-grid opacity-40"
-                  />
-                  <div className="relative aspect-[5/4] w-full">
-                    <CourtPerspective className="absolute inset-0 h-full w-full" />
-                    <Float
-                      className="absolute right-[6%] top-[8%] h-3 w-3 sm:h-3.5 sm:w-3.5"
-                      duration={3}
-                      y={6}
-                    >
-                      <div className="h-full w-full rounded-full bg-brand-400 shadow-[0_0_20px_4px_oklch(0.72_0.205_50_/_0.5)]" />
-                    </Float>
-                    <Float
-                      className="absolute left-[8%] top-[46%] h-2 w-2 sm:h-2.5 sm:w-2.5"
-                      duration={4}
-                      y={4}
-                    >
-                      <div className="h-full w-full rounded-full bg-ink-100/80 shadow-[0_0_16px_3px_oklch(1_0_0_/_0.3)]" />
-                    </Float>
-                  </div>
-                  <div className="flex items-center justify-between hairline-t px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500 sm:text-[11px]">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 animate-ticker rounded-full bg-positive" />
-                      shot chart · live
-                    </span>
-                    <span>trajectory @scroll</span>
-                  </div>
-                </div>
-              </div>
+              <LiveScoutCard />
             </Parallax>
           </FadeIn>
         </div>
@@ -277,13 +245,9 @@ export default async function Home() {
         </Marquee>
       </section>
 
-      {/* ── IMMERSIVE SCROLL SCENE (the shot, scrubbed to scroll) ── */}
-      <section
-        aria-label="From ingest to decoded"
-        className="relative -mx-4 sm:-mx-6"
-      >
-        <div aria-hidden className="absolute inset-0 -z-10 bg-grid-fade opacity-30" />
-        <CourtScrollScene />
+      {/* ── PINNED HORIZONTAL SCROLL GALLERY ──────────────────── */}
+      <section aria-label="From box score to verdict" className="relative">
+        <ScrollGallery />
       </section>
 
       <TrustedBy />

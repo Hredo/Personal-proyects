@@ -95,18 +95,32 @@ export function UserMenu() {
 
   if (!me) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <Link
           href="/login"
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-ink-200 transition hover:text-ink-50"
+          className="hidden h-9 items-center rounded-full px-3.5 text-sm font-medium text-ink-200 transition-colors duration-200 hover:bg-white/[0.06] hover:text-ink-50 sm:inline-flex"
         >
           Sign in
         </Link>
         <Link
           href="/register"
-          className="rounded-md bg-brand-500 px-3 py-1.5 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition hover:bg-brand-400"
+          className="gh-sheen group/cta inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-brand-400 to-ember-500 pl-4 pr-3 text-sm font-semibold text-ink-950 shadow-[var(--shadow-brand-glow)] transition-all duration-300 ease-swift hover:shadow-[var(--shadow-brand-glow-lg)] active:scale-[0.98]"
         >
           Get started
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ink-950/15 transition-transform duration-300 ease-swift group-hover/cta:translate-x-0.5">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3 w-3"
+              aria-hidden
+            >
+              <path d="M5 12h14M13 5l7 7-7 7" />
+            </svg>
+          </span>
         </Link>
       </div>
     )

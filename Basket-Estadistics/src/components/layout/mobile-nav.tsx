@@ -4,12 +4,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { LEAGUE_FILTER_TREE } from "@/lib/league-groups"
 
-type LeagueOption = { slug: string; name: string }
-
-type Props = {
-  leagues: LeagueOption[]
-}
+const FEB_CHILDREN =
+  LEAGUE_FILTER_TREE.find((n) => n.children)?.children ?? []
 
 const PRIMARY_LINKS = [
   { href: "/players", label: "Players" },
@@ -22,7 +20,7 @@ const PRIMARY_LINKS = [
 
 const EASE = [0.19, 1, 0.22, 1] as const
 
-export function MobileNav({ leagues }: Props) {
+export function MobileNav() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
@@ -137,13 +135,24 @@ export function MobileNav({ leagues }: Props) {
                   By league
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {leagues.map((lg) => (
+                  {LEAGUE_FILTER_TREE.map((node) => (
                     <Link
-                      key={lg.slug}
-                      href={`/players?league=${lg.slug}`}
+                      key={node.slug}
+                      href={`/players?league=${node.slug}`}
                       className="gh-chip text-ink-200 transition-colors duration-200 hover:border-brand-400/40 hover:text-brand-200"
                     >
-                      {lg.name}
+                      {node.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 border-l-2 border-brand-500/30 pl-2.5">
+                  {FEB_CHILDREN.map((c) => (
+                    <Link
+                      key={c.slug}
+                      href={`/players?league=${c.slug}`}
+                      className="gh-chip text-xs text-ink-300 transition-colors duration-200 hover:border-brand-400/40 hover:text-brand-200"
+                    >
+                      {c.label}
                     </Link>
                   ))}
                 </div>
