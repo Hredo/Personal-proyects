@@ -2,8 +2,7 @@ import type { Metadata } from "next"
 import { listPlayers, type ListPlayersInput } from "@/lib/data/players"
 import { DirectoryControls } from "@/components/ui/directory-controls"
 import { PlayersInfiniteView } from "@/components/players/players-infinite-view"
-import { Eyebrow } from "@/components/ui/eyebrow"
-import { StatFigure } from "@/components/ui/stat-figure"
+import { DirectoryHero } from "@/components/ui/directory-hero"
 
 type SearchParams = Partial<
   Record<keyof ListPlayersInput | "q" | "page", string>
@@ -61,31 +60,21 @@ export default async function PlayersPage(props: {
   const result = await listPlayers(input)
 
   return (
-    <div className="py-10 sm:py-14">
-      <header className="mb-7 sm:mb-9">
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <Eyebrow>Directory · Players</Eyebrow>
-            <h1 className="mt-4 font-display text-6xl font-bold leading-[0.9] tracking-[-0.03em] text-ink-50 sm:text-7xl md:text-8xl">
-              Players
-            </h1>
-            <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-ink-300 sm:text-base">
-              Every athlete across six leagues, normalized to one scale.
-              Search, filter and rank by the numbers that matter.
-            </p>
-          </div>
-          <div className="flex shrink-0 items-end gap-8 hairline-t pt-5 md:border-t-0 md:pt-0">
-            <StatFigure
-              value={result.total.toLocaleString("en-US")}
-              label="Players indexed"
-              size="lg"
-            />
-            <StatFigure value="6" label="Leagues" size="lg" />
-          </div>
-        </div>
-      </header>
+    <div className="pb-10 sm:pb-14">
+      <DirectoryHero
+        eyebrow="Directory · Players"
+        title="Players"
+        description="Every athlete across six leagues, normalized to one scale. Search, filter and rank by the numbers that matter."
+        stats={[
+          {
+            value: result.total.toLocaleString("en-US"),
+            label: "Players indexed",
+          },
+          { value: "6", label: "Leagues" },
+        ]}
+      />
 
-      <div className="sticky top-[60px] z-30 -mx-4 mb-7 px-4 py-3 sm:top-[64px] sm:-mx-6 sm:px-6">
+      <div className="sticky top-[68px] z-30 -mx-4 mb-7 mt-7 px-4 py-3 sm:-mx-6 sm:px-6">
         <div className="gh-glass rounded-2xl px-3 py-2.5 sm:px-4">
           <DirectoryControls
             basePath="/players"

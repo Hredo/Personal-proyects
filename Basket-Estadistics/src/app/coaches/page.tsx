@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { DirectoryControls } from "@/components/ui/directory-controls"
 import { CoachesInfiniteView } from "@/components/staff/coaches-infinite-view"
+import { DirectoryHero } from "@/components/ui/directory-hero"
 import { listCoaches, type ListCoachesInput } from "@/lib/data/staff"
 
 type SearchParams = Partial<
@@ -53,30 +54,29 @@ export default async function CoachesPage(props: {
   const result = await listCoaches(input)
 
   return (
-    <div className="py-10 sm:py-14">
-      <header className="mb-8 sm:mb-10">
-        <p className="text-xs uppercase tracking-widest text-brand-300 sm:text-sm">
-          Directory
-        </p>
-        <h1 className="mt-2 font-display text-4xl font-bold text-ink-50 sm:text-5xl md:text-6xl">
-          Coaches
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-ink-300 sm:text-base">
-          <span className="font-mono font-semibold text-ink-100">
-            {result.total.toLocaleString("en-US")}
-          </span>{" "}
-          staff member{result.total === 1 ? "" : "s"} across the NBA, EuroLeague
-          and Liga ACB.
-        </p>
-      </header>
+    <div className="pb-10 sm:pb-14">
+      <DirectoryHero
+        eyebrow="Directory · Staff"
+        title="Coaches"
+        description="Head coaches, assistants and staff across the NBA, EuroLeague and Liga ACB — filtered by role and league."
+        stats={[
+          {
+            value: result.total.toLocaleString("en-US"),
+            label: "Staff indexed",
+          },
+          { value: "3", label: "Leagues" },
+        ]}
+      />
 
-      <div className="mb-8">
-        <DirectoryControls
-          basePath="/coaches"
-          kind="coaches"
-          total={result.total}
-          showing={result.items.length}
-        />
+      <div className="sticky top-[68px] z-30 -mx-4 mb-7 mt-7 px-4 py-3 sm:-mx-6 sm:px-6">
+        <div className="gh-glass rounded-2xl px-3 py-2.5 sm:px-4">
+          <DirectoryControls
+            basePath="/coaches"
+            kind="coaches"
+            total={result.total}
+            showing={result.items.length}
+          />
+        </div>
       </div>
 
       <CoachesInfiniteView
