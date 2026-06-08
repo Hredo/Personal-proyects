@@ -140,7 +140,7 @@ export function ScrollGallery() {
         <div className="mx-auto mt-10 w-full max-w-7xl px-4 sm:px-6">
           <div className="h-px w-full overflow-hidden bg-hairline">
             <motion.div
-              style={{ scaleX: progress }}
+              style={{ scaleX: scrollYProgress }}
               className="h-full w-full origin-left bg-gradient-to-r from-brand-500 via-ember-400 to-brand-600"
             />
           </div>
