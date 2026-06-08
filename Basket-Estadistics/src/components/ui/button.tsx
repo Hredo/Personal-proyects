@@ -6,11 +6,11 @@ type Variant = "primary" | "secondary" | "ghost"
 type Size = "sm" | "md" | "lg"
 
 const BASE =
-  "group/btn relative inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 ease-fluid active:translate-y-px disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+  "group/btn gh-sheen relative inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-300 ease-swift active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-brand-500 text-ink-950 shadow-[var(--shadow-brand-glow)] hover:bg-brand-400",
+    "bg-brand-500 text-ink-950 shadow-[var(--shadow-brand-glow)] hover:bg-brand-400 hover:shadow-[var(--shadow-brand-glow-lg)]",
   secondary:
     "border border-hairline bg-white/[0.04] text-ink-50 hover:border-hairline-strong hover:bg-white/[0.07]",
   ghost: "text-ink-200 hover:text-ink-50 hover:bg-white/[0.04]",
@@ -70,7 +70,7 @@ function Inner({
       {arrow ? (
         <span
           className={cn(
-            "flex items-center justify-center rounded-full transition-colors duration-300",
+            "flex items-center justify-center rounded-full transition-all duration-300 ease-swift group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-px group-hover/btn:scale-105",
             ICON_WRAP[size],
             variant === "primary" ? "bg-ink-950/15" : "bg-white/[0.08]",
           )}

@@ -1,5 +1,11 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
+import { Reveal, Stagger, StaggerItem } from "@/components/animations/reveal"
+import { Parallax } from "@/components/animations/parallax"
+import { Magnetic } from "@/components/animations/magnetic"
+import { SpotlightCard } from "@/components/animations/spotlight-card"
+import { CourtScrollScene } from "@/components/animations/court-scroll-scene"
 import { Float } from "@/components/animations/float"
 import { CourtPerspective } from "@/components/svg/court-perspective"
 import { CountUp } from "@/components/marketing/count-up"
@@ -46,24 +52,6 @@ const STATS = [
   { v: 2, suffix: "s", label: "To compare any two", decimals: 0 },
 ]
 
-const PILLARS = [
-  {
-    n: "01",
-    title: "Ingest",
-    body: "Public box scores from the NBA, EuroLeague, ACB and FEB pipelines. Refreshed after every tip-off.",
-  },
-  {
-    n: "02",
-    title: "Normalize",
-    body: "Same per-game scale, same advanced metrics, same court. Spanish minutes, American possessions, one model.",
-  },
-  {
-    n: "03",
-    title: "Compare",
-    body: "Side-by-side overlays, radar diffs, and color-coded bars. Spot the gap in seconds, not film sessions.",
-  },
-]
-
 export const revalidate = 3600
 
 export const metadata: Metadata = {
@@ -98,10 +86,7 @@ export default async function Home() {
     mainEntity: FAQ_DATA.map((q) => ({
       "@type": "Question",
       name: q.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: q.answer,
-      },
+      acceptedAnswer: { "@type": "Answer", text: q.answer },
     })),
   }
 
@@ -137,14 +122,16 @@ export default async function Home() {
     <div className="relative">
       <JsonLd data={[faqJsonLd, softwareJsonLd]} />
 
-      <section className="relative isolate overflow-hidden pb-14 pt-10 sm:pb-24 sm:pt-16 md:pt-24">
+      {/* ── HERO ───────────────────────────────────────────────── */}
+      <section className="relative isolate overflow-hidden pb-14 pt-12 sm:pb-24 sm:pt-20 md:pt-28">
+        <div aria-hidden className="absolute inset-0 -z-20 bg-dot-field opacity-70" />
         <div
           aria-hidden
-          className="absolute inset-0 -z-20 bg-grid-fade opacity-60"
+          className="absolute -top-44 left-1/2 -z-10 h-[440px] w-[780px] -translate-x-1/2 animate-aurora rounded-full bg-brand-500/20 blur-3xl sm:h-[600px] sm:w-[1150px]"
         />
         <div
           aria-hidden
-          className="absolute -top-40 left-1/2 -z-10 h-[420px] w-[760px] -translate-x-1/2 animate-aurora rounded-full bg-brand-500/20 blur-3xl sm:h-[560px] sm:w-[1100px]"
+          className="absolute -top-24 right-[-10%] -z-10 h-72 w-72 animate-breathe rounded-full bg-league-euro-500/15 blur-3xl"
         />
 
         <div className="grid items-center gap-12 md:grid-cols-[1.05fr_0.95fr]">
@@ -160,7 +147,7 @@ export default async function Home() {
             </FadeIn>
 
             <FadeIn delay={0.08} y={28}>
-              <h1 className="mt-6 font-display text-[3.25rem] font-bold leading-[0.88] tracking-[-0.04em] text-ink-50 sm:text-[4.75rem] md:text-[5.75rem] xl:text-[6.5rem]">
+              <h1 className="mt-6 font-display text-[3.4rem] font-bold leading-[0.86] tracking-[-0.045em] text-ink-50 sm:text-[5rem] md:text-[6rem] xl:text-[6.75rem]">
                 Hoops,
                 <br />
                 <span className="text-gradient-shimmer">decoded.</span>
@@ -178,19 +165,26 @@ export default async function Home() {
 
             <FadeIn delay={0.28} y={16}>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <ButtonLink href="/compare" size="lg" arrow>
-                  Open the console
-                </ButtonLink>
-                <ButtonLink href="/players" size="lg" variant="secondary">
-                  Browse the database
-                </ButtonLink>
+                <Magnetic strength={0.4}>
+                  <ButtonLink href="/compare" size="lg" arrow>
+                    Open the console
+                  </ButtonLink>
+                </Magnetic>
+                <Magnetic strength={0.3}>
+                  <ButtonLink href="/players" size="lg" variant="secondary">
+                    Browse the database
+                  </ButtonLink>
+                </Magnetic>
               </div>
             </FadeIn>
 
             <FadeIn delay={0.4}>
               <dl className="mt-12 grid max-w-lg grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
                 {stats.map((s) => (
-                  <div key={s.label} className="border-l-2 border-brand-500/40 pl-4">
+                  <div
+                    key={s.label}
+                    className="border-l-2 border-brand-500/40 pl-4"
+                  >
                     <dt className="font-display text-2xl font-bold tabular-nums text-ink-50 sm:text-3xl">
                       <CountUp
                         to={s.v}
@@ -208,43 +202,52 @@ export default async function Home() {
           </div>
 
           <FadeIn delay={0.2} className="relative">
-            <div
-              aria-hidden
-              className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-500/25 via-transparent to-court-700/20 blur-2xl"
-            />
-            <div className="gh-bezel">
-              <div className="gh-bezel-inner relative overflow-hidden">
-                <div aria-hidden className="absolute inset-0 bg-court-grid opacity-40" />
-                <div className="relative aspect-[5/4] w-full">
-                  <CourtPerspective className="absolute inset-0 h-full w-full" />
-                  <Float
-                    className="absolute right-[6%] top-[8%] h-3 w-3 sm:h-3.5 sm:w-3.5"
-                    duration={3}
-                    y={6}
-                  >
-                    <div className="h-full w-full rounded-full bg-brand-400 shadow-[0_0_20px_4px_oklch(0.7_0.2_51_/_0.5)]" />
-                  </Float>
-                  <Float
-                    className="absolute left-[8%] top-[46%] h-2 w-2 sm:h-2.5 sm:w-2.5"
-                    duration={4}
-                    y={4}
-                  >
-                    <div className="h-full w-full rounded-full bg-ink-100/80 shadow-[0_0_16px_3px_oklch(1_0_0_/_0.3)]" />
-                  </Float>
-                </div>
-                <div className="flex items-center justify-between hairline-t px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500 sm:text-[11px]">
-                  <span>shot chart · live</span>
-                  <span>trajectory @scroll</span>
+            <Parallax speed={36}>
+              <div
+                aria-hidden
+                className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-500/25 via-transparent to-league-euro-600/20 blur-2xl"
+              />
+              <div className="gh-bezel gh-sheen">
+                <div className="gh-bezel-inner relative overflow-hidden">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-court-grid opacity-40"
+                  />
+                  <div className="relative aspect-[5/4] w-full">
+                    <CourtPerspective className="absolute inset-0 h-full w-full" />
+                    <Float
+                      className="absolute right-[6%] top-[8%] h-3 w-3 sm:h-3.5 sm:w-3.5"
+                      duration={3}
+                      y={6}
+                    >
+                      <div className="h-full w-full rounded-full bg-brand-400 shadow-[0_0_20px_4px_oklch(0.72_0.205_50_/_0.5)]" />
+                    </Float>
+                    <Float
+                      className="absolute left-[8%] top-[46%] h-2 w-2 sm:h-2.5 sm:w-2.5"
+                      duration={4}
+                      y={4}
+                    >
+                      <div className="h-full w-full rounded-full bg-ink-100/80 shadow-[0_0_16px_3px_oklch(1_0_0_/_0.3)]" />
+                    </Float>
+                  </div>
+                  <div className="flex items-center justify-between hairline-t px-4 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500 sm:text-[11px]">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 animate-ticker rounded-full bg-positive" />
+                      shot chart · live
+                    </span>
+                    <span>trajectory @scroll</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Parallax>
           </FadeIn>
         </div>
       </section>
 
+      {/* ── TICKER ─────────────────────────────────────────────── */}
       <section
         aria-label="Top performers"
-        className="hairline-t hairline-b bg-surface-0/40 py-3.5"
+        className="relative left-1/2 w-screen -translate-x-1/2 hairline-t hairline-b bg-surface-0/40 py-3.5"
       >
         <Marquee duration={55} className="text-sm">
           {TICKER_LEFT.map((t) => (
@@ -274,57 +277,80 @@ export default async function Home() {
         </Marquee>
       </section>
 
+      {/* ── IMMERSIVE SCROLL SCENE (the shot, scrubbed to scroll) ── */}
+      <section
+        aria-label="From ingest to decoded"
+        className="relative left-1/2 w-screen -translate-x-1/2"
+      >
+        <div aria-hidden className="absolute inset-0 -z-10 bg-grid-fade opacity-30" />
+        <CourtScrollScene />
+      </section>
+
       <TrustedBy />
 
+      {/* ── BENTO — inside the console ─────────────────────────── */}
       <section id="product" className="relative hairline-t py-20 sm:py-28">
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-grid-fade opacity-30"
-        />
-        <FadeIn>
+        <Reveal>
           <SectionHeading
-            align="center"
-            eyebrow="How it works"
+            eyebrow="Inside the console"
             title={
               <>
-                From tip-off to{" "}
-                <span className="text-gradient-brand">terminal.</span>
+                Everything a scout opens{" "}
+                <span className="text-gradient-brand">before tip-off.</span>
               </>
             }
-            description="We ingest public box scores from six leagues, normalize pace and possessions, then surface side-by-side comparisons in seconds. No spreadsheets, no 3am film sessions."
+            description="One workspace for six leagues — compare, measure, ask and export without ever leaving the page."
           />
-        </FadeIn>
+        </Reveal>
 
-        <div className="relative mt-14 grid gap-5 md:grid-cols-3 md:gap-6">
-          <div
-            aria-hidden
-            className="absolute inset-x-8 top-[3.4rem] hidden h-px bg-gradient-to-r from-transparent via-hairline-strong to-transparent md:block"
-          />
-          {PILLARS.map((pillar, i) => (
-            <FadeIn key={pillar.n} delay={0.06 * i}>
-              <article className="gh-card gh-card-interactive group relative flex h-full flex-col overflow-hidden p-6 sm:p-7">
-                <div className="flex items-center justify-between">
-                  <span className="text-outline font-display text-6xl font-bold leading-none tabular-nums sm:text-7xl">
-                    {pillar.n}
-                  </span>
-                  <span className="rounded-full bg-surface-0 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400 ring-1 ring-hairline">
-                    step {i + 1}
-                  </span>
-                </div>
-                <h3 className="mt-7 font-display text-xl font-bold tracking-[-0.01em] text-ink-50 sm:text-2xl">
-                  {pillar.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-300">
-                  {pillar.body}
-                </p>
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -bottom-16 -right-16 h-40 w-40 rounded-full bg-brand-500/0 blur-3xl transition duration-500 group-hover:bg-brand-500/25"
-                />
-              </article>
-            </FadeIn>
-          ))}
-        </div>
+        <Stagger className="mt-12 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-6 md:auto-rows-[minmax(170px,1fr)]">
+          <StaggerItem className="md:col-span-4 md:row-span-2">
+            <BentoCard
+              href="/compare"
+              kicker="01 · Compare"
+              title="Two players, one scale."
+              body="Drop Dončić next to Campazzo. Same per-game scale, same possessions, the leader flagged in green. The argument ends in two seconds."
+              big
+            >
+              <CompareGlyph />
+            </BentoCard>
+          </StaggerItem>
+
+          <StaggerItem className="md:col-span-2">
+            <BentoCard
+              kicker="02 · Metrics"
+              title="24 advanced metrics."
+              body="PER, TS%, ORtg, DRtg, NetRtg, usage — computed from box scores, not copy-pasted."
+            />
+          </StaggerItem>
+
+          <StaggerItem className="md:col-span-2">
+            <BentoCard
+              href="/ai-advisor"
+              kicker="03 · AI advisor"
+              title="Ask in plain language."
+              body="Type a scouting question, get a sourced read with the numbers behind it."
+              pro
+            />
+          </StaggerItem>
+
+          <StaggerItem className="md:col-span-3">
+            <BentoCard
+              href="/leagues"
+              kicker="04 · Coverage"
+              title="Six leagues, one feed."
+              body="NBA · EuroLeague · ACB · LEB Oro · LEB Plata · EBA — refreshed after every tip-off."
+            />
+          </StaggerItem>
+
+          <StaggerItem className="md:col-span-3">
+            <BentoCard
+              kicker="05 · Export"
+              title="Boardroom-ready in a click."
+              body="Send any comparison or profile to PDF, Excel or Word with the formatting intact."
+            />
+          </StaggerItem>
+        </Stagger>
       </section>
 
       <FeatureShowcase />
@@ -335,14 +361,14 @@ export default async function Home() {
         aria-labelledby="faq-heading"
         className="relative hairline-t py-20 sm:py-28"
       >
-        <FadeIn>
+        <Reveal>
           <SectionHeading
             align="center"
             eyebrow="FAQ"
             title="The questions scouts ask first."
             description="Data sources, freshness, what's free and what isn't. If something's missing, ping us."
           />
-        </FadeIn>
+        </Reveal>
         <div id="faq-heading" className="mt-12">
           <Faq />
         </div>
@@ -350,38 +376,151 @@ export default async function Home() {
 
       <PricingCta />
 
+      {/* ── FINAL CTA ──────────────────────────────────────────── */}
       <section className="relative my-16 sm:my-24">
-        <div className="gh-bezel overflow-hidden">
-          <div className="gh-bezel-inner relative overflow-hidden bg-gradient-to-br from-court-800/70 via-surface-1 to-surface-0 p-7 sm:p-12 md:p-16">
-            <div
-              aria-hidden
-              className="absolute -left-24 -top-24 h-72 w-72 animate-aurora rounded-full bg-brand-500/30 blur-3xl"
-            />
-            <div aria-hidden className="absolute inset-0 bg-hatch opacity-50" />
-            <div className="relative grid items-center gap-8 md:grid-cols-[1.1fr_1fr]">
-              <div>
-                <Eyebrow>Open to everyone</Eyebrow>
-                <h2 className="mt-5 font-display text-3xl font-bold leading-[0.98] tracking-[-0.03em] text-balance sm:text-4xl md:text-[3.25rem]">
-                  The data is live.{" "}
-                  <span className="text-gradient-brand">No invite needed.</span>
-                </h2>
-                <p className="mt-4 max-w-md text-pretty text-base text-ink-300 sm:text-lg">
-                  Every player, every stat, every highlight — free during the
-                  public beta. Open the console, drop two names, run the math.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
-                <ButtonLink href="/ai-advisor" size="lg" arrow>
-                  Try the AI Advisor
-                </ButtonLink>
-                <ButtonLink href="/players" size="lg" variant="secondary">
-                  Browse players
-                </ButtonLink>
+        <Reveal>
+          <div className="gh-bezel gh-sheen overflow-hidden">
+            <div className="gh-bezel-inner relative overflow-hidden bg-gradient-to-br from-court-800/70 via-surface-1 to-surface-0 p-7 sm:p-12 md:p-16">
+              <div
+                aria-hidden
+                className="absolute -left-24 -top-24 h-72 w-72 animate-aurora rounded-full bg-brand-500/30 blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="absolute -bottom-28 right-[-6%] h-72 w-72 animate-breathe rounded-full bg-ember-500/20 blur-3xl"
+              />
+              <div aria-hidden className="absolute inset-0 bg-hatch opacity-50" />
+              <div className="relative grid items-center gap-8 md:grid-cols-[1.1fr_1fr]">
+                <div>
+                  <Eyebrow>Open to everyone</Eyebrow>
+                  <h2 className="mt-5 font-display text-3xl font-bold leading-[0.96] tracking-[-0.03em] text-balance sm:text-4xl md:text-[3.25rem]">
+                    The data is live.{" "}
+                    <span className="text-gradient-brand">No invite needed.</span>
+                  </h2>
+                  <p className="mt-4 max-w-md text-pretty text-base text-ink-300 sm:text-lg">
+                    Every player, every stat, every highlight — free during the
+                    public beta. Open the console, drop two names, run the math.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
+                  <Magnetic strength={0.35}>
+                    <ButtonLink href="/ai-advisor" size="lg" arrow>
+                      Try the AI Advisor
+                    </ButtonLink>
+                  </Magnetic>
+                  <Magnetic strength={0.3}>
+                    <ButtonLink href="/players" size="lg" variant="secondary">
+                      Browse players
+                    </ButtonLink>
+                  </Magnetic>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
+    </div>
+  )
+}
+
+/* ── Bento card ───────────────────────────────────────────────── */
+function BentoCard({
+  kicker,
+  title,
+  body,
+  href,
+  pro,
+  big,
+  children,
+}: {
+  kicker: string
+  title: string
+  body: string
+  href?: string
+  pro?: boolean
+  big?: boolean
+  children?: React.ReactNode
+}) {
+  return (
+    <SpotlightCard className="gh-card gh-card-interactive group relative flex h-full flex-col overflow-hidden p-6 sm:p-7">
+      <div className="flex items-center justify-between gap-3">
+        <span className="gh-eyebrow">{kicker}</span>
+        {pro ? (
+          <span className="rounded-full border border-brand-500/40 bg-brand-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-brand-300">
+            Pro
+          </span>
+        ) : null}
+      </div>
+      <h3
+        className={
+          big
+            ? "mt-5 font-display text-2xl font-bold tracking-[-0.02em] text-ink-50 sm:text-3xl md:text-4xl"
+            : "mt-5 font-display text-xl font-bold tracking-[-0.01em] text-ink-50 sm:text-2xl"
+        }
+      >
+        {title}
+      </h3>
+      <p
+        className={
+          big
+            ? "mt-3 max-w-md text-pretty text-sm leading-relaxed text-ink-300 sm:text-base"
+            : "mt-2 text-pretty text-sm leading-relaxed text-ink-300"
+        }
+      >
+        {body}
+      </p>
+      {children ? <div className="mt-auto pt-6">{children}</div> : null}
+      {href ? (
+        <span className="mt-auto inline-flex items-center gap-1.5 pt-6 font-mono text-[11px] uppercase tracking-[0.16em] text-brand-300">
+          Explore
+          <svg
+            className="h-3.5 w-3.5 transition-transform duration-300 ease-fluid group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M7 17 17 7M9 7h8v8" />
+          </svg>
+        </span>
+      ) : null}
+      {href ? (
+        <Link href={href} className="absolute inset-0" aria-label={title} />
+      ) : null}
+    </SpotlightCard>
+  )
+}
+
+/* a small abstract "compare" glyph for the big bento card */
+function CompareGlyph() {
+  const rows = [
+    { l: "PPG", a: 86, b: 64 },
+    { l: "RPG", a: 48, b: 72 },
+    { l: "APG", a: 70, b: 90 },
+    { l: "TS%", a: 78, b: 66 },
+  ]
+  return (
+    <div className="grid gap-2.5">
+      {rows.map((r) => (
+        <div key={r.l} className="flex items-center gap-3">
+          <span className="w-9 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-500">
+            {r.l}
+          </span>
+          <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-white/[0.05]">
+            <span
+              className="h-full rounded-l-full bg-brand-500/80"
+              style={{ width: `${r.a / 2}%` }}
+            />
+            <span
+              className="h-full rounded-r-full bg-accent-cyan/70"
+              style={{ width: `${r.b / 2}%` }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

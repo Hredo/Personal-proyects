@@ -13,6 +13,10 @@ type FadeInProps = {
   children: ReactNode
   delay?: number
   y?: number
+  /** horizontal entry offset (px) */
+  x?: number
+  /** apply a blur-up on entry for a heavier, premium feel */
+  blur?: boolean
   className?: string
   as?:
     | "div"
@@ -29,6 +33,8 @@ export function FadeIn({
   children,
   delay = 0,
   y = 24,
+  x = 0,
+  blur = true,
   className,
   as = "div",
 }: FadeInProps) {
@@ -70,9 +76,12 @@ export function FadeIn({
     ? {}
     : {
         opacity: shown ? 1 : 0,
-        transform: shown ? "translate3d(0,0,0)" : `translate3d(0,${y}px,0)`,
-        transition: `opacity 0.6s cubic-bezier(0.21,0.47,0.32,0.98) ${delay}s, transform 0.6s cubic-bezier(0.21,0.47,0.32,0.98) ${delay}s`,
-        willChange: shown ? "auto" : "opacity, transform",
+        transform: shown
+          ? "translate3d(0,0,0)"
+          : `translate3d(${x}px,${y}px,0)`,
+        filter: blur ? (shown ? "blur(0px)" : "blur(8px)") : undefined,
+        transition: `opacity 0.7s var(--ease-out-expo) ${delay}s, transform 0.8s var(--ease-out-expo) ${delay}s, filter 0.7s var(--ease-out-expo) ${delay}s`,
+        willChange: shown ? "auto" : "opacity, transform, filter",
       }
 
   return createElement(as, { ref, className, style }, children)
