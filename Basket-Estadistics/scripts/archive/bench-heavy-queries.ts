@@ -7,7 +7,7 @@
 // and is the right call in production.
 import { performance } from "node:perf_hooks"
 import { and, desc, eq, sql } from "drizzle-orm"
-import { getDb } from "../src/lib/db/client"
+import { getDb } from "../../src/lib/db/client"
 import {
   leagues,
   playerStats,
@@ -15,9 +15,9 @@ import {
   seasons,
   teams,
   teamSeasonStats,
-} from "../src/lib/db/schema"
-import { listPlayers } from "../src/lib/data/players"
-import { listTeams } from "../src/lib/data/teams"
+} from "../../src/lib/db/schema"
+import { listPlayers } from "../../src/lib/data/players"
+import { listTeams } from "../../src/lib/data/teams"
 
 type Probe = () => Promise<unknown>
 

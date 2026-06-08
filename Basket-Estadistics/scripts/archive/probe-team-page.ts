@@ -1,4 +1,4 @@
-import { acbAdapter } from "../src/lib/sources/acb"
+import { acbAdapter } from "../../src/lib/sources/acb"
 
 async function main() {
   const origFetch = globalThis.fetch
