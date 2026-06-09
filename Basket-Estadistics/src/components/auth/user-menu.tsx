@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -46,23 +46,33 @@ export function UserMenu() {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then((r) => r.json() as Promise<MeResponse>)
-      .then((data) => {
-        if (alive) {
-          setMe(data.user)
-          setLoading(false)
-        }
-      })
-      .catch(() => {
-        if (alive) setLoading(false)
-      })
-    return () => {
-      alive = false
+  const refreshMe = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me", { cache: "no-store" })
+      const data = (await res.json()) as MeResponse
+      setMe(data.user)
+    } catch {
+      // keep the previous state on a transient network error
+    } finally {
+      setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    refreshMe()
+    // Re-check the session when auth changes elsewhere (login / register /
+    // logout in this tab, or another tab) without a full page reload.
+    const onAuthChanged = () => refreshMe()
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshMe()
+    }
+    window.addEventListener("auth:changed", onAuthChanged)
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.removeEventListener("auth:changed", onAuthChanged)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
+  }, [refreshMe])
 
   useEffect(() => {
     if (!open) return
