@@ -280,6 +280,11 @@ export const users = sqliteTable(
       .notNull()
       .default("user"),
     proSince: integer("pro_since", { mode: "timestamp" }),
+    // Billing — nullable today (self-serve plan switch). Reserved so a Stripe
+    // integration can attach a customer/subscription without another migration.
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    planRenewsAt: integer("plan_renews_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .$defaultFn(now),
@@ -289,6 +294,60 @@ export const users = sqliteTable(
   },
   (t) => [uniqueIndex("users_email_idx").on(t.email)],
 )
+
+// Per-user, per-provider AI credentials. The raw key is NEVER stored: only an
+// AES-256-GCM ciphertext (see lib/security/secrets) plus the last 4 chars so
+// the UI can show a masked preview. One row per (user, provider).
+export const userApiKeys = sqliteTable(
+  "user_api_keys",
+  {
+    id: text("id").primaryKey().$defaultFn(uuid),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    encryptedKey: text("encrypted_key").notNull(),
+    last4: text("last4").notNull(),
+    label: text("label"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(now),
+  },
+  (t) => [
+    uniqueIndex("user_api_keys_user_provider_idx").on(t.userId, t.provider),
+  ],
+)
+
+// Per-user preferences: which engine powers each AI feature, locale and
+// notification toggles. One row per user, created lazily on first save.
+export const userSettings = sqliteTable("user_settings", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  advisorProvider: text("advisor_provider"),
+  advisorModel: text("advisor_model"),
+  compareProvider: text("compare_provider"),
+  compareModel: text("compare_model"),
+  locale: text("locale").notNull().default("en"),
+  emailProduct: integer("email_product", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  emailUsage: integer("email_usage", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  reduceMotion: integer("reduce_motion", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(now),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(now),
+})
 
 export const sessions = sqliteTable(
   "sessions",
@@ -389,6 +448,8 @@ export type User = typeof users.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type Conversation = typeof conversations.$inferSelect
 export type Message = typeof messages.$inferSelect
+export type UserApiKey = typeof userApiKeys.$inferSelect
+export type UserSettings = typeof userSettings.$inferSelect
 
 export const ftsPlayers = sql`
   CREATE VIRTUAL TABLE IF NOT EXISTS players_fts USING fts5(

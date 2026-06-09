@@ -8,6 +8,7 @@ import {
   useState,
 } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import { TeamSelector } from "@/app/ai-advisor/team-selector"
 import { ChatWindow } from "@/app/ai-advisor/chat-window"
 import { InputArea } from "@/app/ai-advisor/input-area"
@@ -35,6 +36,9 @@ type AdvisorApiResult = {
   data?: AdvisorOutput
   mode?: "llm" | "local"
   model?: string
+  provider?: string
+  aiConfigured?: boolean
+  aiReason?: string | null
   conversationId?: string
   error?: boolean
 }
@@ -120,6 +124,8 @@ export default function AIAdvisorClient() {
   const [loadingConversation, setLoadingConversation] = useState(false)
   const [paywall, setPaywall] = useState<"auth" | "quota" | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [aiNotConfigured, setAiNotConfigured] = useState(false)
+  const [aiNoticeDismissed, setAiNoticeDismissed] = useState(false)
   const idRef = useRef(0)
   const initialized = useRef(false)
 
@@ -315,6 +321,8 @@ export default function AIAdvisorClient() {
           model: result.model,
         }
         setMessages((prev) => [...prev, aiMsg])
+        if (result.mode === "llm") setAiNotConfigured(false)
+        else if (result.aiConfigured === false) setAiNotConfigured(true)
         if (result.conversationId) {
           setActiveConversationId(result.conversationId)
           loadConversationList()
@@ -626,6 +634,43 @@ export default function AIAdvisorClient() {
         </header>
 
         <LlmSettings mode={llmMode} onModeChange={setLlmMode} />
+
+        {aiNotConfigured && !aiNoticeDismissed ? (
+          <div className="flex items-start gap-3 border-b border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5 sm:px-6">
+            <svg
+              className="mt-0.5 h-4 w-4 shrink-0 text-amber-300"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              aria-hidden
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9l-8 14A2 2 0 004 21h16a2 2 0 001.7-3l-8-14a2 2 0 00-3.4 0z" />
+            </svg>
+            <p className="flex-1 text-[12px] leading-relaxed text-amber-100/90">
+              You&apos;re seeing <span className="font-semibold">basic mode</span>.
+              Connect an AI for AI-powered answers —{" "}
+              <Link href="/account/ai-keys" className="font-semibold underline underline-offset-2">
+                add a provider
+              </Link>{" "}
+              or{" "}
+              <Link href="/ai-setup" className="font-semibold underline underline-offset-2">
+                read the setup guide
+              </Link>
+              .
+            </p>
+            <button
+              type="button"
+              onClick={() => setAiNoticeDismissed(true)}
+              aria-label="Dismiss"
+              className="shrink-0 rounded-md p-1 text-amber-200/70 transition hover:bg-white/10 hover:text-amber-100"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+                <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
+        ) : null}
 
         <div className="border-b border-white/5 bg-ink-950/30">
           <TeamSelector

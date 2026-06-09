@@ -23,6 +23,10 @@ const serverSchema = z.object({
     emptyToUndefined,
     z.coerce.number().int().min(1).max(365).default(30),
   ),
+  // Dedicated key for encrypting user-provided AI credentials at rest.
+  // Optional in dev (a key is derived from SESSION_SECRET); set a strong,
+  // unique value in production so rotating the session secret never exposes keys.
+  ENCRYPTION_KEY: z.preprocess(emptyToUndefined, z.string().min(32).optional()),
   ADMIN_EMAILS: z.preprocess(emptyToUndefined, z.string().optional()),
   HUGGINGFACE_API_KEY: z.preprocess(
     emptyToUndefined,

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { AuthForm } from "@/components/auth/auth-form"
 import { readSessionUser } from "@/lib/auth/server-user"
+import { getGlobalLeagueCounts } from "@/lib/data/leagues"
 import { SITE } from "@/lib/site"
 
 export const metadata: Metadata = {
@@ -21,9 +22,10 @@ export const metadata: Metadata = {
 export default async function LoginPage() {
   const user = await readSessionUser()
   if (user) redirect("/ai-advisor")
+  const stats = await getGlobalLeagueCounts()
   return (
     <Suspense fallback={null}>
-      <AuthForm variant="login" />
+      <AuthForm variant="login" stats={stats} />
     </Suspense>
   )
 }

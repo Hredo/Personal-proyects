@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
 export type LlmMode = "off" | "ollama"
@@ -265,6 +266,13 @@ export function LlmSettings({ mode, onModeChange }: Props) {
             Activar mi LLM
           </button>
         )}
+
+        <Link
+          href="/account/ai-keys"
+          className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-ink-400 transition hover:text-ink-100"
+        >
+          Más IAs &amp; API keys →
+        </Link>
       </div>
 
       <AnimatePresence>

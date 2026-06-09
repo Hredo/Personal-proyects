@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 import type {
   CategoryResult,
   ComparisonOutput,
@@ -43,6 +44,8 @@ const INSIGHT_META: Record<
 
 export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
   const [data, setData] = useState<ComparisonOutput | null>(null)
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<string | null>(null)
@@ -57,24 +60,30 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
       const res = await fetch("/api/compare/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ aSlug, bSlug }),
+        body: JSON.stringify({ aSlug, bSlug, aName, bName }),
       })
       const payload = await res.json()
       if (!res.ok) {
         throw new Error(payload?.error ?? `Error ${res.status}`)
       }
       setData(payload.data as ComparisonOutput)
+      setAiSummary(typeof payload.aiSummary === "string" ? payload.aiSummary : null)
+      setAiConfigured(
+        typeof payload.aiConfigured === "boolean" ? payload.aiConfigured : null,
+      )
       lastKeyRef.current = requestKey
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed.")
     } finally {
       setLoading(false)
     }
-  }, [aSlug, bSlug, requestKey])
+  }, [aSlug, bSlug, aName, bName, requestKey])
 
   useEffect(() => {
     if (lastKeyRef.current && lastKeyRef.current !== requestKey) {
       setData(null)
+      setAiSummary(null)
+      setAiConfigured(null)
       setError(null)
     }
   }, [requestKey])
@@ -175,6 +184,8 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
             className="mt-5 space-y-5"
           >
             <ScoreCard data={data} aName={aName} bName={bName} />
+            {aiSummary ? <AiTake summary={aiSummary} /> : null}
+            {aiConfigured === false ? <AiNudge /> : null}
             <Verdict data={data} />
             <Categories cats={data.categories} aName={aName} bName={bName} />
             <Insights insights={data.insights} aName={aName} bName={bName} />
@@ -266,6 +277,41 @@ function Verdict({ data }: { data: ComparisonOutput }) {
         Verdict
       </p>
       {data.verdict}
+    </div>
+  )
+}
+
+function AiTake({ summary }: { summary: string }) {
+  return (
+    <div className="rounded-xl border border-brand-500/30 bg-gradient-to-br from-brand-500/10 to-transparent px-4 py-3.5">
+      <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-brand-300">
+        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.8 15.9L9 18.8l-.8-2.9a4.5 4.5 0 00-3.1-3.1L2.3 12l2.8-.8a4.5 4.5 0 003.1-3.1L9 5.3l.8 2.8a4.5 4.5 0 003.1 3.1l2.8.8-2.8.8a4.5 4.5 0 00-3.1 3.1z" />
+        </svg>
+        AI take · your model
+      </p>
+      <p className="text-sm leading-relaxed text-ink-100">{summary}</p>
+    </div>
+  )
+}
+
+function AiNudge() {
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-4 py-3">
+      <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9l-8 14A2 2 0 004 21h16a2 2 0 001.7-3l-8-14a2 2 0 00-3.4 0z" />
+      </svg>
+      <p className="text-[13px] leading-relaxed text-amber-100/90">
+        This breakdown runs without AI. Connect your own model for an AI take —{" "}
+        <Link href="/account/ai-keys" className="font-semibold underline underline-offset-2">
+          add a provider
+        </Link>{" "}
+        or{" "}
+        <Link href="/ai-setup" className="font-semibold underline underline-offset-2">
+          see the guide
+        </Link>
+        .
+      </p>
     </div>
   )
 }

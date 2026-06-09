@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AuthCourt } from "@/components/auth/auth-court"
+import { AuthCourt, type AuthCourtStats } from "@/components/auth/auth-court"
 import { safeNextPath } from "@/lib/auth/safe-redirect"
 
 type FieldProps = {
@@ -132,9 +132,10 @@ export type AuthFormVariant = "login" | "register"
 
 type AuthFormProps = {
   variant: AuthFormVariant
+  stats: AuthCourtStats
 }
 
-export function AuthForm({ variant }: AuthFormProps) {
+export function AuthForm({ variant, stats }: AuthFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = safeNextPath(searchParams.get("next"))
@@ -445,7 +446,7 @@ export function AuthForm({ variant }: AuthFormProps) {
       </div>
 
       <div className="relative hidden lg:block lg:w-[58%] xl:w-[60%]">
-        <AuthCourt className="h-full w-full" />
+        <AuthCourt className="h-full w-full" stats={stats} />
       </div>
     </div>
   )

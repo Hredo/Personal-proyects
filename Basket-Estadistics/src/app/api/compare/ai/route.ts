@@ -1,15 +1,47 @@
 import { NextResponse } from "next/server"
 import { getPlayerForCompare } from "@/lib/data/compare"
-import { comparePlayers } from "@/lib/ai/player-comparator"
-import { rateLimit, clientIp } from "@/lib/security/ai-advisor"
+import {
+  comparePlayers,
+  type ComparisonOutput,
+} from "@/lib/ai/player-comparator"
+import { rateLimit, clientIp, cleanLlmOutput } from "@/lib/security/ai-advisor"
+import { getCurrentUser } from "@/lib/auth/current-user"
+import { resolveEngine } from "@/lib/ai/user-provider"
+import { chatComplete } from "@/lib/ai/chat"
 
 export const dynamic = "force-dynamic"
 
 const MAX_SLUG_LEN = 100
+const MAX_NAME_LEN = 120
 
 type Body = {
   aSlug?: string
   bSlug?: string
+  aName?: string
+  bName?: string
+}
+
+function buildComparePrompt(
+  aName: string,
+  bName: string,
+  r: ComparisonOutput,
+): string {
+  const cats = r.categories
+    .map((c) => {
+      const winner =
+        c.winner === "a" ? aName : c.winner === "b" ? bName : "tie"
+      return `- ${c.label}: ${aName} ${c.formatted.a} vs ${bName} ${c.formatted.b} → ${winner}`
+    })
+    .join("\n")
+  return [
+    `Players: ${aName} vs ${bName}`,
+    `Overall AI score: ${aName} ${r.overall.aScore.toFixed(1)} — ${bName} ${r.overall.bScore.toFixed(1)} (confidence ${r.overall.confidence})`,
+    `Archetypes: ${aName} = ${r.archetype.a}; ${bName} = ${r.archetype.b}`,
+    `Category winners:`,
+    cats,
+    "",
+    `Write a 2-3 sentence scouting take on who fits which team better and why. Be specific about role and fit. Plain prose, no lists, no markdown.`,
+  ].join("\n")
 }
 
 export async function POST(request: Request) {
@@ -76,9 +108,54 @@ export async function POST(request: Request) {
     )
   }
 
+  const aName = (body.aName?.trim() || aSlug).slice(0, MAX_NAME_LEN)
+  const bName = (body.bName?.trim() || bSlug).slice(0, MAX_NAME_LEN)
+
   try {
     const result = comparePlayers(a, b)
-    return NextResponse.json({ data: result })
+
+    // Optional AI take, powered by whatever engine the user picked for Compare.
+    // The deterministic breakdown above always renders; this just adds prose.
+    let aiSummary: string | null = null
+    let aiProvider: string | null = null
+    let aiConfigured = false
+    let aiReason: string | null = null
+
+    const user = await getCurrentUser(request.headers.get("cookie"))
+    if (user) {
+      const engine = await resolveEngine(user.id, "compare")
+      if (engine.ok) {
+        aiConfigured = true
+        const llm = await chatComplete({
+          provider: engine.provider,
+          model: engine.model,
+          apiKey: engine.apiKey,
+          system:
+            "You are a concise basketball scout. Given a structured head-to-head, write a short, specific verdict. No markdown, no lists, plain prose, English.",
+          messages: [
+            { role: "user", content: buildComparePrompt(aName, bName, result) },
+          ],
+          maxTokens: 220,
+          temperature: 0.5,
+        })
+        if (llm.ok) {
+          aiSummary = cleanLlmOutput(llm.content)
+          aiProvider = engine.provider.id
+        } else {
+          aiReason = "ai_error"
+        }
+      } else {
+        aiReason = engine.reason
+      }
+    }
+
+    return NextResponse.json({
+      data: result,
+      aiSummary,
+      aiProvider,
+      aiConfigured,
+      aiReason,
+    })
   } catch (error) {
     console.error("compare/ai error:", error)
     return NextResponse.json(
@@ -86,5 +163,4 @@ export async function POST(request: Request) {
       { status: 500 },
     )
   }
-
 }

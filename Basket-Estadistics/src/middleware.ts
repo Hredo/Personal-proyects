@@ -11,6 +11,7 @@ export const config = {
     "/api/ai-advisor/:path*",
     "/api/conversations/:path*",
     "/api/compare/ai/:path*",
+    "/api/account/:path*",
     "/api/admin/:path*",
   ],
   runtime: "nodejs",
@@ -22,6 +23,7 @@ const PROTECTED_PREFIXES = [
   "/api/ai-advisor",
   "/api/conversations",
   "/api/compare/ai",
+  "/api/account",
   "/api/admin",
 ]
 

@@ -8,11 +8,9 @@ import {
   findPlayerInQuery,
   type AdvisorOutput,
 } from "@/lib/ai/local-advisor"
-import {
-  generateAdvisorResponse,
-  isLlmEnabled,
-  lastLlmError,
-} from "@/lib/ai/llm"
+import { generateAdvisorResponse, lastLlmError } from "@/lib/ai/llm"
+import { resolveEngine } from "@/lib/ai/user-provider"
+import { getProvider, resolveModel } from "@/lib/ai/providers"
 import { getCurrentUser } from "@/lib/auth/current-user"
 import { getAdvisorFreeUsage } from "@/lib/auth/free-usage"
 import { userPlan } from "@/lib/db/schema"
@@ -27,7 +25,6 @@ import {
   MAX_HISTORY_MESSAGES,
   MAX_USER_MESSAGE_LEN,
   rateLimit,
-  safeOllamaBaseUrl,
   securityHeaders,
 } from "@/lib/security/ai-advisor"
 
@@ -287,29 +284,36 @@ export async function POST(request: Request) {
     audit("player-lookup-error", { ip, err: String(err) })
   }
 
-  // 12. LLM call (only if URL is safe).
-  // The client can request BYO-LLM via `X-User-LLM: ollama`. If the server
-  // isn't reachable or fails we transparently fall back to the rule-based
-  // advisor.
-  const userOptedIn = request.headers.get("x-user-llm") === "ollama"
-  if (userOptedIn && isLlmEnabled()) {
-    // Defensive: refuse to call the LLM if the configured base URL is unsafe.
-    const ollamaBaseUrl = process.env.OLLAMA_BASE_URL
-    if (ollamaBaseUrl && !safeOllamaBaseUrl(ollamaBaseUrl)) {
-      audit("unsafe-ollama-url", { ip, ollamaBaseUrl })
-      return jsonError(
-        "OLLAMA_BASE_URL points to a destination that is not allowed (loopback or private network).",
-        500,
-      )
+  // 12. LLM call. Use the engine the user configured for the advisor (a cloud
+  // provider with their own key, or a local Ollama). Back-compat: an explicit
+  // `X-User-LLM: ollama` header forces Ollama even before the user has picked a
+  // provider in their account. If no engine is available we fall back to the
+  // deterministic rule-based advisor and flag `aiConfigured: false` so the UI
+  // can nudge the user to connect an AI.
+  let engine = await resolveEngine(user.id, "advisor")
+  if (!engine.ok && request.headers.get("x-user-llm") === "ollama") {
+    const ollama = getProvider("ollama")
+    if (ollama) {
+      engine = {
+        ok: true,
+        provider: ollama,
+        model: resolveModel(ollama, process.env.OLLAMA_MODEL),
+        apiKey: null,
+      }
     }
+  }
 
+  let aiReason: string | null = engine.ok ? null : engine.reason
+  if (engine.ok) {
     try {
-      const llm = await generateAdvisorResponse({
-        team,
-        userMessage,
-        history,
-        playerProfile,
-      })
+      const llm = await generateAdvisorResponse(
+        { team, userMessage, history, playerProfile },
+        {
+          provider: engine.provider,
+          model: engine.model,
+          apiKey: engine.apiKey,
+        },
+      )
       if (llm) {
         const safe = cleanLlmOutput(llm.content)
         await persistAssistant(db, conversationId!, safe, llm.model, "llm")
@@ -317,25 +321,22 @@ export async function POST(request: Request) {
           {
             content: safe,
             model: llm.model,
+            provider: engine.provider.id,
             mode: "llm" as const,
             conversationId,
           },
           { headers: securityHeaders() },
         )
       }
-      console.warn(
-        "AI advisor: LLM enabled but the call returned null. " +
-          `Reason: ${lastLlmError() ?? "unknown"}. Using fallback.`,
-      )
+      aiReason = lastLlmError() ?? "ai_error"
+      audit("llm-null", { ip, provider: engine.provider.id, reason: aiReason })
     } catch (err) {
+      aiReason = "ai_error"
       audit("llm-threw", { ip, err: String(err) })
     }
-  } else if (!userOptedIn) {
-    // No opt-in → use the deterministic local advisor. This is the default
-    // behaviour and works without any external service.
   }
 
-  // 13. Fallback (rule-based).
+  // 13. Fallback (rule-based). Always available, even with no AI configured.
   try {
     const fallback: AdvisorOutput = await buildLocalAdvice(team, userMessage)
     const safe = cleanLlmOutput(fallback.analysis)
@@ -345,6 +346,8 @@ export async function POST(request: Request) {
         content: safe,
         data: fallback,
         mode: "local" as const,
+        aiConfigured: engine.ok,
+        aiReason,
         conversationId,
       },
       { headers: securityHeaders() },

@@ -1,15 +1,19 @@
 import type { TeamProfile } from "@/lib/data/teams"
 import type { PlayerProfile } from "@/lib/data/players"
 import { formatStat, getLeagueBadge } from "@/lib/ai/local-advisor"
-import { safeOllamaBaseUrl } from "@/lib/security/ai-advisor"
-
-const DEFAULT_MODEL = "llama3.1:8b"
-const DEFAULT_BASE_URL = "http://localhost:11434/v1"
-const LLM_TIMEOUT_MS = 120_000
+import { chatComplete, type ChatMessage } from "@/lib/ai/chat"
+import type { AiProvider } from "@/lib/ai/providers"
 
 export type AdvisorHistoryMessage = {
   role: "user" | "assistant"
   content: string
+}
+
+/** The engine to drive a single advisor response, resolved per user/request. */
+export type AdvisorEngine = {
+  provider: AiProvider
+  model: string
+  apiKey: string | null
 }
 
 export type GenerateAdvisorInput = {
@@ -28,11 +32,6 @@ export function lastLlmError(): string | null {
 function setError(msg: string): void {
   lastError = msg
   console.error(`[llm] ${msg}`)
-}
-
-export function isLlmEnabled(): boolean {
-  // Ollama runs locally with no API key. We just check it's reachable.
-  return true
 }
 
 function buildPlayerContext(profile: PlayerProfile): string {
@@ -207,89 +206,27 @@ function buildSystemPrompt(input: GenerateAdvisorInput): string {
 
 export async function generateAdvisorResponse(
   input: GenerateAdvisorInput,
+  engine: AdvisorEngine,
 ): Promise<{ content: string; model: string } | null> {
-  const rawBase = process.env.OLLAMA_BASE_URL ?? DEFAULT_BASE_URL
-  const safeBase = safeOllamaBaseUrl(rawBase)
-  if (!safeBase) {
-    setError(
-      `OLLAMA_BASE_URL no es seguro (${rawBase}). Solo se permiten direcciones loopback o redes privadas.`,
-    )
-    return null
-  }
-  const baseUrl = safeBase
-  const model = process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
-  const url = `${baseUrl}/chat/completions`
-
-  const messages: AdvisorHistoryMessage[] = [
+  const messages: ChatMessage[] = [
     ...input.history.slice(-8),
     { role: "user", content: input.userMessage },
   ]
 
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS)
+  const result = await chatComplete({
+    provider: engine.provider,
+    model: engine.model,
+    apiKey: engine.apiKey,
+    system: buildSystemPrompt(input),
+    messages,
+    maxTokens: 700,
+    temperature: 0.6,
+  })
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: buildSystemPrompt(input) },
-          ...messages,
-        ],
-        max_tokens: 700,
-        temperature: 0.6,
-        top_p: 0.9,
-        stream: false,
-      }),
-      signal: controller.signal,
-    })
-
-    if (!res.ok) {
-      const detail = await res.text().catch(() => "")
-      const snippet = detail.slice(0, 300)
-      if (res.status === 404) {
-        setError(
-          `Ollama no encuentra el modelo "${model}". Ejecuta: ollama pull ${model}`,
-        )
-      } else {
-        setError(`Ollama ${res.status} ${res.statusText}: ${snippet}`)
-      }
-      return null
-    }
-
-    const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>
-    }
-    const content = json.choices?.[0]?.message?.content?.trim()
-    if (!content) {
-      setError("Ollama devolvió una respuesta vacía")
-      return null
-    }
-    lastError = null
-    return { content, model }
-  } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") {
-      setError(
-        `Ollama tardó demasiado (>${LLM_TIMEOUT_MS / 1000}s). Si el modelo es grande o el equipo tiene poca RAM, prueba con uno más pequeño (e.g. llama3.2:3b).`,
-      )
-    } else if (err instanceof Error) {
-      const code = (err as NodeJS.ErrnoException).code
-      if (code === "ECONNREFUSED") {
-        setError(
-          `Ollama no está corriendo. Arranca el servicio con: ollama serve (o inicia la app de escritorio de Ollama)`,
-        )
-      } else {
-        setError(`Error de conexión con Ollama: ${err.message}`)
-      }
-    } else {
-      setError("Error desconocido al llamar a Ollama")
-    }
+  if (!result.ok) {
+    setError(result.error)
     return null
-  } finally {
-    clearTimeout(timer)
   }
+  lastError = null
+  return { content: result.content, model: result.model }
 }

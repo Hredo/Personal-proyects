@@ -3,7 +3,6 @@ import Link from "next/link"
 import { FadeIn } from "@/components/animations/fade-in"
 import { Reveal, Stagger, StaggerItem } from "@/components/animations/reveal"
 import { Parallax } from "@/components/animations/parallax"
-import { Magnetic } from "@/components/animations/magnetic"
 import { SpotlightCard } from "@/components/animations/spotlight-card"
 import { ScrollGallery } from "@/components/animations/scroll-gallery"
 import { LiveScoutCard } from "@/components/marketing/live-scout-card"
@@ -164,16 +163,12 @@ export default async function Home() {
 
             <FadeIn delay={0.28} y={16}>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Magnetic strength={0.4}>
-                  <ButtonLink href="/compare" size="lg" arrow>
-                    Open the console
-                  </ButtonLink>
-                </Magnetic>
-                <Magnetic strength={0.3}>
-                  <ButtonLink href="/players" size="lg" variant="secondary">
-                    Browse the database
-                  </ButtonLink>
-                </Magnetic>
+                <ButtonLink href="/compare" size="lg" arrow>
+                  Open the console
+                </ButtonLink>
+                <ButtonLink href="/players" size="lg" variant="secondary">
+                  Browse the database
+                </ButtonLink>
               </div>
             </FadeIn>
 
@@ -367,16 +362,12 @@ export default async function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row md:justify-end">
-                  <Magnetic strength={0.35}>
-                    <ButtonLink href="/ai-advisor" size="lg" arrow>
-                      Try the AI Advisor
-                    </ButtonLink>
-                  </Magnetic>
-                  <Magnetic strength={0.3}>
-                    <ButtonLink href="/players" size="lg" variant="secondary">
-                      Browse players
-                    </ButtonLink>
-                  </Magnetic>
+                  <ButtonLink href="/ai-advisor" size="lg" arrow>
+                    Try the AI Advisor
+                  </ButtonLink>
+                  <ButtonLink href="/players" size="lg" variant="secondary">
+                    Browse players
+                  </ButtonLink>
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useTransition } from "react"
+import { Suspense, useEffect, useRef, useState, useTransition } from "react"
 import {
   FEB_GROUP_SLUG,
   isFebFilter,
@@ -64,6 +64,29 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
 
   const sorts = kind === "teams" ? SORTS_TEAMS : SORTS_PLAYERS
 
+  // The search box keeps its own state so typing never depends on a round-trip
+  // to the URL. We debounce the navigation and only mirror the URL back into the
+  // box when it changes for some *other* reason (back/forward, a filter reset),
+  // guarded by `lastPushed` so an in-flight navigation can't clobber characters
+  // typed during the debounce window.
+  const [text, setText] = useState(q)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastPushed = useRef(q)
+
+  useEffect(() => {
+    if (q !== lastPushed.current) {
+      lastPushed.current = q
+      setText(q)
+    }
+  }, [q])
+
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    },
+    [],
+  )
+
   function apply(updates: Record<string, string | null>) {
     const params = new URLSearchParams(search.toString())
     for (const [k, v] of Object.entries(updates)) {
@@ -75,6 +98,22 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
     startTransition(() => {
       router.replace(qs ? `${basePath}?${qs}` : basePath, { scroll: false })
     })
+  }
+
+  function onSearchChange(value: string) {
+    setText(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      lastPushed.current = value
+      apply({ q: value || null })
+    }, 300)
+  }
+
+  function clearSearch() {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setText("")
+    lastPushed.current = ""
+    apply({ q: null })
   }
 
   return (
@@ -95,10 +134,10 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
           />
         </svg>
         <input
-          type="search"
-          defaultValue={q}
-          key={q}
-          onChange={(e) => apply({ q: e.target.value || null })}
+          type="text"
+          inputMode="search"
+          value={text}
+          onChange={(e) => onSearchChange(e.target.value)}
           placeholder={
             kind === "players"
               ? "Search players…"
@@ -107,8 +146,31 @@ function DirectoryControlsInner({ basePath, kind, total, showing }: Props) {
                 : "Search coaches…"
           }
           aria-label="Search"
-          className="h-11 w-full rounded-full border border-hairline bg-white/[0.03] pl-11 pr-4 text-sm text-ink-50 outline-none transition duration-200 placeholder:text-ink-400 focus:border-brand-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-brand-500/20"
+          autoComplete="off"
+          spellCheck={false}
+          className="h-11 w-full rounded-full border border-hairline bg-white/[0.03] pl-11 pr-10 text-sm text-ink-50 outline-none transition duration-200 placeholder:text-ink-400 focus:border-brand-400/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-brand-500/20"
         />
+        {text ? (
+          <button
+            type="button"
+            onClick={clearSearch}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-ink-400 transition hover:bg-white/10 hover:text-ink-50"
+          >
+            <svg
+              aria-hidden
+              className="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-1.5">

@@ -208,7 +208,7 @@ export function UserMenu() {
                 </span>
                 {me.plan === "free" && me.role !== "admin" ? (
                   <Link
-                    href="mailto:Hrvaldes22@gmail.com?subject=Upgrade%20to%20Pro"
+                    href="/account/subscription"
                     className="text-[11px] text-brand-300 transition hover:text-brand-200"
                     onClick={() => setOpen(false)}
                   >
@@ -218,17 +218,24 @@ export function UserMenu() {
               </div>
             </div>
             <div className="my-1 h-px bg-white/5" />
+            <MenuLink href="/account" onSelect={() => setOpen(false)}>
+              Account settings
+            </MenuLink>
+            <MenuLink href="/account/ai-keys" onSelect={() => setOpen(false)}>
+              AI &amp; keys
+            </MenuLink>
+            <MenuLink href="/account/subscription" onSelect={() => setOpen(false)}>
+              Subscription
+            </MenuLink>
+            <div className="my-1 h-px bg-white/5" />
             <MenuLink href="/ai-advisor" onSelect={() => setOpen(false)}>
               AI Advisor
             </MenuLink>
-            <MenuLink href="/players" onSelect={() => setOpen(false)}>
-              Players
-            </MenuLink>
-            <MenuLink href="/teams" onSelect={() => setOpen(false)}>
-              Teams
-            </MenuLink>
             <MenuLink href="/compare" onSelect={() => setOpen(false)}>
               Compare
+            </MenuLink>
+            <MenuLink href="/ai-setup" onSelect={() => setOpen(false)}>
+              Connect your AI
             </MenuLink>
             <div className="my-1 h-px bg-white/5" />
             <button
