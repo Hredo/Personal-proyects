@@ -13,11 +13,13 @@ function formatTeam(team: TeamContext): string {
 }
 
 function formatAiMessage(content: string): string {
-  return `${content.trim()}\n`
+  const trimmed = content.trim()
+  return trimmed
 }
 
 function formatUserMessage(content: string): string {
-  return `> ${content.trim()}\n`
+  const trimmed = content.trim()
+  return trimmed
 }
 
 function buildMarkdown(team: TeamContext, messages: ChatMessage[]): string {
@@ -37,13 +39,14 @@ function buildMarkdown(team: TeamContext, messages: ChatMessage[]): string {
     const label = m.type === "user" ? `🙋 **Tú**` : `🤖 **Asesor**`
     lines.push(`### ${label} · mensaje ${i + 1}`)
     lines.push(``)
-    if (m.type === "user") {
-      lines.push(formatUserMessage(m.content))
-    } else {
-      lines.push(formatAiMessage(m.content))
+    const content = m.type === "user"
+      ? formatUserMessage(m.content)
+      : formatAiMessage(m.content)
+    if (content) {
+      lines.push(content)
+      lines.push(``)
     }
     if (m.data?.recommendations?.length) {
-      lines.push(``)
       lines.push(`**Candidatos:**`)
       lines.push(``)
       lines.push(`| # | Jugador | Pos. | Liga | Edad | Contrato | Prioridad |`)
@@ -53,15 +56,15 @@ function buildMarkdown(team: TeamContext, messages: ChatMessage[]): string {
           `| ${j + 1} | ${escapeMd(r.name)} | ${escapeMd(r.position)} | ${r.league} | ${r.age} | ${escapeMd(r.contractValue)} | ${escapeMd(r.priority)} |`,
         )
       })
+      lines.push(``)
     }
     if (m.data?.considerations?.length) {
-      lines.push(``)
       lines.push(`**Consideraciones:**`)
       m.data.considerations.forEach((c) => {
         lines.push(`- ${c}`)
       })
+      lines.push(``)
     }
-    lines.push(``)
   })
 
   return lines.join("\n")

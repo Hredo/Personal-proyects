@@ -117,13 +117,13 @@ function NavItem({
   label,
   active,
   pro,
-  leagues,
+  withLeagues,
 }: {
   href: string
   label: string
   active: boolean
   pro?: boolean
-  leagues?: LeagueOption[]
+  withLeagues?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -140,16 +140,16 @@ function NavItem({
   return (
     <li
       className="relative"
-      onMouseEnter={leagues ? enter : undefined}
-      onMouseLeave={leagues ? leave : undefined}
-      onFocus={leagues ? enter : undefined}
-      onBlur={leagues ? leave : undefined}
+      onMouseEnter={withLeagues ? enter : undefined}
+      onMouseLeave={withLeagues ? leave : undefined}
+      onFocus={withLeagues ? enter : undefined}
+      onBlur={withLeagues ? leave : undefined}
     >
       <Link
         href={href}
         aria-current={active ? "page" : undefined}
-        aria-haspopup={leagues ? "menu" : undefined}
-        aria-expanded={leagues ? open : undefined}
+        aria-haspopup={withLeagues ? "menu" : undefined}
+        aria-expanded={withLeagues ? open : undefined}
         className={cn(
           "relative flex items-center gap-1.5 rounded-full px-3.5 py-2 transition-colors duration-300 lg:px-4",
           active ? "text-ink-50" : "hover:text-ink-50",
@@ -169,7 +169,7 @@ function NavItem({
             Pro
           </span>
         )}
-        {leagues && (
+        {withLeagues && (
           <svg
             aria-hidden
             className={cn(
@@ -186,11 +186,11 @@ function NavItem({
         )}
       </Link>
 
-      {leagues && (
+      {withLeagues && (
         <div
           role="menu"
           className={cn(
-            "absolute left-1/2 top-full z-50 mt-2 w-52 -translate-x-1/2 origin-top rounded-2xl border border-hairline bg-surface-2/95 p-1.5 shadow-[var(--shadow-court)] backdrop-blur-xl transition-all duration-300 ease-fluid",
+            "absolute left-1/2 top-full z-50 mt-2 w-56 -translate-x-1/2 origin-top rounded-2xl border border-hairline bg-surface-2/95 p-1.5 shadow-[var(--shadow-court)] backdrop-blur-xl transition-all duration-300 ease-fluid",
             open
               ? "pointer-events-auto translate-y-0 opacity-100"
               : "pointer-events-none -translate-y-1.5 opacity-0",
@@ -206,16 +206,28 @@ function NavItem({
           >
             All leagues
           </Link>
-          {leagues.map((lg) => (
-            <Link
-              key={lg.slug}
-              href={`${href}?league=${lg.slug}`}
-              role="menuitem"
-              className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-ink-200 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink-50"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-500/70" />
-              {lg.name}
-            </Link>
+          {LEAGUE_FILTER_TREE.map((node) => (
+            <div key={node.slug}>
+              <Link
+                href={`${href}?league=${node.slug}`}
+                role="menuitem"
+                className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] font-medium text-ink-200 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink-50"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500/70" />
+                {node.label}
+              </Link>
+              {node.children?.map((child) => (
+                <Link
+                  key={child.slug}
+                  href={`${href}?league=${child.slug}`}
+                  role="menuitem"
+                  className="flex items-center gap-2 rounded-xl py-1.5 pl-7 pr-2.5 text-[12px] font-medium text-ink-300 transition-colors duration-200 hover:bg-white/[0.05] hover:text-ink-50"
+                >
+                  <span className="h-1 w-1 rounded-full bg-brand-500/50" />
+                  {child.label}
+                </Link>
+              ))}
+            </div>
           ))}
         </div>
       )}

@@ -35,6 +35,7 @@ export function ChatWindow({
   onRedo,
   lastMessageRef,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const internalLastRef = useRef<HTMLDivElement | null>(null)
   const focusLast = useRef<((el: HTMLDivElement | null) => void) | undefined>(
@@ -43,7 +44,9 @@ export function ChatWindow({
   focusLast.current = lastMessageRef
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    const el = containerRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" })
   }, [messages, loading])
 
   // Move focus to the last AI message whenever a new one lands, so screen
@@ -104,13 +107,14 @@ export function ChatWindow({
   }
 
   return (
-    <div
-      role="log"
-      aria-live="polite"
-      aria-relevant="additions"
-      aria-label="Conversación con el asesor"
-      className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-    >
+      <div
+          ref={containerRef}
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="Conversación con el asesor"
+          className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
+        >
       {messages.map((msg, idx) => {
         const isLastAi = msg.type === "ai" && idx === messages.length - 1
         const prev = idx > 0 ? messages[idx - 1] : null

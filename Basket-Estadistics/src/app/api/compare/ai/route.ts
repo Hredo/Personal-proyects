@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   if (!limit.ok) {
     return NextResponse.json(
       {
-        error: `Demasiadas solicitudes. Intenta de nuevo en ${limit.retryAfterSec}s.`,
+        error: `Too many requests. Try again in ${limit.retryAfterSec}s.`,
       },
       {
         status: 429,
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     body = (await request.json()) as Body
   } catch {
     return NextResponse.json(
-      { error: "Cuerpo JSON inválido." },
+      { error: "Invalid JSON body." },
       { status: 400 },
     )
   }
@@ -41,19 +41,19 @@ export async function POST(request: Request) {
   const bSlug = body.bSlug?.trim()
   if (!aSlug || !bSlug) {
     return NextResponse.json(
-      { error: "Faltan los slugs de los jugadores." },
+      { error: "Missing player slugs." },
       { status: 400 },
     )
   }
   if (aSlug.length > MAX_SLUG_LEN || bSlug.length > MAX_SLUG_LEN) {
     return NextResponse.json(
-      { error: "Slug demasiado largo." },
+      { error: "Slug too long." },
       { status: 400 },
     )
   }
   if (aSlug === bSlug) {
     return NextResponse.json(
-      { error: "Hay que elegir dos jugadores distintos." },
+      { error: "Pick two different players." },
       { status: 400 },
     )
   }
@@ -65,13 +65,13 @@ export async function POST(request: Request) {
 
   if (!a) {
     return NextResponse.json(
-      { error: `Jugador "${aSlug}" no encontrado.` },
+      { error: `Player "${aSlug}" not found.` },
       { status: 404 },
     )
   }
   if (!b) {
     return NextResponse.json(
-      { error: `Jugador "${bSlug}" no encontrado.` },
+      { error: `Player "${bSlug}" not found.` },
       { status: 404 },
     )
   }
@@ -82,8 +82,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("compare/ai error:", error)
     return NextResponse.json(
-      { error: "No se pudo generar el análisis." },
+      { error: "Could not generate the analysis." },
       { status: 500 },
     )
   }
+
 }

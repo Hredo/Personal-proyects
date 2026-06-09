@@ -22,6 +22,7 @@ const LEAGUE_VALUES = new Set([
   "nba",
   "euroleague",
   "acb",
+  "feb",
   "leb-oro",
   "leb-plata",
   "eba",

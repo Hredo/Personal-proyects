@@ -182,7 +182,10 @@ export default function AIAdvisorClient() {
           return
         }
         if (!res.ok) return
-        const data = (await res.json()) as { conversation: ConversationDetail }
+        const data = (await res.json()) as {
+          conversation: ConversationSummary
+          messages: ConversationDetail["messages"]
+        }
         const conv = data.conversation
         if (!conv) return
         setActiveConversationId(conv.id)
@@ -194,7 +197,7 @@ export default function AIAdvisorClient() {
         }
         setSelectedTeam(teamOption)
         idRef.current = 0
-        const next: Message[] = conv.messages.map((m) => ({
+        const next: Message[] = (data.messages ?? []).map((m) => ({
           id: ++idRef.current,
           type: m.role === "user" ? "user" : "ai",
           content: m.content,

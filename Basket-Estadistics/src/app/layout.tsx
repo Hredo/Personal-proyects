@@ -7,12 +7,6 @@ import { JsonLd } from "@/components/marketing/json-ld"
 import { SITE, SEO_KEYWORDS } from "@/lib/site"
 import "./globals.css"
 
-const NAV_LEAGUES = [
-  { slug: "nba", name: "NBA" },
-  { slug: "euroleague", name: "EuroLeague" },
-  { slug: "acb", name: "ACB" },
-]
-
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans-loaded",
@@ -149,7 +143,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <Navbar leagues={NAV_LEAGUES} />
+        <Navbar />
         <main id="main" className="mx-auto max-w-7xl px-4 sm:px-6">
           {children}
         </main>

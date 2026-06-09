@@ -1,11 +1,5 @@
 "use client"
 
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useReducedMotion,
-} from "framer-motion"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 
 type Panel = {
@@ -55,21 +49,28 @@ const PANELS: Panel[] = [
 ]
 
 export function ScrollGallery() {
-  const reduce = useReducedMotion()
   const [enabled, setEnabled] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
   const [dist, setDist] = useState(0)
   const [vh, setVh] = useState(0)
 
+  // Enable the pinned horizontal scroll only on desktop without reduced motion.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)")
-    const update = () => setEnabled(mq.matches && !reduce)
+    const mqDesk = window.matchMedia("(min-width: 768px)")
+    const mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const update = () => setEnabled(mqDesk.matches && !mqReduce.matches)
     update()
-    mq.addEventListener("change", update)
-    return () => mq.removeEventListener("change", update)
-  }, [reduce])
+    mqDesk.addEventListener("change", update)
+    mqReduce.addEventListener("change", update)
+    return () => {
+      mqDesk.removeEventListener("change", update)
+      mqReduce.removeEventListener("change", update)
+    }
+  }, [])
 
+  // Measure how far the track must travel horizontally.
   useEffect(() => {
     if (!enabled) {
       setDist(0)
@@ -83,69 +84,94 @@ export function ScrollGallery() {
       setVh(window.innerHeight)
     }
     measure()
+    const ro = new ResizeObserver(measure)
+    if (trackRef.current) ro.observe(trackRef.current)
     window.addEventListener("resize", measure)
-    return () => window.removeEventListener("resize", measure)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener("resize", measure)
+    }
   }, [enabled])
 
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  })
-  const x = useTransform(scrollYProgress, [0, 1], [0, -dist])
+  // Scroll-link: translate the track directly (no React re-render, GPU only).
+  useEffect(() => {
+    if (!enabled) return
+    const onScroll = () => {
+      const section = sectionRef.current
+      const track = trackRef.current
+      if (!section || !track) return
+      const total = section.offsetHeight - window.innerHeight
+      const scrolled = Math.min(
+        Math.max(-section.getBoundingClientRect().top, 0),
+        total,
+      )
+      const p = total > 0 ? scrolled / total : 0
+      track.style.transform = `translate3d(${-(p * dist)}px,0,0)`
+      if (barRef.current) barRef.current.style.transform = `scaleX(${p})`
+    }
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("resize", onScroll)
+    return () => {
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", onScroll)
+    }
+  }, [enabled, dist])
 
   const heading = (
-    <div className="flex items-end justify-between gap-4">
-      <div>
-        <span className="gh-eyebrow">The pipeline</span>
-        <h2 className="mt-3 font-display text-4xl font-bold leading-[0.9] tracking-[-0.04em] text-ink-50 sm:text-5xl md:text-6xl">
-          From box score to{" "}
-          <span className="text-gradient-brand">verdict.</span>
-        </h2>
-      </div>
+    <div>
+      <span className="gh-eyebrow">The pipeline</span>
+      <h2 className="mt-3 font-display text-4xl font-bold leading-[0.9] tracking-[-0.04em] text-ink-50 sm:text-5xl md:text-6xl">
+        From box score to <span className="text-gradient-brand">verdict.</span>
+      </h2>
     </div>
   )
 
-  // ── Static fallback (mobile / reduced motion): vertical stack ──
-  if (!enabled) {
-    return (
-      <div className="py-16">
-        {heading}
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {PANELS.map((p) => (
-            <PanelCard key={p.index} panel={p} />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div ref={sectionRef} style={{ height: dist + vh }} className="relative">
-      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden py-16">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">{heading}</div>
+    <div
+      ref={sectionRef}
+      className="relative"
+      style={enabled ? { height: dist + vh } : undefined}
+    >
+      {enabled ? (
+        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden py-16">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">{heading}</div>
 
-        <motion.div
-          ref={trackRef}
-          style={{ x }}
-          className="mt-10 flex w-max items-stretch gap-5 px-4 sm:px-6"
-        >
-          {PANELS.map((p) => (
-            <div key={p.index} className="w-[78vw] shrink-0 sm:w-[440px] lg:w-[500px]">
-              <PanelCard panel={p} />
+          <div
+            ref={trackRef}
+            className="mt-10 flex w-max items-stretch gap-5 px-4 will-change-transform sm:px-6"
+          >
+            {PANELS.map((p) => (
+              <div
+                key={p.index}
+                className="w-[78vw] shrink-0 sm:w-[440px] lg:w-[500px]"
+              >
+                <PanelCard panel={p} />
+              </div>
+            ))}
+            <div aria-hidden className="w-[8vw] shrink-0" />
+          </div>
+
+          <div className="mx-auto mt-10 w-full max-w-7xl px-4 sm:px-6">
+            <div className="h-px w-full overflow-hidden bg-hairline">
+              <div
+                ref={barRef}
+                style={{ transform: "scaleX(0)" }}
+                className="h-full w-full origin-left bg-gradient-to-r from-brand-500 via-ember-400 to-brand-600"
+              />
             </div>
-          ))}
-          <div aria-hidden className="w-[8vw] shrink-0" />
-        </motion.div>
-
-        <div className="mx-auto mt-10 w-full max-w-7xl px-4 sm:px-6">
-          <div className="h-px w-full overflow-hidden bg-hairline">
-            <motion.div
-              style={{ scaleX: scrollYProgress }}
-              className="h-full w-full origin-left bg-gradient-to-r from-brand-500 via-ember-400 to-brand-600"
-            />
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="py-16">
+          {heading}
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {PANELS.map((p) => (
+              <PanelCard key={p.index} panel={p} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -166,14 +192,12 @@ function PanelCard({ panel }: { panel: Panel }) {
         className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-20 blur-3xl transition-opacity duration-500 group-hover:opacity-40"
         style={{ background: "var(--lg)" }}
       />
-      <div className="flex items-center justify-between">
-        <span
-          className="text-outline font-display text-5xl font-bold leading-none"
-          style={{ WebkitTextStrokeColor: "var(--lg)" }}
-        >
-          {panel.index}
-        </span>
-      </div>
+      <span
+        className="text-outline font-display text-5xl font-bold leading-none"
+        style={{ WebkitTextStrokeColor: "var(--lg)" }}
+      >
+        {panel.index}
+      </span>
       <h3 className="mt-6 font-display text-2xl font-bold tracking-[-0.02em] text-ink-50 sm:text-[1.7rem]">
         {panel.title}
       </h3>

@@ -776,22 +776,27 @@ function buildConversationSheet(payload: ExportPayload): XLSX.WorkSheet {
 
 function buildAdvisorText(data: AdvisorOutput): string {
   const lines: string[] = []
-  lines.push(`${data.intentEmoji} ${data.intentLabel}`)
-  lines.push("")
+  const label = data.intentLabel?.trim()
+  if (label) {
+    lines.push(`${data.intentEmoji ?? ""} ${label}`)
+    lines.push("")
+  }
   lines.push(stripMarkdown(data.analysis))
   lines.push("")
   lines.push(`Hueco detectado: ${data.gap}`)
   lines.push("")
-  lines.push("Candidatos:")
-  data.recommendations.forEach((r, i) => {
-    lines.push(
-      `  ${i + 1}. ${r.name} (${r.position}, ${r.league}, ${r.age} años) — ${r.contractValue} [${r.priority}]`,
-    )
-    lines.push(`     Encaje: ${r.fit}`)
-    if (r.strengths.length > 0) {
-      lines.push(`     Puntos fuertes: ${r.strengths.join(", ")}`)
-    }
-  })
+  if (data.recommendations.length > 0) {
+    lines.push("Candidatos:")
+    data.recommendations.forEach((r, i) => {
+      lines.push(
+        `  ${i + 1}. ${r.name} (${r.position}, ${r.league}, ${r.age} años) — ${r.contractValue} [${r.priority}]`,
+      )
+      lines.push(`     Encaje: ${r.fit}`)
+      if (r.strengths.length > 0) {
+        lines.push(`     Puntos fuertes: ${r.strengths.join(", ")}`)
+      }
+    })
+  }
   if (data.considerations.length > 0) {
     lines.push("")
     lines.push("Consideraciones:")
@@ -1023,30 +1028,49 @@ export function exportToPdf(payload: ExportPayload): void {
   doc.addPage()
   addHeader()
   doc.setFont("helvetica", "bold")
-  doc.setFontSize(12)
+  doc.setFontSize(14)
   doc.text("Conversación completa", margin, y)
-  y += 6
+  y += 16
 
-  autoTable(doc, {
-    startY: y + 4,
-    margin: { left: margin, right: margin },
-    head: [["#", "Tipo", "Mensaje"]],
-    body: messages.length
-      ? messages.map((m, i) => [
-          i + 1,
-          m.type === "user" ? "Usuario" : "Asesor",
-          m.data ? buildAdvisorText(m.data) : stripMarkdown(m.content),
-        ])
-      : [["—", "—", "Sin mensajes en esta conversación."]],
-    styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
-    headStyles: { fillColor: [31, 41, 55], textColor: 255, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: [249, 250, 251] },
-    columnStyles: {
-      0: { cellWidth: 22, halign: "center" },
-      1: { cellWidth: 60 },
-      2: { cellWidth: "auto" },
-    },
-  })
+  if (messages.length === 0) {
+    doc.setFont("helvetica", "italic")
+    doc.setFontSize(10)
+    doc.text("Sin mensajes en esta conversación.", margin, y)
+  } else {
+    for (const [i, m] of messages.entries()) {
+      ensureSpace(50)
+      const label = m.type === "user" ? "Usuario" : "Asesor"
+      const accent = m.type === "user"
+        ? [245, 158, 11]
+        : [59, 130, 246]
+      doc.setFillColor(31, 41, 55)
+      doc.rect(margin, y - 6, pageWidth - margin * 2, 18, "F")
+      doc.setTextColor(255, 255, 255)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(9)
+      doc.text(`${label} · mensaje ${i + 1}`, margin + 6, y + 4)
+      doc.setTextColor(0, 0, 0)
+      y += 22
+
+      const content = m.data
+        ? buildAdvisorText(m.data)
+        : stripMarkdown(m.content)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      const textLines = content.split("\n")
+      for (const line of textLines) {
+        if (line.trim()) {
+          const isBullet = /^\s*[\d]+[\.\)]/.test(line) || /^\s*[-•]/.test(line)
+          doc.setFont("helvetica", isBullet ? "normal" : "normal")
+          const indent = /^\s{2,}/.test(line) ? margin + 12 : margin
+          y = drawWrappedText(doc, line.trim(), indent, y, pageWidth - indent - margin, 9) + 3
+        } else {
+          y += 6
+        }
+      }
+      y += 8
+    }
+  }
 
   doc.save(buildFileName(team.name, "pdf"))
 }
@@ -1247,25 +1271,57 @@ export async function exportToWord(payload: ExportPayload): Promise<void> {
     )
   } else {
     messages.forEach((m, i) => {
-      const cleaned = m.data
-        ? buildAdvisorText(m.data)
-        : stripMarkdown(m.content)
       const isUser = m.type === "user"
+      const label = isUser ? "Usuario" : "Asesor"
+      const accent = isUser ? "B45309" : "2563EB"
       children.push(
         new Paragraph({
-          spacing: { before: 100 },
+          spacing: { before: 120, after: 60 },
+          shading: {
+            type: ShadingType.SOLID,
+            color: "1F2937",
+            fill: "1F2937",
+          },
           children: [
             new TextRun({
-              text: `${i + 1}. ${isUser ? "Usuario" : "Asesor"}`,
+              text: `${label} · mensaje ${i + 1}`,
               bold: true,
-              color: isUser ? "B45309" : "1F2937",
+              size: 18,
+              color: "FFFFFF",
             }),
           ],
         }),
-        new Paragraph({
-          children: [new TextRun({ text: cleaned })],
-        }),
       )
+
+      if (m.data) {
+        const dataLines = buildAdvisorText(m.data).split("\n")
+        for (const line of dataLines) {
+          if (line.trim()) {
+            const lineIsBullet = /^\s*[\d]+[\.\)]/.test(line) || /^\s*[-•]/.test(line)
+            children.push(
+              new Paragraph({
+                spacing: { after: 40 },
+                indent: lineIsBullet ? { left: 240 } : undefined,
+                children: [
+                  new TextRun({
+                    text: line.trim(),
+                    size: 20,
+                    color: "111827",
+                  }),
+                ],
+              }),
+            )
+          } else {
+            children.push(new Paragraph({ spacing: { after: 40 }, children: [new TextRun({ text: "" })] }))
+          }
+        }
+      } else {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: stripMarkdown(m.content), size: 20, color: "111827" })],
+          }),
+        )
+      }
     })
   }
 

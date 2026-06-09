@@ -126,12 +126,12 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
                 className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-950"
                 style={{ animationDelay: "240ms" }}
               />
-              <span className="ml-1">Analizando…</span>
+              <span className="ml-1">Analyzing…</span>
             </span>
           ) : data ? (
-            "Volver a analizar"
+            "Re-run analysis"
           ) : (
-            "Generar análisis"
+            "Generate analysis"
           )}
         </button>
       </div>
@@ -197,9 +197,9 @@ export function CompareAi({ aSlug, bSlug, aName, bName }: Props) {
             animate={{ opacity: 1 }}
             className="mt-4 text-sm text-ink-400"
           >
-            Pulsa <span className="text-brand-300">Generar análisis</span> y la
-            IA local desglosará la comparativa por categorías, detectará
-            ventajas, debilidades y dará un veredicto razonado.
+            Hit <span className="text-brand-300">Generate analysis</span> and the
+            local AI breaks the matchup down by category, flags edges and
+            weaknesses, and lands a reasoned verdict.
           </motion.p>
         ) : null}
       </AnimatePresence>
@@ -220,12 +220,12 @@ function ScoreCard({
   const total = aScore + bScore || 1
   const aPct = (aScore / total) * 100
   const leaderName =
-    leader === "tie" ? "Empate" : leader === "a" ? aName : bName
+    leader === "tie" ? "Tie" : leader === "a" ? aName : bName
   return (
     <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
       <div className="mb-3 flex items-center justify-between text-[11px] font-mono uppercase tracking-widest">
         <span className="text-brand-300">{aName}</span>
-        <span className="text-ink-500">Marcador IA</span>
+        <span className="text-ink-500">AI score</span>
         <span className="text-accent-cyan">{bName}</span>
       </div>
       <div className="relative h-3 overflow-hidden rounded-full bg-white/5">
@@ -249,10 +249,10 @@ function ScoreCard({
           <span className="text-ink-500">/ 6</span>
         </span>
         <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest text-ink-300">
-          Confianza {confidence}
+          Confidence: {confidence}
         </span>
         <span className="font-semibold text-ink-100">
-          {leader === "tie" ? "Empate técnico" : `Líder: ${leaderName}`}
+          {leader === "tie" ? "Dead heat" : `Leader: ${leaderName}`}
         </span>
       </div>
     </div>
@@ -263,7 +263,7 @@ function Verdict({ data }: { data: ComparisonOutput }) {
   return (
     <div className="rounded-xl border-l-2 border-brand-500/60 bg-brand-500/5 px-4 py-3 text-sm leading-relaxed text-ink-100">
       <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-brand-300">
-        Veredicto
+        Verdict
       </p>
       {data.verdict}
     </div>
@@ -282,7 +282,7 @@ function Categories({
   return (
     <div>
       <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-ink-400">
-        Desglose por categoría
+        Category breakdown
       </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {cats.map((c) => {
@@ -292,7 +292,7 @@ function Categories({
               : c.winner === "b"
                 ? bName
                 : c.winner === "tie"
-                  ? "Empate"
+                  ? "Tie"
                   : "—"
           const winnerColor =
             c.winner === "a"
@@ -351,13 +351,13 @@ function Insights({
   return (
     <div>
       <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-ink-400">
-        Claves
+        Key takeaways
       </p>
       <ul className="space-y-2">
         {insights.map((i, idx) => {
           const meta = INSIGHT_META[i.kind]
           const subject =
-            i.player === "a" ? aName : i.player === "b" ? bName : "Ambos"
+            i.player === "a" ? aName : i.player === "b" ? bName : "Both"
           return (
             <li
               key={idx}
@@ -394,7 +394,7 @@ function FitNotes({
   return (
     <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
       <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-ink-400">
-        Arquetipo y encaje
+        Archetype &amp; fit
       </p>
       <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="rounded-lg border border-brand-500/30 bg-brand-500/5 px-3 py-2">
@@ -430,7 +430,7 @@ function Warnings({ warnings }: { warnings: string[] }) {
   return (
     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
       <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-amber-300">
-        Antes de fiarte
+        Before you trust it
       </p>
       <ul className="space-y-1">
         {warnings.map((w, i) => (
