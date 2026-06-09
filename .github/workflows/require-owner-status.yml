@@ -12,8 +12,9 @@ jobs:
     steps:
       - name: Check actor is repository owner
         run: |
-          ALLOWED="Hredo"
-          if [ "${GITHUB_ACTOR}" != "$ALLOWED" ]; then
-            echo "Unauthorized actor: ${GITHUB_ACTOR}. Only $ALLOWED may push directly to protected branches." >&2
+          ALLOWED1="Hredo"
+          ALLOWED2="Hrvr1"
+          if [ "${GITHUB_ACTOR}" != "$ALLOWED1" ] && [ "${GITHUB_ACTOR}" != "$ALLOWED2" ]; then
+            echo "Unauthorized actor: ${GITHUB_ACTOR}. Only $ALLOWED1 or $ALLOWED2 may push directly to protected branches." >&2
             exit 1
           fi
