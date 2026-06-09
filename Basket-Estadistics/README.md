@@ -1,128 +1,115 @@
-# globalhoopstats
+# globalhoopstats / Basket-Estadistics
 
 Basketball statistics tracking web application — work in progress.
 
-## What this project is
+## Resumen
 
-globalhoopstats is a web app to collect, aggregate and display basketball statistics for players, teams and staff across multiple sources (EuroLeague, ACB, NBA and others). It uses Next.js (App Router), TypeScript, Tailwind CSS and Drizzle ORM for database access. The repo includes frontend pages, reusable components, data source adapters and scripts to sync and migrate data.
+`globalhoopstats` (carpeta `Basket-Estadistics`) es una aplicación web para recoger, agregar y mostrar estadísticas de baloncesto para jugadores, equipos y staff desde múltiples fuentes (EuroLeague, ACB, NBA y otras). Está construida con Next.js (App Router), TypeScript, Tailwind CSS y Drizzle ORM.
+
+## Últimos cambios (resumen)
+
+- Añadida y mejorada la ruta de búsqueda de jugadores (`src/app/api/players/search/route.ts`) para búsquedas más precisas.
+- Nuevos scripts de backfill y sincronización en `scripts/` para facilitar la importación de datos históricos.
+- Ajustes en las migraciones de Drizzle y snapshots en `drizzle/` para mejorar la reproducibilidad.
+- Documentación ampliada sobre problemas conocidos con OneDrive y recomendaciones para entornos locales.
+
+Si quieres que detalle los cambios uno por uno (commits o PRs), indícame qué nivel de detalle necesitas.
 
 ## Tech stack
 
 - Frontend: Next.js (App Router) + React + Tailwind CSS
-- Language: TypeScript (strict)
-- ORM: Drizzle (see `drizzle.config.ts`)
-- Package manager: pnpm
+- Lenguaje: TypeScript (estricto)
+- ORM: Drizzle (ver `drizzle.config.ts`)
+- Gestor de paquetes: pnpm
 
-## What is included
+## Qué incluye
 
-- Pages and routes for `players`, `teams`, `coaches`, `leagues`, and `compare` (see `src/app/`).
-- API route for player search at `src/app/api/players/search/route.ts`.
-- Reusable UI components under `src/components/` (players, teams, staff, SVG icons, layout helpers).
-- Data adapters and sync utilities in `src/lib/sources/` and `src/lib/sync/` (ACB, EuroLeague, NBA, etc.).
-- Scripts for database checks, migrations and syncing under `scripts/` (e.g. `apply-migrations.ts`, `sync.ts`, `check-db.ts`).
+- Páginas y rutas para `players`, `teams`, `coaches`, `leagues` y `compare` (ver `src/app/`).
+- API route para búsqueda de jugadores en `src/app/api/players/search/route.ts`.
+- Componentes reutilizables en `src/components/`.
+- Adaptadores de datos y utilidades de sincronización en `src/lib/sources/` y `src/lib/sync/`.
+- Scripts para chequeos de base de datos, migraciones y sincronización en `scripts/`.
 
-## Current status
+## Estado actual
 
-The project is actively developed but not finished. Known gaps and work remaining:
+Proyecto en desarrollo activo. Tareas pendientes destacadas:
 
-- Database migrations and reproducible local DB setup need refinement (Drizzle migrations present but may require manual setup).
-- No authentication / user management implemented.
-- UI polish, accessibility improvements and responsive tweaks.
-- More complete test coverage and CI configuration.
-- Better error handling and observability for sync scripts.
+- Automatizar por completo el flujo de migraciones y seeds para entornos locales.
+- Implementar autenticación y control de acceso para áreas administrativas.
+- Mejoras de accesibilidad y pruebas UI.
+- Observabilidad y manejo de errores en los jobs de sincronización.
 
-## Quick start (developer)
+## Inicio rápido (desarrollador)
 
-Prerequisites: Node.js (recommended LTS), `pnpm`, and a relational database compatible with the configured Drizzle connector.
+Pre-requisitos: Node.js (versión LTS recomendada), `pnpm`, y una base de datos relacional compatible con la configuración de Drizzle.
 
-1.  Install dependencies:
+1. Instalar dependencias:
 
 ```bash
 pnpm install
 ```
 
-2.  Create a local environment file (choose the command for your shell):
+2. Crear el fichero de entorno local:
 
-```bash
-# macOS / Linux
-cp .env.example .env.local
-
+```powershell
 # PowerShell (Windows)
 Copy-Item .env.example .env.local
+
+# macOS / Linux
+cp .env.example .env.local
 ```
 
-3.  Configure your database connection in `drizzle.config.ts` and update `.env.local` accordingly.
+3. Configurar la conexión a base de datos en `drizzle.config.ts` y actualizar `.env.local`.
 
-4.  Apply migrations (if using the included scripts/migration flow) — inspect `scripts/` for the exact helper used in this repo. Example (may require Node + ts-node/tsx):
+4. Aplicar migraciones (ver `scripts/` para detalles). Ejemplo:
 
 ```bash
 pnpm tsx scripts/apply-migrations.ts
 ```
 
-5.  Run the development server:
+5. Levantar servidor de desarrollo:
 
 ```bash
 pnpm dev
 ```
 
-## Useful scripts
+## Scripts útiles
 
-- `pnpm dev` — start Next.js development server
-- `pnpm build` — build for production
-- `pnpm lint` — run ESLint
-- `pnpm typecheck` — run TypeScript checks
-- `pnpm test` — run tests (if configured)
+- `pnpm dev` — iniciar servidor de desarrollo
+- `pnpm build` — build para producción
+- `pnpm lint` — ejecutar ESLint
+- `pnpm typecheck` — comprobaciones TypeScript
+- `pnpm test` — ejecutar tests (si están configurados)
 
-Inspect the `scripts/` directory for other utilities like `sync.ts`, database checks and debug helpers.
+Revisa la carpeta `scripts/` para utilidades adicionales como `sync.ts`, `backfill-players.ts` y comprobaciones DB.
 
-## Data sync & sources
+## Sincronización de datos y fuentes
 
-The project contains source adapters under `src/lib/sources/` for scraping or consuming external datasets. Use the `scripts/sync.ts` and related debug scripts to import or refresh data. These scripts are not fully automated and may require manual configuration or API keys depending on the source.
+Los adaptadores se encuentran en `src/lib/sources/`. Las tareas de importación y refresco se orquestan desde los scripts en `scripts/`. Dependiendo de la fuente, puede ser necesario configurar claves/API y ejecutar algunos scripts manualmente.
 
-## Project structure (high level)
+## Estructura del proyecto (alto nivel)
 
-- `src/app/` — Next.js App Router pages and API routes
-- `src/components/` — UI components and design primitives
-- `src/lib/` — utilities, data fetching, sync logic and DB client (`db/client.ts`, `db/schema.ts`)
-- `scripts/` — maintenance, migrations and sync scripts
-- `drizzle/` — migrations and SQL snapshots
+- `src/app/` — páginas y rutas API (App Router)
+- `src/components/` — componentes de UI
+- `src/lib/` — utilidades, lógica de sincronización y cliente DB
+- `scripts/` — mantenimiento, migraciones y sincronización
+- `drizzle/` — migraciones y snapshots SQL
 
-## Development notes / pitfalls
+## Notas de desarrollo / caveats
 
-- OneDrive users: the project may be affected by OneDrive Files On-Demand. Some generated files under `.next/` can be reparse points that cause Node `readlink()` errors. If you experience mysterious 500s with no logs, delete `.next/` and restart the dev server or exclude the project folder from OneDrive Files On-Demand.
-- Drizzle subqueries: see internal project notes for pitfalls when wrapping joined tables in subqueries — prefer explicit projections to avoid column shadowing.
+- OneDrive: si trabajas desde OneDrive pueden aparecer errores con `readlink()` y archivos reparse point en `.next/`. Si detectas problemas, borra `.next/` o excluye la carpeta de OneDrive.
+- Recomendación: usa una copia local no gestionada por OneDrive para entornos CI/producción.
 
-## AI / Machine Learning
+## Cómo contribuir
 
-This project does not currently depend on or embed any production AI/LLM model by default. However, the codebase contains places where AI could be integrated in the future (data-cleaning, intelligent scraping, player name matching, automated summaries). If you plan to add AI features, consider the following recommendations:
+- Abre un issue para discutir cambios grandes o problemas con datos.
+- Haz PRs pequeñas y focalizadas: mejoras de migraciones, tests para adaptadores, o correcciones UI.
+- Para cambios en la DB, aporta migrations reproducibles y, si procede, un script de seed reducido.
 
-- Providers & env vars: common providers and environment variables you might use:
-  - `OPENAI_API_KEY` — OpenAI API key, if using OpenAI services.
-  - `LOCAL_LLM_ENDPOINT` — URL for a self-hosted LLM endpoint (optional).
-- Data handling & privacy: avoid sending personally identifiable or sensitive data to third-party APIs. Sanitize scraped data before requests and log only non-sensitive metadata.
-- Cost & rate limits: external LLM APIs incur costs and rate limits; instrument usage and add retry/backoff logic in sync jobs.
-- Reproducibility: pin model versions and record provider names in repository docs or `.env.example`.
-- Security: never commit API keys. Use `.env.local` and CI secrets for credentials.
+## Contacto
 
-## Notable / Remarkable points
+- Autor: Hugo Redondo Valdés — Hrvaldes22@gmail.com
 
-- TypeScript strict mode and code style: the repo enforces strict typing and functional React components. Follow existing patterns when adding features.
-- App Router: the app uses Next.js App Router with server and client components in `src/app/`.
-- Data-first design: much of the work focuses on durable data ingestion (adapters under `src/lib/sources/`) and aggregation logic in `src/lib/data`.
-- Scripts & tooling: numerous helper scripts exist under `scripts/` for debugging, migrations and sync. Inspect them before writing new DB-related utilities.
-- OneDrive caveat: the project is stored inside OneDrive in this environment — this can cause filesystem surprises. Prefer a non-OneDrive clone for CI or production runs.
-- Contact & provenance: repository owner and contact information are listed in the Contact section below — reach out before making disruptive changes to migration logic.
+## Licencia
 
-## How to contribute
-
-- Open an issue for any bug, design or data problem.
-- Prefer small focused PRs: setup improvements, migration automation, tests for data adapters, or UI polish.
-- If you work on the DB, ensure migrations are repeatable and add a short README or script for local seed data.
-
-## Contact
-
-- Project owner: Hugo Redondo Valdés — Hrvaldes22@gmail.com
-
-## License
-
-Check `LICENSE.txt` in the repository root for license details.
+Consulta `LICENSE.txt` en la raíz del repositorio para los detalles de licencia.

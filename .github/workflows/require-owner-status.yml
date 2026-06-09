@@ -1,0 +1,19 @@
+name: require-owner-status
+
+on:
+  push:
+    branches: [ main, master, production ]
+  pull_request:
+    branches: [ main, master, production ]
+
+jobs:
+  check-actor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check actor is repository owner
+        run: |
+          ALLOWED="Hredo"
+          if [ "${GITHUB_ACTOR}" != "$ALLOWED" ]; then
+            echo "Unauthorized actor: ${GITHUB_ACTOR}. Only $ALLOWED may push directly to protected branches." >&2
+            exit 1
+          fi
