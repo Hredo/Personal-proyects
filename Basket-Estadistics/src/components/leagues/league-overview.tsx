@@ -54,7 +54,7 @@ export function LeagueOverview({ data, index }: Props) {
         )}
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-300 sm:text-[11px]">
-            {data.country}
+            {data.region}
             {data.seasonLabel ? (
               <>
                 <span className="mx-1.5 text-ink-500">·</span>
@@ -125,9 +125,9 @@ export function LeagueOverview({ data, index }: Props) {
                   >
                     {i + 1}
                   </span>
-                  {scorer.photoUrl ? (
+                  {scorer.imageUrl ? (
                     <Image
-                      src={scorer.photoUrl}
+                      src={scorer.imageUrl}
                       alt={scorer.fullName}
                       width={28}
                       height={28}

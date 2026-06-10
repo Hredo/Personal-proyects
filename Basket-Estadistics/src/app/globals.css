@@ -487,6 +487,12 @@
       );
   }
 
+  /* full-bleed — break out of parent max-width to span viewport */
+  .full-bleed {
+    width: 100dvw;
+    margin-inline: calc(-50dvw + 50%);
+  }
+
   /* ── Surfaces: cards & glass ─────────────────────────────────── */
   .gh-card {
     position: relative;

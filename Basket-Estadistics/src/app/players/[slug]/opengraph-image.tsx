@@ -15,7 +15,11 @@ export default async function PlayerOgImage({ params }: Props) {
   const title = profile?.fullName ?? "Player"
   const team = profile?.team?.name ?? "Free agent"
   const league = profile?.league.name ?? ""
-  const ppg = profile?.seasons[0]?.points
+  const s0 = profile?.seasons[0]
+  const ppg =
+    s0 && s0.pointsTotal != null && s0.gamesPlayed > 0
+      ? s0.pointsTotal / s0.gamesPlayed
+      : null
   const ppgStr = ppg != null ? `${ppg.toFixed(1)} PPG` : null
   const chips = [team, league, ppgStr].filter(Boolean) as string[]
 

@@ -60,8 +60,9 @@ export default async function TeamDetailPage({
   ]
 
   return (
-    <div className="pt-6 sm:pt-8">
+    <div className="full-bleed relative pt-6 sm:pt-8">
       <JsonLd data={structuredData} />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <FadeIn>
         <Link
           href="/teams"
@@ -71,6 +72,7 @@ export default async function TeamDetailPage({
         </Link>
       </FadeIn>
       <TeamDetailView team={team} />
+      </div>
     </div>
   )
 }

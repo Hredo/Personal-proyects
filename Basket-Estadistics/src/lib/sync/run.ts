@@ -3,7 +3,7 @@ import { getDb, closeDb } from "@/lib/db/client"
 import {
   coaches,
   leagues,
-  playerStats,
+  playerSeasonStats,
   players,
   seasons,
   syncRuns,
@@ -14,18 +14,16 @@ import type { SourceAdapter, SourceId } from "@/lib/sources/types"
 import { slugify, uniqueSlug } from "@/lib/sync/slug"
 
 function scorePlayerRecord(p: {
-  photoUrl: string | null
+  imageUrl: string | null
   nationality: string | null
   position: string | null
-  birthdate: string | null
   heightCm: number | null
   weightKg: number | null
 }): number {
   let s = 0
-  if (p.photoUrl) s += 10
+  if (p.imageUrl) s += 10
   if (p.nationality) s += 5
   if (p.position) s += 3
-  if (p.birthdate) s += 2
   if (p.heightCm) s += 1
   if (p.weightKg) s += 1
   return s
@@ -63,113 +61,79 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
   const totals = { teams: 0, players: 0, stats: 0, coaches: 0, teamStats: 0 }
 
   try {
-    const existingLeague = await db
-      .select()
-      .from(leagues)
-      .where(eq(leagues.source, adapter.id))
-      .limit(1)
+    /* ---- League ---- */
+    const leagueSlug = adapter.id
+    const [league] = await db
+      .insert(leagues)
+      .values({
+        name: adapter.displayName,
+        slug: leagueSlug,
+        region: adapter.country,
+      })
+      .onConflictDoUpdate({
+        target: leagues.slug,
+        set: { name: adapter.displayName, region: adapter.country },
+      })
+      .returning()
+    const leagueId = league.id
 
-    let leagueId: string
-    if (existingLeague[0]) {
-      leagueId = existingLeague[0].id
-    } else {
-      const leagueSlug = adapter.id
-      const [inserted] = await db
-        .insert(leagues)
-        .values({
-          name: adapter.displayName,
-          slug: leagueSlug,
-          country: adapter.country,
-          source: adapter.id,
-        })
-        .returning()
-      leagueId = inserted.id
-    }
-
-    const existingSeason = await db
+    /* ---- Season ---- */
+    const [existingSeason] = await db
       .select()
       .from(seasons)
-      .where(eq(seasons.leagueId, leagueId))
-      .limit(50)
-
+      .where(eq(seasons.name, adapter.seasonCode))
+      .limit(1)
     let seasonId: string
-    const matched = existingSeason.find((s) => s.year === adapter.season)
-    if (matched) {
-      seasonId = matched.id
+    if (existingSeason) {
+      seasonId = existingSeason.id
     } else {
-      const [insertedSeason] = await db
+      const [inserted] = await db
         .insert(seasons)
-        .values({
-          leagueId,
-          year: adapter.season,
-          name: adapter.seasonCode,
-        })
+        .values({ name: adapter.seasonCode, isCurrent: true })
         .returning()
-      seasonId = insertedSeason.id
+      seasonId = inserted.id
     }
 
+    /* ---- Teams ---- */
     const sourceTeams = await adapter.fetchTeams()
-    const existingTeamRows = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.leagueId, leagueId))
-    const existingTeamsBySourceId = new Map(
-      existingTeamRows.map((t) => [t.sourceId, t]),
-    )
-    const usedSlugs = new Set(existingTeamRows.map((t) => t.slug))
-
+    const existingTeams = await db.select().from(teams)
+    const teamBySlug = new Map(existingTeams.map((t) => [t.slug, t]))
+    const usedTeamSlugs = new Set(existingTeams.map((t) => t.slug))
     const teamIdBySourceId = new Map<string, string>()
-    for (const t of sourceTeams) {
-      const existing = existingTeamsBySourceId.get(t.sourceId)
-      const slug = existing?.slug ?? uniqueSlug(t.name, usedSlugs)
-      const [row] = await db
-        .insert(teams)
-        .values({
-          leagueId,
-          sourceId: t.sourceId,
-          name: t.name,
-          slug,
-          country: t.country,
-          logoUrl: t.logoUrl,
-          shortName: t.shortName ?? null,
-          city: t.city ?? null,
-          foundedYear: t.foundedYear ?? null,
-          arena: t.arena ?? null,
-          arenaCapacity: t.arenaCapacity ?? null,
-          websiteUrl: t.websiteUrl ?? null,
-          primaryColor: t.primaryColor ?? null,
-        })
-        .onConflictDoUpdate({
-          target: [teams.leagueId, teams.sourceId],
-          set: {
-            name: t.name,
-            country: t.country,
-            logoUrl: t.logoUrl,
-            shortName: t.shortName ?? null,
-            city: t.city ?? null,
-            foundedYear: t.foundedYear ?? null,
-            arena: t.arena ?? null,
-            arenaCapacity: t.arenaCapacity ?? null,
-            websiteUrl: t.websiteUrl ?? null,
-            primaryColor: t.primaryColor ?? null,
-          },
-        })
-        .returning()
-      teamIdBySourceId.set(t.sourceId, row.id)
+
+    for (const st of sourceTeams) {
+      const baseSlug = slugify(st.name) || `team-${st.sourceId}`
+      let row = teamBySlug.get(baseSlug)
+      if (!row) {
+        const slug = uniqueSlug(baseSlug, usedTeamSlugs)
+        const [inserted] = await db
+          .insert(teams)
+          .values({
+            name: st.name,
+            slug,
+            city: st.city ?? null,
+            logoUrl: st.logoUrl ?? null,
+          })
+          .returning()
+        row = inserted
+        teamBySlug.set(slug, row)
+      }
+      teamIdBySourceId.set(st.sourceId, row.id)
       totals.teams++
     }
 
+    /* ---- Players ---- */
     const sourcePlayers = await adapter.fetchPlayers()
     const existingPlayerRows = await db.select().from(players)
-    const existingPlayersBySourceId = new Map(
-      existingPlayerRows.map((p) => [p.sourceId, p]),
+    const existingPlayersBySlug = new Map(
+      existingPlayerRows.map((p) => [p.slug, p]),
     )
     const existingPlayersByName = new Map<
       string,
       (typeof existingPlayerRows)[number]
     >()
     for (const p of existingPlayerRows) {
-      const key = p.fullName.toLowerCase().trim().replace(/\s+/g, " ")
+      const key = `${p.firstName} ${p.lastName}`.toLowerCase().trim().replace(/\s+/g, " ")
       const prior = existingPlayersByName.get(key)
       if (!prior) {
         existingPlayersByName.set(key, p)
@@ -181,42 +145,36 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
         existingPlayersByName.set(key, p)
       }
     }
-    const usedPlayerSlugs = new Set<string>()
-    for (const p of existingPlayerRows) {
-      usedPlayerSlugs.add(p.slug)
-    }
+    const usedPlayerSlugs = new Set(existingPlayerRows.map((p) => p.slug))
 
     const playerIdBySourceId = new Map<string, string>()
-    const now = new Date()
-    for (const p of sourcePlayers) {
-      const nameKey = p.fullName.toLowerCase().trim().replace(/\s+/g, " ")
+    for (const sp of sourcePlayers) {
+      const nameKey = sp.fullName.toLowerCase().trim().replace(/\s+/g, " ")
       const matchByName = existingPlayersByName.get(nameKey)
-      const existingBySourceId = existingPlayersBySourceId.get(p.sourceId)
-      const teamId = p.teamSourceId
-        ? (teamIdBySourceId.get(p.teamSourceId) ?? null)
-        : null
+      const baseSlug = slugify(sp.fullName) || `player-${sp.sourceId}`
+      const sourceScopedSlug = `${adapter.id}-${baseSlug}`
+      const slug = uniqueSlug(sourceScopedSlug, usedPlayerSlugs)
+      const existing = existingPlayersBySlug.get(slug)
       const fillIns: Partial<typeof players.$inferInsert> = {}
-      if (p.photoUrl) fillIns.photoUrl = p.photoUrl
-      if (p.nationality) fillIns.nationality = p.nationality
-      if (p.position) fillIns.position = p.position
-      if (p.birthdate) fillIns.birthdate = p.birthdate
-      if (p.heightCm) fillIns.heightCm = p.heightCm
-      if (p.weightKg) fillIns.weightKg = p.weightKg
-      if (teamId) fillIns.currentTeamId = teamId
-      fillIns.updatedAt = now
 
-      if (existingBySourceId) {
+      const parts = sp.fullName.trim().split(/\s+/)
+      const firstName = parts[0] ?? ""
+      const lastName = parts.slice(1).join(" ") || firstName
+
+      if (sp.photoUrl) fillIns.imageUrl = sp.photoUrl
+      if (sp.nationality) fillIns.nationality = sp.nationality
+      if (sp.position) fillIns.position = sp.position
+      if (sp.heightCm) fillIns.heightCm = sp.heightCm
+      if (sp.weightKg) fillIns.weightKg = sp.weightKg
+
+      if (existing) {
         if (Object.keys(fillIns).length > 0) {
           await db
             .update(players)
             .set(fillIns)
-            .where(eq(players.id, existingBySourceId.id))
+            .where(eq(players.id, existing.id))
         }
-        playerIdBySourceId.set(p.sourceId, existingBySourceId.id)
-        existingPlayersByName.set(nameKey, {
-          ...existingBySourceId,
-          ...fillIns,
-        } as (typeof existingPlayerRows)[number])
+        playerIdBySourceId.set(sp.sourceId, existing.id)
         totals.players++
         continue
       }
@@ -228,106 +186,114 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
             .set(fillIns)
             .where(eq(players.id, matchByName.id))
         }
-        playerIdBySourceId.set(p.sourceId, matchByName.id)
-        existingPlayersByName.set(nameKey, {
-          ...matchByName,
-          ...fillIns,
-        } as (typeof existingPlayerRows)[number])
+        playerIdBySourceId.set(sp.sourceId, matchByName.id)
         totals.players++
         continue
       }
 
-      const baseSlug = slugify(p.fullName) || p.sourceId
-      const sourceScopedSlug = `${adapter.id}-${baseSlug}`
-      const slug = uniqueSlug(sourceScopedSlug, usedPlayerSlugs)
       const [row] = await db
         .insert(players)
         .values({
-          fullName: p.fullName,
+          firstName,
+          lastName,
           slug,
-          birthdate: p.birthdate,
-          nationality: p.nationality,
-          position: p.position,
-          heightCm: p.heightCm,
-          weightKg: p.weightKg,
-          currentTeamId: teamId,
-          photoUrl: p.photoUrl,
-          source: adapter.id,
-          sourceId: p.sourceId,
-          createdAt: now,
-          updatedAt: now,
+          nationality: sp.nationality ?? null,
+          position: sp.position ?? null,
+          heightCm: sp.heightCm ?? null,
+          weightKg: sp.weightKg ?? null,
+          imageUrl: sp.photoUrl ?? null,
+          ...fillIns,
         })
         .returning()
-      playerIdBySourceId.set(p.sourceId, row.id)
+      playerIdBySourceId.set(sp.sourceId, row.id)
       usedPlayerSlugs.add(slug)
       existingPlayersByName.set(nameKey, row)
       totals.players++
     }
 
+    /* ---- Player Stats ---- */
     const sourceStats = await adapter.fetchStats()
-    const seen = new Set<string>()
     for (const s of sourceStats) {
       const playerId = playerIdBySourceId.get(s.playerSourceId)
       if (!playerId) continue
       const teamId = s.teamSourceId
         ? (teamIdBySourceId.get(s.teamSourceId) ?? null)
         : null
+      if (!teamId) continue
       await db
-        .insert(playerStats)
+        .insert(playerSeasonStats)
         .values({
           playerId,
-          seasonId,
           teamId,
+          leagueId,
+          seasonId,
           gamesPlayed: s.gamesPlayed,
-          minutesPerGame: s.minutesPerGame ?? null,
-          points: s.points ?? null,
-          rebounds: s.rebounds ?? null,
-          assists: s.assists ?? null,
-          steals: s.steals ?? null,
-          blocks: s.blocks ?? null,
-          turnovers: s.turnovers ?? null,
-          fgPct: s.fgPct ?? null,
-          threePct: s.threePct ?? null,
-          ftPct: s.ftPct ?? null,
-          offRtg: null,
-          defRtg: null,
-          per: null,
-          winShares: null,
-          bpm: null,
+          minutesTotal: s.minutesTotal,
+          pointsTotal: s.pointsTotal,
+          reboundsTotal: s.reboundsTotal,
+          assistsTotal: s.assistsTotal,
+          stealsTotal: s.stealsTotal,
+          blocksTotal: s.blocksTotal,
+          turnoversTotal: s.turnoversTotal,
+          fgMade: s.fgMade,
+          fgAttempted: s.fgAttempted,
+          threeMade: s.threeMade,
+          threeAttempted: s.threeAttempted,
+          ftMade: s.ftMade,
+          ftAttempted: s.ftAttempted,
+          offensiveRebounds: s.offensiveRebounds,
+          defensiveRebounds: s.defensiveRebounds,
+          foulsTotal: s.foulsTotal,
+          plusMinus: s.plusMinus,
+          per: s.per,
+          trueShootingPct: s.trueShootingPct,
+          winShares: s.winShares,
+          bpm: s.bpm,
         })
         .onConflictDoUpdate({
-          target: [playerStats.playerId, playerStats.seasonId],
+          target: [
+            playerSeasonStats.playerId,
+            playerSeasonStats.teamId,
+            playerSeasonStats.leagueId,
+            playerSeasonStats.seasonId,
+          ],
           set: {
-            teamId,
             gamesPlayed: s.gamesPlayed,
-            minutesPerGame: s.minutesPerGame ?? null,
-            points: s.points ?? null,
-            rebounds: s.rebounds ?? null,
-            assists: s.assists ?? null,
-            steals: s.steals ?? null,
-            blocks: s.blocks ?? null,
-            turnovers: s.turnovers ?? null,
-            fgPct: s.fgPct ?? null,
-            threePct: s.threePct ?? null,
-            ftPct: s.ftPct ?? null,
+            minutesTotal: s.minutesTotal,
+            pointsTotal: s.pointsTotal,
+            reboundsTotal: s.reboundsTotal,
+            assistsTotal: s.assistsTotal,
+            stealsTotal: s.stealsTotal,
+            blocksTotal: s.blocksTotal,
+            turnoversTotal: s.turnoversTotal,
+            fgMade: s.fgMade,
+            fgAttempted: s.fgAttempted,
+            threeMade: s.threeMade,
+            threeAttempted: s.threeAttempted,
+            ftMade: s.ftMade,
+            ftAttempted: s.ftAttempted,
+            offensiveRebounds: s.offensiveRebounds,
+            defensiveRebounds: s.defensiveRebounds,
+            foulsTotal: s.foulsTotal,
+            plusMinus: s.plusMinus,
+            per: s.per,
+            trueShootingPct: s.trueShootingPct,
+            winShares: s.winShares,
+            bpm: s.bpm,
           },
         })
-      const key = `${playerId}:${seasonId}`
-      if (!seen.has(key)) {
-        seen.add(key)
-        totals.stats++
-      }
+      totals.stats++
     }
 
+    /* ---- Coaches ---- */
     const sourceCoaches = await adapter.fetchCoaches()
     const usedCoachSlugs = new Set<string>()
-    for (const c of sourceCoaches) {
-      const teamId = c.teamSourceId
-        ? (teamIdBySourceId.get(c.teamSourceId) ?? null)
+    for (const sc of sourceCoaches) {
+      const teamId = sc.teamSourceId
+        ? (teamIdBySourceId.get(sc.teamSourceId) ?? null)
         : null
       if (!teamId) continue
-      const baseSlug =
-        c.fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || c.sourceId
+      const baseSlug = sc.fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "coach"
       const slug = (() => {
         let candidate = baseSlug
         let i = 2
@@ -342,32 +308,27 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
         .values({
           leagueId,
           teamId,
-          fullName: c.fullName,
+          fullName: sc.fullName,
           slug,
-          role: c.role,
-          nationality: c.nationality ?? null,
-          age: c.age ?? null,
-          photoUrl: c.photoUrl ?? null,
-          licenseType: c.licenseType ?? null,
-          source: adapter.id,
-          sourceId: c.sourceId,
+          role: sc.role,
+          nationality: sc.nationality ?? null,
+          age: sc.age ?? null,
+          photoUrl: sc.photoUrl ?? null,
         })
         .onConflictDoUpdate({
-          target: [coaches.source, coaches.sourceId],
+          target: [coaches.teamId, coaches.leagueId, coaches.slug],
           set: {
-            teamId,
-            fullName: c.fullName,
-            slug,
-            role: c.role,
-            nationality: c.nationality ?? null,
-            age: c.age ?? null,
-            photoUrl: c.photoUrl ?? null,
-            licenseType: c.licenseType ?? null,
+            fullName: sc.fullName,
+            role: sc.role,
+            nationality: sc.nationality ?? null,
+            age: sc.age ?? null,
+            photoUrl: sc.photoUrl ?? null,
           },
         })
       totals.coaches++
     }
 
+    /* ---- Team Stats ---- */
     const sourceTeamStats = await adapter.fetchTeamStats()
     for (const ts of sourceTeamStats) {
       const teamId = teamIdBySourceId.get(ts.teamSourceId)
@@ -377,6 +338,7 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
         .values({
           teamId,
           seasonId,
+          leagueId,
           gamesPlayed: ts.gamesPlayed,
           wins: ts.wins,
           losses: ts.losses,
@@ -391,7 +353,11 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
           sos: ts.sos ?? null,
         })
         .onConflictDoUpdate({
-          target: [teamSeasonStats.teamId, teamSeasonStats.seasonId],
+          target: [
+            teamSeasonStats.teamId,
+            teamSeasonStats.seasonId,
+            teamSeasonStats.leagueId,
+          ],
           set: {
             gamesPlayed: ts.gamesPlayed,
             wins: ts.wins,
@@ -410,6 +376,7 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
       totals.teamStats++
     }
 
+    /* ---- Finalize ---- */
     const rowsWritten =
       totals.teams +
       totals.players +
@@ -419,11 +386,7 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
     const finishedAt = new Date()
     await db
       .update(syncRuns)
-      .set({
-        finishedAt,
-        status: "ok",
-        rowsWritten,
-      })
+      .set({ finishedAt, status: "ok", rowsWritten })
       .where(eq(syncRuns.id, run.id))
 
     return {
@@ -438,11 +401,7 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
     const message = err instanceof Error ? err.message : String(err)
     await db
       .update(syncRuns)
-      .set({
-        finishedAt,
-        status: "failed",
-        error: message,
-      })
+      .set({ finishedAt, status: "failed", error: message })
       .where(eq(syncRuns.id, run.id))
     return {
       source: adapter.id,
@@ -461,7 +420,7 @@ export function summarizeDb() {
     db.select({ count: sql<number>`count(*)` }).from(leagues),
     db.select({ count: sql<number>`count(*)` }).from(teams),
     db.select({ count: sql<number>`count(*)` }).from(players),
-    db.select({ count: sql<number>`count(*)` }).from(playerStats),
+    db.select({ count: sql<number>`count(*)` }).from(playerSeasonStats),
     db.select({ count: sql<number>`count(*)` }).from(coaches),
     db.select({ count: sql<number>`count(*)` }).from(teamSeasonStats),
   ]).then(([l, t, p, s, c, ts]) => ({

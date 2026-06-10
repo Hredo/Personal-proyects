@@ -1,9 +1,9 @@
 import { fetchJson } from "@/lib/sources/fetcher"
 import {
+  type ExtractedPlayerStat,
   type SourceAdapter,
   type SourceCoach,
   type SourcePlayer,
-  type SourceStats,
   type SourceTeam,
   type SourceTeamStats,
   SOURCE_META,
@@ -119,7 +119,10 @@ export const nbaAdapter: SourceAdapter = {
   async fetchTeams(): Promise<SourceTeam[]> {
     const season = SOURCE_META.nba.seasonCode
     const url = `${BASE_URL}/leaguestandingsv3?LeagueID=00&Season=${season}&SeasonType=Regular+Season`
-    const payload = await fetchJson<NbaEnvelope>(url, { headers: NBA_HEADERS })
+    const payload = await fetchJson<NbaEnvelope>(url, {
+      headers: NBA_HEADERS,
+      timeoutMs: 90_000,
+    })
     const rows = readResultSet(payload, "Standings")
     const out: SourceTeam[] = []
     for (const r of rows) {
@@ -135,24 +138,14 @@ export const nbaAdapter: SourceAdapter = {
         logoUrl: teamLogoUrl(id),
       })
     }
-    const teamIds = out.map((t) => t.sourceId)
-    const detailMap = this.fetchTeamDetails
-      ? await this.fetchTeamDetails(teamIds)
-      : new Map<string, Partial<SourceTeam>>()
-    for (const t of out) {
-      const d = detailMap.get(t.sourceId)
-      if (!d) continue
-      if (d.arena) t.arena = d.arena
-      if (d.arenaCapacity) t.arenaCapacity = d.arenaCapacity
-      if (d.foundedYear) t.foundedYear = d.foundedYear
-      if (d.websiteUrl) t.websiteUrl = d.websiteUrl
-    }
+    // teamdetails enrichment removed from the sync path: the 30-request burst
+    // trips stats.nba.com throttling and none of its fields (arena, capacity,
+    // founded year) are persisted by the ingestion pipeline. Call
+    // fetchTeamDetails explicitly if that data is ever needed.
     return out
   },
 
-  async fetchTeamDetails(
-    teamIds: string[],
-  ): Promise<
+  async fetchTeamDetails(teamIds: string[]): Promise<
     Map<
       string,
       {
@@ -196,7 +189,7 @@ export const nbaAdapter: SourceAdapter = {
             foundedYear: obj.YEARFOUNDED ? Number(obj.YEARFOUNDED) : undefined,
           })
         } catch {
-          // ignore — keep default values
+          // ignore
         }
       }),
     )
@@ -208,8 +201,35 @@ export const nbaAdapter: SourceAdapter = {
     const url =
       `${BASE_URL}/leaguedashplayerbiostats?Season=${season}` +
       `&SeasonType=Regular+Season&LeagueID=00&PerMode=PerGame`
-    const payload = await fetchJson<NbaEnvelope>(url, { headers: NBA_HEADERS })
+    const payload = await fetchJson<NbaEnvelope>(url, {
+      headers: NBA_HEADERS,
+      timeoutMs: 60_000,
+    })
     const rows = readResultSet(payload, "LeagueDashPlayerBioStats")
+
+    // Bio stats carry no position; playerindex does, in a single request.
+    const positionById = new Map<string, string>()
+    try {
+      const indexUrl =
+        `${BASE_URL}/playerindex?College=&Country=&DraftPick=&DraftRound=` +
+        `&DraftYear=&Height=&Historical=0&LeagueID=00&Season=${season}` +
+        `&SeasonType=Regular+Season&TeamID=0&Weight=`
+      const indexPayload = await fetchJson<NbaEnvelope>(indexUrl, {
+        headers: NBA_HEADERS,
+        timeoutMs: 60_000,
+      })
+      for (const r of readResultSet(indexPayload, "PlayerIndex")) {
+        if (r.PERSON_ID != null && r.POSITION) {
+          positionById.set(String(r.PERSON_ID), String(r.POSITION))
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn(
+        `[nba] playerindex unavailable, positions skipped — ${message}`,
+      )
+    }
+
     const out: SourcePlayer[] = []
     for (const r of rows) {
       const id = r.PLAYER_ID
@@ -222,6 +242,7 @@ export const nbaAdapter: SourceAdapter = {
         fullName: String(name).trim(),
         nationality: r.COUNTRY ? String(r.COUNTRY) : undefined,
         age: r.AGE != null ? Number(r.AGE) : undefined,
+        position: positionById.get(String(id)),
         heightCm:
           heightInches > 0 ? Math.round(heightInches * 2.54) : undefined,
         weightKg: weightLbs > 0 ? Math.round(weightLbs * 0.453592) : undefined,
@@ -232,13 +253,18 @@ export const nbaAdapter: SourceAdapter = {
     return out
   },
 
-  async fetchStats(): Promise<SourceStats[]> {
+  async fetchStats(): Promise<ExtractedPlayerStat[]> {
     const season = SOURCE_META.nba.seasonCode
     const url =
       `${BASE_URL}/leaguegamelog?LeagueID=00&Season=${season}` +
       `&SeasonType=Regular+Season&PlayerOrTeam=P&Direction=ASC&Sorter=DATE` +
       `&DateFrom=&DateTo=&Counter=0`
-    const payload = await fetchJson<NbaEnvelope>(url, { headers: NBA_HEADERS })
+    // Full-season game log is a multi-MB payload; 15s is not enough when
+    // stats.nba.com throttles after the burst of teamdetails requests.
+    const payload = await fetchJson<NbaEnvelope>(url, {
+      headers: NBA_HEADERS,
+      timeoutMs: 90_000,
+    })
     const rows = readResultSet(payload, "LeagueGameLog")
     const accum = new Map<
       string,
@@ -259,6 +285,10 @@ export const nbaAdapter: SourceAdapter = {
         fg3a: number
         ftm: number
         fta: number
+        offReb: number
+        defReb: number
+        pf: number
+        plusMinus: number
       }
     >()
 
@@ -283,6 +313,10 @@ export const nbaAdapter: SourceAdapter = {
         fg3a: 0,
         ftm: 0,
         fta: 0,
+        offReb: 0,
+        defReb: 0,
+        pf: 0,
+        plusMinus: 0,
       }
       entry.games += 1
       entry.min += Number(r.MIN ?? 0) || 0
@@ -298,29 +332,48 @@ export const nbaAdapter: SourceAdapter = {
       entry.fg3a += Number(r.FG3A ?? 0) || 0
       entry.ftm += Number(r.FTM ?? 0) || 0
       entry.fta += Number(r.FTA ?? 0) || 0
+      entry.offReb += Number(r.OREB ?? 0) || 0
+      entry.defReb += Number(r.DREB ?? 0) || 0
+      entry.pf += Number(r.PF ?? 0) || 0
+      entry.plusMinus += Number(r.PLUS_MINUS ?? 0) || 0
       accum.set(key, entry)
     }
 
-    const out: SourceStats[] = []
+    const out: ExtractedPlayerStat[] = []
     for (const entry of accum.values()) {
       const g = entry.games
-      const safeRatio = (num: number, den: number) =>
-        den > 0 ? Number((num / den).toFixed(3)) : undefined
+      const tsPct =
+        entry.fga > 0
+          ? Number(
+              (entry.pts / (2 * (entry.fga + 0.44 * entry.fta))).toFixed(3),
+            )
+          : null
       out.push({
         playerSourceId: entry.playerId,
         season: SOURCE_META.nba.season,
         teamSourceId: entry.teamId,
         gamesPlayed: g,
-        minutesPerGame: g > 0 ? Number((entry.min / g).toFixed(2)) : undefined,
-        points: g > 0 ? Number((entry.pts / g).toFixed(2)) : undefined,
-        rebounds: g > 0 ? Number((entry.reb / g).toFixed(2)) : undefined,
-        assists: g > 0 ? Number((entry.ast / g).toFixed(2)) : undefined,
-        steals: g > 0 ? Number((entry.stl / g).toFixed(2)) : undefined,
-        blocks: g > 0 ? Number((entry.blk / g).toFixed(2)) : undefined,
-        turnovers: g > 0 ? Number((entry.tov / g).toFixed(2)) : undefined,
-        fgPct: safeRatio(entry.fgm, entry.fga),
-        threePct: safeRatio(entry.fg3m, entry.fg3a),
-        ftPct: safeRatio(entry.ftm, entry.fta),
+        minutesTotal: entry.min,
+        pointsTotal: entry.pts,
+        reboundsTotal: entry.reb,
+        assistsTotal: entry.ast,
+        stealsTotal: entry.stl,
+        blocksTotal: entry.blk,
+        turnoversTotal: entry.tov,
+        fgMade: entry.fgm,
+        fgAttempted: entry.fga,
+        threeMade: entry.fg3m,
+        threeAttempted: entry.fg3a,
+        ftMade: entry.ftm,
+        ftAttempted: entry.fta,
+        offensiveRebounds: entry.offReb,
+        defensiveRebounds: entry.defReb,
+        foulsTotal: entry.pf,
+        plusMinus: entry.plusMinus,
+        per: null,
+        trueShootingPct: tsPct,
+        winShares: null,
+        bpm: null,
       })
     }
     return out

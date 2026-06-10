@@ -16,7 +16,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import type { ComparePlayer } from "@/lib/data/compare"
 import { SmartImage } from "@/components/ui/smart-image"
 
-type LeagueInfo = { id: string; name: string; slug: string; country: string }
+type LeagueInfo = { id: string; name: string; slug: string; region: string }
 type TeamInfo = {
   id: string
   name: string
@@ -29,7 +29,7 @@ export type CompareChoice = {
   slug: string
   fullName: string
   source: string
-  photoUrl: string | null
+  imageUrl: string | null
   position: string | null
   nationality: string | null
   team: TeamInfo
@@ -240,7 +240,7 @@ export function CompareSearch({ side, current, otherSlug }: Props) {
       >
         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-court-800 ring-1 ring-white/5">
           <SmartImage
-            src={current?.photoUrl}
+            src={current?.imageUrl}
             alt={current?.fullName ?? `Player ${side === "a" ? "A" : "B"}`}
             fit="cover"
             fallbackClassName="text-sm font-bold text-brand-300"
@@ -442,7 +442,7 @@ export function CompareSearch({ side, current, otherSlug }: Props) {
                             >
                               <span className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-court-800 ring-1 ring-white/5">
                                 <SmartImage
-                                  src={o.photoUrl}
+                                  src={o.imageUrl}
                                   alt={o.fullName}
                                   fit="cover"
                                   fallbackClassName="text-[10px] font-bold text-brand-300"

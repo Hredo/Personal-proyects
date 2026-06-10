@@ -1,330 +1,280 @@
-import { sql } from "drizzle-orm"
 import {
-  index,
-  integer,
-  real,
-  sqliteTable,
+  pgTable,
+  uuid,
   text,
+  integer,
+  serial,
+  doublePrecision,
+  boolean,
+  timestamp,
   uniqueIndex,
-} from "drizzle-orm/sqlite-core"
+  index,
+} from "drizzle-orm/pg-core"
 
-const uuid = () => crypto.randomUUID()
-const now = () => new Date()
-
-export const leagues = sqliteTable("leagues", {
-  id: text("id").primaryKey().$defaultFn(uuid),
+export const leagues = pgTable("leagues", {
+  id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
-  country: text("country").notNull(),
+  region: text("region").notNull(),
   logoUrl: text("logo_url"),
-  source: text("source").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(now),
 })
 
-export const seasons = sqliteTable(
-  "seasons",
-  {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    leagueId: text("league_id")
-      .notNull()
-      .references(() => leagues.id, { onDelete: "cascade" }),
-    year: integer("year").notNull(),
-    name: text("name").notNull(),
-  },
-  (t) => [uniqueIndex("seasons_league_year_idx").on(t.leagueId, t.year)],
-)
+export const seasons = pgTable("seasons", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  isCurrent: boolean("is_current").notNull().default(false),
+})
 
-export const teams = sqliteTable(
+export const teams = pgTable(
   "teams",
   {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    leagueId: text("league_id")
-      .notNull()
-      .references(() => leagues.id, { onDelete: "cascade" }),
-    sourceId: text("source_id").notNull(),
+    id: uuid("id").defaultRandom().primaryKey(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
-    logoUrl: text("logo_url"),
-    country: text("country"),
     city: text("city"),
-    shortName: text("short_name"),
-    foundedYear: integer("founded_year"),
-    arena: text("arena"),
-    arenaCapacity: integer("arena_capacity"),
-    websiteUrl: text("website_url"),
-    primaryColor: text("primary_color"),
+    logoUrl: text("logo_url"),
   },
   (t) => [
-    uniqueIndex("teams_league_source_idx").on(t.leagueId, t.sourceId),
-    uniqueIndex("teams_league_slug_idx").on(t.leagueId, t.slug),
-    index("teams_league_name_idx").on(t.leagueId, t.name),
+    uniqueIndex("teams_slug_idx").on(t.slug),
+    index("teams_name_idx").on(t.name),
   ],
 )
 
-export const coaches = sqliteTable(
-  "coaches",
+export const players = pgTable(
+  "players",
   {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    teamId: text("team_id")
+    id: uuid("id").defaultRandom().primaryKey(),
+    firstName: text("first_name").notNull(),
+    lastName: text("last_name").notNull(),
+    slug: text("slug").notNull().unique(),
+    bio: text("bio"),
+    imageUrl: text("image_url"),
+    position: text("position"),
+    heightCm: integer("height_cm"),
+    weightKg: integer("weight_kg"),
+    nationality: text("nationality"),
+  },
+  (t) => [
+    index("players_last_name_idx").on(t.lastName),
+    index("players_position_idx").on(t.position),
+  ],
+)
+
+export const playerSeasonStats = pgTable(
+  "player_season_stats",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    playerId: uuid("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    leagueId: text("league_id")
+    leagueId: uuid("league_id")
       .notNull()
       .references(() => leagues.id, { onDelete: "cascade" }),
-    source: text("source").notNull(),
-    sourceId: text("source_id").notNull(),
+    seasonId: uuid("season_id")
+      .notNull()
+      .references(() => seasons.id, { onDelete: "cascade" }),
+    gamesPlayed: integer("games_played").notNull().default(0),
+    minutesTotal: integer("minutes_total"),
+    pointsTotal: integer("points_total"),
+    reboundsTotal: integer("rebounds_total"),
+    assistsTotal: integer("assists_total"),
+    stealsTotal: integer("steals_total"),
+    blocksTotal: integer("blocks_total"),
+    turnoversTotal: integer("turnovers_total"),
+    fgMade: integer("fg_made"),
+    fgAttempted: integer("fg_attempted"),
+    threeMade: integer("three_made"),
+    threeAttempted: integer("three_attempted"),
+    ftMade: integer("ft_made"),
+    ftAttempted: integer("ft_attempted"),
+    offensiveRebounds: integer("offensive_rebounds"),
+    defensiveRebounds: integer("defensive_rebounds"),
+    foulsTotal: integer("fouls_total"),
+    plusMinus: integer("plus_minus"),
+    per: doublePrecision("per"),
+    trueShootingPct: doublePrecision("true_shooting_pct"),
+    winShares: doublePrecision("win_shares"),
+    bpm: doublePrecision("bpm"),
+  },
+  (t) => [
+    uniqueIndex("player_season_stats_unique_idx").on(
+      t.playerId,
+      t.teamId,
+      t.leagueId,
+      t.seasonId,
+    ),
+    index("player_season_stats_player_idx").on(t.playerId),
+    index("player_season_stats_league_season_idx").on(t.leagueId, t.seasonId),
+    index("player_season_stats_team_season_idx").on(t.teamId, t.seasonId),
+    index("player_season_stats_points_idx").on(t.pointsTotal),
+  ],
+)
+
+export const coaches = pgTable(
+  "coaches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    leagueId: uuid("league_id")
+      .notNull()
+      .references(() => leagues.id, { onDelete: "cascade" }),
     fullName: text("full_name").notNull(),
     slug: text("slug").notNull(),
     role: text("role").notNull(),
     nationality: text("nationality"),
     age: integer("age"),
     photoUrl: text("photo_url"),
-    licenseType: text("license_type"),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [
-    uniqueIndex("coaches_source_source_id_idx").on(t.source, t.sourceId),
-    index("coaches_team_idx").on(t.teamId),
+    uniqueIndex("coaches_team_role_idx").on(t.teamId, t.leagueId, t.slug),
     index("coaches_league_name_idx").on(t.leagueId, t.fullName),
   ],
 )
 
-export const teamSeasonStats = sqliteTable(
+export const teamSeasonStats = pgTable(
   "team_season_stats",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    teamId: text("team_id")
+    id: serial("id").primaryKey(),
+    teamId: uuid("team_id")
       .notNull()
       .references(() => teams.id, { onDelete: "cascade" }),
-    seasonId: text("season_id")
+    seasonId: uuid("season_id")
       .notNull()
       .references(() => seasons.id, { onDelete: "cascade" }),
+    leagueId: uuid("league_id")
+      .notNull()
+      .references(() => leagues.id, { onDelete: "cascade" }),
     gamesPlayed: integer("games_played").notNull().default(0),
     wins: integer("wins").notNull().default(0),
     losses: integer("losses").notNull().default(0),
-    winPct: real("win_pct"),
-    pointsFor: real("points_for"),
-    pointsAgainst: real("points_against"),
+    winPct: doublePrecision("win_pct"),
+    pointsFor: doublePrecision("points_for"),
+    pointsAgainst: doublePrecision("points_against"),
     position: integer("position"),
-    pace: real("pace"),
-    offRtg: real("off_rtg"),
-    defRtg: real("def_rtg"),
-    netRtg: real("net_rtg"),
-    sos: real("sos"),
+    pace: doublePrecision("pace"),
+    offRtg: doublePrecision("off_rtg"),
+    defRtg: doublePrecision("def_rtg"),
+    netRtg: doublePrecision("net_rtg"),
+    sos: doublePrecision("sos"),
   },
   (t) => [
-    uniqueIndex("team_season_stats_team_season_idx").on(t.teamId, t.seasonId),
+    uniqueIndex("team_season_stats_team_season_league_idx").on(
+      t.teamId,
+      t.seasonId,
+      t.leagueId,
+    ),
   ],
 )
 
-export const players = sqliteTable(
-  "players",
-  {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    fullName: text("full_name").notNull(),
-    slug: text("slug").notNull().unique(),
-    birthdate: text("birthdate"),
-    nationality: text("nationality"),
-    position: text("position"),
-    heightCm: integer("height_cm"),
-    weightKg: integer("weight_kg"),
-    currentTeamId: text("current_team_id").references(() => teams.id, {
-      onDelete: "set null",
-    }),
-    photoUrl: text("photo_url"),
-    source: text("source").notNull(),
-    sourceId: text("source_id").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
-  },
-  (t) => [
-    uniqueIndex("players_source_source_id_idx").on(t.source, t.sourceId),
-    index("players_full_name_idx").on(t.fullName),
-  ],
-)
-
-export const playerStats = sqliteTable(
-  "player_stats",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    playerId: text("player_id")
-      .notNull()
-      .references(() => players.id, { onDelete: "cascade" }),
-    seasonId: text("season_id")
-      .notNull()
-      .references(() => seasons.id, { onDelete: "cascade" }),
-    teamId: text("team_id").references(() => teams.id, {
-      onDelete: "set null",
-    }),
-    gamesPlayed: integer("games_played").notNull().default(0),
-    minutesPerGame: real("minutes_per_game"),
-    points: real("points"),
-    rebounds: real("rebounds"),
-    assists: real("assists"),
-    steals: real("steals"),
-    blocks: real("blocks"),
-    turnovers: real("turnovers"),
-    fgPct: real("fg_pct"),
-    threePct: real("three_pct"),
-    ftPct: real("ft_pct"),
-    offRtg: real("off_rtg"),
-    defRtg: real("def_rtg"),
-    per: real("per"),
-    winShares: real("win_shares"),
-    bpm: real("bpm"),
-  },
-  (t) => [
-    uniqueIndex("player_stats_player_season_idx").on(t.playerId, t.seasonId),
-    index("player_stats_season_idx").on(t.seasonId),
-    index("player_stats_team_season_idx").on(t.teamId, t.seasonId),
-    index("player_stats_season_points_idx").on(t.seasonId, t.points),
-    index("player_stats_season_rebounds_idx").on(t.seasonId, t.rebounds),
-    index("player_stats_season_assists_idx").on(t.seasonId, t.assists),
-  ],
-)
-
-export const videos = sqliteTable(
+export const videos = pgTable(
   "videos",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    playerId: text("player_id")
+    id: serial("id").primaryKey(),
+    playerId: uuid("player_id")
       .notNull()
       .references(() => players.id, { onDelete: "cascade" }),
     youtubeId: text("youtube_id").notNull(),
     title: text("title").notNull(),
     thumbnailUrl: text("thumbnail_url").notNull(),
-    publishedAt: integer("published_at", { mode: "timestamp" }),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    publishedAt: timestamp("published_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [uniqueIndex("videos_youtube_id_idx").on(t.youtubeId)],
 )
 
-export const syncRuns = sqliteTable("sync_runs", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const syncRuns = pgTable("sync_runs", {
+  id: serial("id").primaryKey(),
   source: text("source").notNull(),
-  startedAt: integer("started_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(now),
-  finishedAt: integer("finished_at", { mode: "timestamp" }),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  finishedAt: timestamp("finished_at"),
   status: text("status").notNull(),
   error: text("error"),
   rowsWritten: integer("rows_written").notNull().default(0),
 })
 
-export const shortlists = sqliteTable("shortlists", {
-  id: text("id").primaryKey().$defaultFn(uuid),
+export const shortlists = pgTable("shortlists", {
+  id: uuid("id").defaultRandom().primaryKey(),
   ownerId: text("owner_id").notNull(),
   name: text("name").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(now),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 
-export const waitlistEntries = sqliteTable(
+export const waitlistEntries = pgTable(
   "waitlist_entries",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     email: text("email").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
     source: text("source"),
   },
   (t) => [uniqueIndex("waitlist_entries_email_idx").on(t.email)],
 )
 
-export const shortlistPlayers = sqliteTable(
+export const shortlistPlayers = pgTable(
   "shortlist_players",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    shortlistId: text("shortlist_id")
+    id: serial("id").primaryKey(),
+    shortlistId: uuid("shortlist_id")
       .notNull()
       .references(() => shortlists.id, { onDelete: "cascade" }),
-    playerId: text("player_id")
+    playerId: uuid("player_id")
       .notNull()
       .references(() => players.id, { onDelete: "cascade" }),
     notes: text("notes"),
-    addedAt: integer("added_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    addedAt: timestamp("added_at").notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("shortlist_players_unique_idx").on(t.shortlistId, t.playerId),
   ],
 )
 
-export const users = sqliteTable(
+export const users = pgTable(
   "users",
   {
-    id: text("id").primaryKey().$defaultFn(uuid),
+    id: uuid("id").defaultRandom().primaryKey(),
     email: text("email").notNull(),
     name: text("name").notNull(),
     passwordHash: text("password_hash"),
-    plan: text("plan", { enum: ["free", "pro"] })
-      .notNull()
-      .default("free"),
-    role: text("role", { enum: ["user", "admin"] })
-      .notNull()
-      .default("user"),
-    proSince: integer("pro_since", { mode: "timestamp" }),
-    // Billing — nullable today (self-serve plan switch). Reserved so a Stripe
-    // integration can attach a customer/subscription without another migration.
+    plan: text("plan").notNull().default("free"),
+    role: text("role").notNull().default("user"),
+    proSince: timestamp("pro_since"),
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
-    planRenewsAt: integer("plan_renews_at", { mode: "timestamp" }),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    planRenewsAt: timestamp("plan_renews_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [uniqueIndex("users_email_idx").on(t.email)],
 )
 
-// Per-user, per-provider AI credentials. The raw key is NEVER stored: only an
-// AES-256-GCM ciphertext (see lib/security/secrets) plus the last 4 chars so
-// the UI can show a masked preview. One row per (user, provider).
-export const userApiKeys = sqliteTable(
+export const userApiKeys = pgTable(
   "user_api_keys",
   {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    userId: text("user_id")
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     provider: text("provider").notNull(),
     encryptedKey: text("encrypted_key").notNull(),
     last4: text("last4").notNull(),
     label: text("label"),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("user_api_keys_user_provider_idx").on(t.userId, t.provider),
   ],
 )
 
-// Per-user preferences: which engine powers each AI feature, locale and
-// notification toggles. One row per user, created lazily on first save.
-export const userSettings = sqliteTable("user_settings", {
-  userId: text("user_id")
+export const userSettings = pgTable("user_settings", {
+  userId: uuid("user_id")
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
   advisorProvider: text("advisor_provider"),
@@ -332,36 +282,24 @@ export const userSettings = sqliteTable("user_settings", {
   compareProvider: text("compare_provider"),
   compareModel: text("compare_model"),
   locale: text("locale").notNull().default("en"),
-  emailProduct: integer("email_product", { mode: "boolean" })
-    .notNull()
-    .default(true),
-  emailUsage: integer("email_usage", { mode: "boolean" })
-    .notNull()
-    .default(false),
-  reduceMotion: integer("reduce_motion", { mode: "boolean" })
-    .notNull()
-    .default(false),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(now),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(now),
+  emailProduct: boolean("email_product").notNull().default(true),
+  emailUsage: boolean("email_usage").notNull().default(false),
+  reduceMotion: boolean("reduce_motion").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
 
-export const sessions = sqliteTable(
+export const sessions = pgTable(
   "sessions",
   {
     id: text("id").primaryKey(),
-    userId: text("user_id")
+    userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
     userAgent: text("user_agent"),
     ip: text("ip"),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
     index("sessions_user_idx").on(t.userId),
@@ -369,11 +307,11 @@ export const sessions = sqliteTable(
   ],
 )
 
-export const conversations = sqliteTable(
+export const conversations = pgTable(
   "conversations",
   {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    userId: text("user_id")
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     teamId: text("team_id"),
@@ -381,53 +319,47 @@ export const conversations = sqliteTable(
     teamName: text("team_name").notNull(),
     leagueSlug: text("league_slug").notNull(),
     title: text("title").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [index("conversations_user_idx").on(t.userId, t.updatedAt)],
 )
 
-export const messages = sqliteTable(
+export const messages = pgTable(
   "messages",
   {
-    id: text("id").primaryKey().$defaultFn(uuid),
-    conversationId: text("conversation_id")
+    id: uuid("id").defaultRandom().primaryKey(),
+    conversationId: uuid("conversation_id")
       .notNull()
       .references(() => conversations.id, { onDelete: "cascade" }),
-    role: text("role", { enum: ["user", "assistant"] }).notNull(),
+    role: text("role").notNull(),
     content: text("content").notNull(),
     model: text("model"),
     mode: text("mode"),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt)],
+  (t) => [
+    index("messages_conversation_idx").on(t.conversationId, t.createdAt),
+  ],
 )
 
-export const compareUses = sqliteTable(
+export const compareUses = pgTable(
   "compare_uses",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: text("user_id")
+    id: serial("id").primaryKey(),
+    userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    usedAt: integer("used_at", { mode: "timestamp" })
-      .notNull()
-      .$defaultFn(now),
+    usedAt: timestamp("used_at").notNull().defaultNow(),
   },
   (t) => [index("compare_uses_user_idx").on(t.userId)],
 )
 
-export type Plan = "free" | "pro" | "admin"
+export type Plan = "free" | "pro"
 
 export function userPlan(
   u: { plan: string; role: string } | null | undefined,
-): Plan {
+): Plan | "admin" {
   if (!u) return "free"
   if (u.role === "admin") return "admin"
   return u.plan === "pro" ? "pro" : "free"
@@ -436,10 +368,10 @@ export function userPlan(
 export type League = typeof leagues.$inferSelect
 export type Season = typeof seasons.$inferSelect
 export type Team = typeof teams.$inferSelect
+export type Player = typeof players.$inferSelect
+export type PlayerSeasonStat = typeof playerSeasonStats.$inferSelect
 export type Coach = typeof coaches.$inferSelect
 export type TeamSeasonStat = typeof teamSeasonStats.$inferSelect
-export type Player = typeof players.$inferSelect
-export type PlayerStat = typeof playerStats.$inferSelect
 export type Video = typeof videos.$inferSelect
 export type SyncRun = typeof syncRuns.$inferSelect
 export type Shortlist = typeof shortlists.$inferSelect
@@ -450,12 +382,3 @@ export type Conversation = typeof conversations.$inferSelect
 export type Message = typeof messages.$inferSelect
 export type UserApiKey = typeof userApiKeys.$inferSelect
 export type UserSettings = typeof userSettings.$inferSelect
-
-export const ftsPlayers = sql`
-  CREATE VIRTUAL TABLE IF NOT EXISTS players_fts USING fts5(
-    full_name,
-    nationality,
-    content='players',
-    content_rowid='rowid'
-  )
-`

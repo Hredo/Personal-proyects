@@ -121,7 +121,7 @@ export default async function Home() {
       <JsonLd data={[faqJsonLd, softwareJsonLd]} />
 
       {/* ── HERO ───────────────────────────────────────────────── */}
-      <section className="relative isolate overflow-hidden pb-14 pt-12 sm:pb-24 sm:pt-20 md:pt-28">
+      <section className="full-bleed relative isolate overflow-hidden pb-14 pt-12 sm:pb-24 sm:pt-20 md:pt-28">
         <div aria-hidden className="absolute inset-0 -z-20 bg-dot-field opacity-70" />
         <div
           aria-hidden
@@ -132,6 +132,7 @@ export default async function Home() {
           className="absolute -top-24 right-[-10%] -z-10 h-72 w-72 animate-breathe rounded-full bg-league-euro-500/15 blur-3xl"
         />
 
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid items-center gap-12 md:grid-cols-[1.05fr_0.95fr]">
           <div>
             <FadeIn>
@@ -205,12 +206,13 @@ export default async function Home() {
             </Parallax>
           </FadeIn>
         </div>
+        </div>
       </section>
 
       {/* ── TICKER ─────────────────────────────────────────────── */}
       <section
         aria-label="Top performers"
-        className="relative -mx-4 hairline-t hairline-b bg-surface-0/40 py-3.5 sm:-mx-6"
+        className="full-bleed relative hairline-t hairline-b bg-surface-0/40 py-3.5"
       >
         <Marquee duration={55} className="text-sm">
           {TICKER_LEFT.map((t) => (

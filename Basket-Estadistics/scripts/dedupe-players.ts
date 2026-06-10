@@ -1,6 +1,6 @@
 import { eq, inArray, sql } from "drizzle-orm"
 import { getDb, closeDb } from "../src/lib/db/client"
-import { playerStats, players } from "../src/lib/db/schema"
+import { playerSeasonStats, players } from "../src/lib/db/schema"
 
 type PlayerRow = typeof players.$inferSelect
 
@@ -11,7 +11,7 @@ async function main() {
 
   const groups = new Map<string, PlayerRow[]>()
   for (const p of allPlayers) {
-    const key = p.fullName.toLowerCase().trim().replace(/\s+/g, " ")
+    const key = `${p.firstName} ${p.lastName}`.toLowerCase().trim().replace(/\s+/g, " ")
     const existing = groups.get(key) ?? []
     existing.push(p)
     groups.set(key, existing)
@@ -27,13 +27,13 @@ async function main() {
     const ids = group.map((p) => p.id)
     const statRows = await db
       .select({
-        id: playerStats.id,
-        playerId: playerStats.playerId,
-        gamesPlayed: playerStats.gamesPlayed,
-        teamId: playerStats.teamId,
+        id: playerSeasonStats.id,
+        playerId: playerSeasonStats.playerId,
+        gamesPlayed: playerSeasonStats.gamesPlayed,
+        teamId: playerSeasonStats.teamId,
       })
-      .from(playerStats)
-      .where(inArray(playerStats.playerId, ids))
+      .from(playerSeasonStats)
+      .where(inArray(playerSeasonStats.playerId, ids))
 
     const statsByPlayer = new Map<string, typeof statRows>()
     for (const s of statRows) {
@@ -59,29 +59,22 @@ async function main() {
       const stats = statsByPlayer.get(p.id) ?? []
       const totalGames = stats.reduce((sum, s) => sum + (s.gamesPlayed ?? 0), 0)
       const statsCount = stats.length
-      const updatedAt =
-        p.updatedAt instanceof Date
-          ? p.updatedAt.getTime()
-          : Number(p.updatedAt ?? 0)
       return {
         player: p,
         totalGames,
         statsCount,
-        updatedAt,
         score:
           totalGames * 100 +
           statsCount * 20 +
-          (p.photoUrl ? 10 : 0) +
+          (p.imageUrl ? 10 : 0) +
           (p.nationality ? 5 : 0) +
           (p.position ? 3 : 0) +
-          (p.birthdate ? 2 : 0) +
           (p.heightCm ? 1 : 0),
       }
     })
 
     scored.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score
-      return b.updatedAt - a.updatedAt
+      return b.score - a.score
     })
 
     const winner = scored[0]
@@ -93,17 +86,17 @@ async function main() {
       for (const s of dupStats) {
         const teamId = s.teamId ?? dominantTeamId
         await db
-          .update(playerStats)
+          .update(playerSeasonStats)
           .set({ playerId: primary.id, teamId })
-          .where(eq(playerStats.id, s.id))
+          .where(eq(playerSeasonStats.id, s.id))
         reassignedStats++
       }
     }
 
     const fillIns: Partial<typeof players.$inferInsert> = {}
-    if (!primary.photoUrl) {
-      const photo = losers.find((l) => l.player.photoUrl)?.player.photoUrl
-      if (photo) fillIns.photoUrl = photo
+    if (!primary.imageUrl) {
+      const photo = losers.find((l) => l.player.imageUrl)?.player.imageUrl
+      if (photo) fillIns.imageUrl = photo
     }
     if (!primary.nationality) {
       const n = losers.find((l) => l.player.nationality)?.player.nationality
@@ -113,10 +106,6 @@ async function main() {
       const pos = losers.find((l) => l.player.position)?.player.position
       if (pos) fillIns.position = pos
     }
-    if (!primary.birthdate) {
-      const bd = losers.find((l) => l.player.birthdate)?.player.birthdate
-      if (bd) fillIns.birthdate = bd
-    }
     if (!primary.heightCm) {
       const h = losers.find((l) => l.player.heightCm)?.player.heightCm
       if (h) fillIns.heightCm = h
@@ -124,9 +113,6 @@ async function main() {
     if (!primary.weightKg) {
       const w = losers.find((l) => l.player.weightKg)?.player.weightKg
       if (w) fillIns.weightKg = w
-    }
-    if (!primary.currentTeamId && dominantTeamId) {
-      fillIns.currentTeamId = dominantTeamId
     }
     if (Object.keys(fillIns).length > 0) {
       await db.update(players).set(fillIns).where(eq(players.id, primary.id))
@@ -139,7 +125,7 @@ async function main() {
 
     mergedGroups++
     console.log(
-      `[${name}] kept=${primary.slug} (source=${primary.source}, team=${dominantTeamId ?? "—"}) removed=${losers
+      `[${name}] kept=${primary.slug} removed=${losers
         .map((l) => l.player.slug)
         .join(", ")}`,
     )

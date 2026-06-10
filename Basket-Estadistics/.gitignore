@@ -35,7 +35,7 @@ desktop.ini
 *.tsbuildinfo
 next-env.d.ts
 
-# local sqlite database
+# local database
 /data/
 *.db
 *.db-journal

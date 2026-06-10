@@ -1,13 +1,16 @@
 import Link from "next/link"
 import { SmartImage } from "@/components/ui/smart-image"
 import {
-  ageFrom,
   formatHeight,
-  formatPct,
   formatStat,
   formatWeight,
   getInitials,
 } from "@/lib/format"
+
+function pg(total: number | null | undefined, gp: number | undefined): number | null {
+  if (total == null || !gp) return null
+  return total / gp
+}
 
 const LEAGUE_ACCENT: Record<string, string> = {
   nba: "bg-brand-500/15 text-brand-200 ring-brand-500/30",
@@ -17,38 +20,28 @@ const LEAGUE_ACCENT: Record<string, string> = {
 
 type Props = {
   player: {
-    id: string
     fullName: string
     slug: string
     nationality: string | null
     position: string | null
-    birthdate: string | null
     heightCm: number | null
     weightKg: number | null
-    photoUrl: string | null
-    league: { id: string; name: string; slug: string; country: string }
+    imageUrl: string | null
+    league: { name: string; slug: string; region: string }
     team: {
-      id: string
       name: string
       slug: string
       logoUrl: string | null
     } | null
     stats: {
       seasonName: string
-      year: number
       gamesPlayed: number
-      minutesPerGame: number | null
-      points: number | null
-      rebounds: number | null
-      assists: number | null
-      steals: number | null
-      blocks: number | null
-      turnovers: number | null
-      fgPct: number | null
-      threePct: number | null
-      ftPct: number | null
-      offRtg: number | null
-      defRtg: number | null
+      pointsTotal: number | null
+      reboundsTotal: number | null
+      assistsTotal: number | null
+      stealsTotal: number | null
+      blocksTotal: number | null
+      turnoversTotal: number | null
       per: number | null
     } | null
   }
@@ -57,7 +50,6 @@ type Props = {
 
 export function PlayerCard({ player, index = 0 }: Props) {
   const initials = getInitials(player.fullName)
-  const age = ageFrom(player.birthdate)
   const s = player.stats
 
   return (
@@ -69,7 +61,7 @@ export function PlayerCard({ player, index = 0 }: Props) {
       <div className="flex items-start gap-3">
         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-court-800 ring-1 ring-white/5 sm:h-20 sm:w-20">
           <SmartImage
-            src={player.photoUrl}
+            src={player.imageUrl}
             alt={player.fullName}
             fit="cover"
             className="transition duration-500 ease-out group-hover:scale-105"
@@ -111,7 +103,6 @@ export function PlayerCard({ player, index = 0 }: Props) {
               </span>
             ) : null}
             {player.nationality ? <span>· {player.nationality}</span> : null}
-            {age != null ? <span>· {age} y.o.</span> : null}
             <span className="hidden sm:inline">
               · {formatHeight(player.heightCm)} ·{" "}
               {formatWeight(player.weightKg)}
@@ -124,22 +115,16 @@ export function PlayerCard({ player, index = 0 }: Props) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-2 font-mono sm:mt-3.5 sm:grid-cols-7 sm:gap-2.5">
-        <Stat label="PPG" value={formatStat(s?.points)} highlight />
-        <Stat label="RPG" value={formatStat(s?.rebounds)} />
-        <Stat label="APG" value={formatStat(s?.assists)} />
-        <Stat label="SPG" value={formatStat(s?.steals, 1)} />
-        <Stat label="BPG" value={formatStat(s?.blocks, 1)} />
-        <Stat label="FG%" value={formatPct(s?.fgPct, 1)} />
-        <Stat label="3P%" value={formatPct(s?.threePct, 1)} />
+      <div className="mt-3 grid grid-cols-5 gap-2 font-mono sm:mt-3.5 sm:gap-2.5">
+        <Stat label="PPG" value={formatStat(pg(s?.pointsTotal, s?.gamesPlayed))} highlight />
+        <Stat label="RPG" value={formatStat(pg(s?.reboundsTotal, s?.gamesPlayed))} />
+        <Stat label="APG" value={formatStat(pg(s?.assistsTotal, s?.gamesPlayed))} />
+        <Stat label="SPG" value={formatStat(pg(s?.stealsTotal, s?.gamesPlayed), 1)} />
+        <Stat label="BPG" value={formatStat(pg(s?.blocksTotal, s?.gamesPlayed), 1)} />
       </div>
 
-      <div className="mt-2 hidden grid-cols-6 gap-2 border-t border-white/5 pt-2 font-mono sm:grid">
-        <Stat label="FT%" value={formatPct(s?.ftPct, 1)} muted />
-        <Stat label="MPG" value={formatStat(s?.minutesPerGame)} muted />
-        <Stat label="TO" value={formatStat(s?.turnovers, 1)} muted />
-        <Stat label="OffRtg" value={formatStat(s?.offRtg, 0)} muted />
-        <Stat label="DefRtg" value={formatStat(s?.defRtg, 0)} muted />
+      <div className="mt-2 hidden grid-cols-2 gap-2 border-t border-white/5 pt-2 font-mono sm:grid">
+        <Stat label="TO" value={formatStat(pg(s?.turnoversTotal, s?.gamesPlayed), 1)} muted />
         <Stat label="PER" value={formatStat(s?.per, 1)} muted />
       </div>
 
@@ -147,7 +132,7 @@ export function PlayerCard({ player, index = 0 }: Props) {
         <span>
           {s ? (
             <>
-              Season {s.year} · {s.gamesPlayed} GP
+              {s.seasonName} · {s.gamesPlayed} GP
             </>
           ) : (
             "No stats"

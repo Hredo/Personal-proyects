@@ -5,7 +5,26 @@ import { motion } from "framer-motion"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { PlayerCardElegant } from "@/components/players/player-card-elegant"
 
-type Player = Parameters<typeof PlayerCardElegant>[0]["player"]
+type Player = {
+  id: string
+  fullName: string
+  slug: string
+  position: string | null
+  imageUrl: string | null
+  league: { name: string; slug: string }
+  team: {
+    name: string
+    slug: string
+    logoUrl: string | null
+  } | null
+  stats: {
+    seasonName: string
+    gamesPlayed: number
+    pointsTotal: number | null
+    reboundsTotal: number | null
+    assistsTotal: number | null
+  } | null
+}
 
 type PageResult = {
   items: Player[]

@@ -2,7 +2,7 @@ import {
   type SourceAdapter,
   type SourceCoach,
   type SourcePlayer,
-  type SourceStats,
+  type ExtractedPlayerStat,
   type SourceTeam,
   type SourceTeamStats,
   SOURCE_META,
@@ -174,15 +174,12 @@ export const euroleagueAdapter: SourceAdapter = {
     return out
   },
 
-  async fetchStats(): Promise<SourceStats[]> {
-    const url = `${BR_BASE}${BR_LEAGUE_PATH}/${SEASON_START_YEAR}_per_game.html`
+  async fetchStats(): Promise<ExtractedPlayerStat[]> {
+    const url = `${BR_BASE}${BR_LEAGUE_PATH}/${SEASON_START_YEAR}_totals.html`
     const html = await fetchHtml(url)
-    const tableHtml = extractTableById(
-      html,
-      `per_game-stats-${BR_SEASON_SUFFIX}`,
-    )
+    const tableHtml = extractTableById(html, `totals-stats-${BR_SEASON_SUFFIX}`)
     const rows = rowsFromTable(tableHtml)
-    const out: SourceStats[] = []
+    const out: ExtractedPlayerStat[] = []
     for (const row of rows) {
       const cells = getRowCells(row)
       const playerLink = row.match(
@@ -195,21 +192,42 @@ export const euroleagueAdapter: SourceAdapter = {
           /<a[^>]*href=(?:"|')(\/international\/teams\/[^"']+\.html)(?:"|')/,
         )?.[1] ?? undefined
       const teamCode = brSlugToEuroleagueCode(extractTeamSlug(teamHref))
+      const fgm = toNumberOrNull(cells.get("fg"))
+      const fga = toNumberOrNull(cells.get("fga"))
+      const threeM = toNumberOrNull(cells.get("fg3"))
+      const threeA = toNumberOrNull(cells.get("fg3a"))
+      const ftm = toNumberOrNull(cells.get("ft"))
+      const fta = toNumberOrNull(cells.get("fta"))
+      const pts = toNumberOrNull(cells.get("pts"))
+      const tsPct = fga && fga > 0 && pts != null
+        ? Number((pts / (2 * (fga + 0.44 * (fta ?? 0)))).toFixed(3))
+        : null
       out.push({
         playerSourceId: id,
         season: SOURCE_META.euroleague.season,
         teamSourceId: teamCode,
         gamesPlayed: toNumberOrNull(cells.get("g")) ?? 0,
-        minutesPerGame: toNumberOrNull(cells.get("mp_per_g")),
-        points: toNumberOrNull(cells.get("pts_per_g")),
-        rebounds: toNumberOrNull(cells.get("trb_per_g")),
-        assists: toNumberOrNull(cells.get("ast_per_g")),
-        steals: toNumberOrNull(cells.get("stl_per_g")),
-        blocks: toNumberOrNull(cells.get("blk_per_g")),
-        turnovers: toNumberOrNull(cells.get("tov_per_g")),
-        fgPct: percentileToDecimal(cells.get("fg_pct")),
-        threePct: percentileToDecimal(cells.get("fg3_pct")),
-        ftPct: percentileToDecimal(cells.get("ft_pct")),
+        minutesTotal: toNumberOrNull(cells.get("mp")) ?? null,
+        pointsTotal: pts ?? null,
+        reboundsTotal: toNumberOrNull(cells.get("trb")) ?? null,
+        assistsTotal: toNumberOrNull(cells.get("ast")) ?? null,
+        stealsTotal: toNumberOrNull(cells.get("stl")) ?? null,
+        blocksTotal: toNumberOrNull(cells.get("blk")) ?? null,
+        turnoversTotal: toNumberOrNull(cells.get("tov")) ?? null,
+        fgMade: fgm ?? null,
+        fgAttempted: fga ?? null,
+        threeMade: threeM ?? null,
+        threeAttempted: threeA ?? null,
+        ftMade: ftm ?? null,
+        ftAttempted: fta ?? null,
+        offensiveRebounds: toNumberOrNull(cells.get("orb")) ?? null,
+        defensiveRebounds: toNumberOrNull(cells.get("drb")) ?? null,
+        foulsTotal: toNumberOrNull(cells.get("pf")) ?? null,
+        plusMinus: null,
+        per: toNumberOrNull(cells.get("per")) ?? null,
+        trueShootingPct: tsPct,
+        winShares: toNumberOrNull(cells.get("ws")) ?? null,
+        bpm: toNumberOrNull(cells.get("bpm")) ?? null,
       })
     }
     return out

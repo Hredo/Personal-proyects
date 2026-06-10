@@ -1,10 +1,9 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { getPlayerForCompare } from "@/lib/data/compare"
+import { getPlayerForCompare, type ComparePlayer } from "@/lib/data/compare"
 import { CompareSearch } from "@/components/players/compare-search"
 import { CompareBar } from "@/components/players/compare-bar"
 import { CompareRadar } from "@/components/players/compare-radar"
-import { CompareShootingSplits } from "@/components/players/compare-shooting-splits"
 import { CompareAi } from "@/components/players/compare-ai"
 import { FadeIn } from "@/components/animations/fade-in"
 import { Reveal } from "@/components/animations/reveal"
@@ -20,23 +19,35 @@ export const metadata: Metadata = {
 
 type Search = { a?: string; b?: string }
 
-const STAT_KEYS = [
-  { key: "points", label: "Points / G", fmt: (n: number) => n.toFixed(1), max: 35 },
-  { key: "rebounds", label: "Rebounds / G", fmt: (n: number) => n.toFixed(1), max: 15 },
-  { key: "assists", label: "Assists / G", fmt: (n: number) => n.toFixed(1), max: 12 },
-  { key: "steals", label: "Steals / G", fmt: (n: number) => n.toFixed(1), max: 3 },
-  { key: "blocks", label: "Blocks / G", fmt: (n: number) => n.toFixed(1), max: 3 },
+type SeasonStats = NonNullable<ComparePlayer["stats"]>
+
+function perGame(total: number | null, gp: number): number | null {
+  if (total == null || gp === 0) return null
+  return total / gp
+}
+
+const STAT_KEYS: Array<{
+  key: string
+  label: string
+  getValue: (s: SeasonStats) => number | null
+  fmt: (n: number) => string
+  max: number
+  lowerBetter?: boolean
+}> = [
+  { key: "points", label: "Points / G", getValue: (s) => perGame(s.pointsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 35 },
+  { key: "rebounds", label: "Rebounds / G", getValue: (s) => perGame(s.reboundsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 15 },
+  { key: "assists", label: "Assists / G", getValue: (s) => perGame(s.assistsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 12 },
+  { key: "steals", label: "Steals / G", getValue: (s) => perGame(s.stealsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 3 },
+  { key: "blocks", label: "Blocks / G", getValue: (s) => perGame(s.blocksTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 3 },
   {
     key: "turnovers",
     label: "Turnovers / G",
-    fmt: (n: number) => n.toFixed(1),
+    getValue: (s) => perGame(s.turnoversTotal, s.gamesPlayed),
+    fmt: (n) => n.toFixed(1),
     max: 5,
     lowerBetter: true,
   },
-  { key: "fgPct", label: "FG%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
-  { key: "threePct", label: "3P%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
-  { key: "ftPct", label: "FT%", fmt: (n: number) => `${(n * 100).toFixed(1)}%`, max: 1 },
-] as const
+]
 
 export default async function ComparePage(props: {
   searchParams: Promise<Search>
@@ -50,13 +61,14 @@ export default async function ComparePage(props: {
   ])
 
   return (
-    <div className="relative pb-12 pt-10 sm:pt-14">
+    <div className="full-bleed relative pb-12 pt-10 sm:pt-14">
       <div
         aria-hidden
         className="absolute -top-24 left-1/2 -z-10 h-72 w-[680px] -translate-x-1/2 animate-aurora rounded-full bg-brand-500/12 blur-3xl"
       />
       <div aria-hidden className="absolute inset-x-0 -top-10 -z-10 h-64 bg-dot-field opacity-50" />
 
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <Reveal>
         <header className="mb-8">
           <Eyebrow>Matchup</Eyebrow>
@@ -95,7 +107,7 @@ export default async function ComparePage(props: {
 
       {playerA && playerB ? (
         <Reveal>
-          <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[1.05fr_1fr]">
+          <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[1fr]">
             <div className="gh-card p-5 sm:p-6">
               <h2 className="gh-eyebrow">Multi-stat radar</h2>
               <div className="mt-4 aspect-square w-full">
@@ -104,36 +116,6 @@ export default async function ComparePage(props: {
               <p className="mt-3 text-xs leading-relaxed text-ink-400">
                 Each axis is scaled against an elite ceiling — more area covered
                 means a more complete profile.
-              </p>
-            </div>
-            <div className="gh-card p-5 sm:p-6">
-              <h2 className="gh-eyebrow">Shooting splits</h2>
-              <div className="mt-4">
-                <CompareShootingSplits
-                  aName={playerA.fullName}
-                  bName={playerB.fullName}
-                  splits={[
-                    {
-                      label: "FG%",
-                      a: playerA.stats?.fgPct ?? null,
-                      b: playerB.stats?.fgPct ?? null,
-                    },
-                    {
-                      label: "3P%",
-                      a: playerA.stats?.threePct ?? null,
-                      b: playerB.stats?.threePct ?? null,
-                    },
-                    {
-                      label: "FT%",
-                      a: playerA.stats?.ftPct ?? null,
-                      b: playerB.stats?.ftPct ?? null,
-                    },
-                  ]}
-                />
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-ink-400">
-                Outer ring is {playerA.fullName} (orange), inner ring is{" "}
-                {playerB.fullName} (cyan).
               </p>
             </div>
           </section>
@@ -146,21 +128,19 @@ export default async function ComparePage(props: {
             <h2 className="gh-eyebrow">Per-game production</h2>
             <div className="mt-5 space-y-5">
               {STAT_KEYS.map((s) => {
-                const av = playerA.stats?.[s.key as keyof typeof playerA.stats]
-                const bv = playerB.stats?.[s.key as keyof typeof playerB.stats]
-                const aN = typeof av === "number" ? av : null
-                const bN = typeof bv === "number" ? bv : null
+                const av = playerA.stats ? s.getValue(playerA.stats) : null
+                const bv = playerB.stats ? s.getValue(playerB.stats) : null
                 return (
                   <CompareBar
                     key={s.key}
                     label={s.label}
                     aName={playerA.fullName}
                     bName={playerB.fullName}
-                    a={aN}
-                    b={bN}
+                    a={av}
+                    b={bv}
                     max={s.max}
                     fmt={s.fmt}
-                    lowerBetter={"lowerBetter" in s ? s.lowerBetter : false}
+                    lowerBetter={s.lowerBetter ?? false}
                   />
                 )
               })}
@@ -181,6 +161,7 @@ export default async function ComparePage(props: {
           </div>
         </FadeIn>
       ) : null}
+      </div>
     </div>
   )
 }
@@ -230,7 +211,7 @@ function ComparePlayerCard({
       >
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-court-800 ring-1 ring-hairline">
           <SmartImage
-            src={player.photoUrl}
+            src={player.imageUrl}
             alt={player.fullName}
             fit="cover"
             eager
@@ -261,7 +242,7 @@ function ComparePlayerCard({
             side === "b" ? "md:text-right" : ""
           }`}
         >
-          Season {player.stats.year} · {player.stats.gamesPlayed} GP
+          Season {player.stats.seasonName} · {player.stats.gamesPlayed} GP
         </p>
       ) : (
         <p className="mt-4 text-xs text-ink-400">No stats available.</p>

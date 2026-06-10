@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
-import { leagues, players, teams } from "@/lib/db/schema"
+import { leagues, playerSeasonStats, teams } from "@/lib/db/schema"
 import type { PlayerListItem } from "@/lib/data/players"
 import type { CoachListItem } from "@/lib/data/staff"
 import { cached } from "@/lib/data/cache"
@@ -11,13 +11,8 @@ export type TeamListItem = {
   name: string
   slug: string
   logoUrl: string | null
-  country: string | null
   city: string | null
-  shortName: string | null
-  foundedYear: number | null
-  arena: string | null
-  primaryColor: string | null
-  league: { id: string; name: string; slug: string; country: string }
+  league: { id: string; name: string; slug: string; region: string }
   playerCount: number
 }
 
@@ -48,23 +43,36 @@ export async function listTeams(
   const sort = input.sort ?? "name"
   const offset = (page - 1) * pageSize
 
-  const conditions = []
   const leagueSlugs = leagueSlugsFor(input.league)
+  const conditions = []
   if (leagueSlugs) conditions.push(inArray(leagues.slug, leagueSlugs))
   if (input.query) {
     const q = `%${input.query.toLowerCase()}%`
     conditions.push(like(sql`lower(${teams.name})`, q))
   }
-  const where = conditions.length ? and(...conditions) : undefined
 
   const playerCountExpr = sql<number>`(
-    select count(*) from ${players} where ${players.currentTeamId} = ${teams.id}
+    select count(*) from ${playerSeasonStats} pss
+    where pss.team_id = ${teams.id}
   )`
 
+  const tl = db.$with("tl").as(
+    db
+      .selectDistinct({
+        teamId: playerSeasonStats.teamId,
+        leagueId: playerSeasonStats.leagueId,
+      })
+      .from(playerSeasonStats),
+  )
+
+  const where = conditions.length ? and(...conditions) : undefined
+
   const totalRow = await db
+    .with(tl)
     .select({ c: sql<number>`count(*)` })
     .from(teams)
-    .innerJoin(leagues, eq(teams.leagueId, leagues.id))
+    .innerJoin(tl, eq(teams.id, tl.teamId))
+    .innerJoin(leagues, eq(tl.leagueId, leagues.id))
     .where(where)
   const total = Number(totalRow[0]?.c ?? 0)
 
@@ -79,25 +87,22 @@ export async function listTeams(
   })()
 
   const rows = await db
+    .with(tl)
     .select({
       id: teams.id,
       name: teams.name,
       slug: teams.slug,
       logoUrl: teams.logoUrl,
-      country: teams.country,
       city: teams.city,
-      shortName: teams.shortName,
-      foundedYear: teams.foundedYear,
-      arena: teams.arena,
-      primaryColor: teams.primaryColor,
       leagueId: leagues.id,
       leagueName: leagues.name,
       leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
+      leagueRegion: leagues.region,
       playerCount: playerCountExpr,
     })
     .from(teams)
-    .innerJoin(leagues, eq(teams.leagueId, leagues.id))
+    .innerJoin(tl, eq(teams.id, tl.teamId))
+    .innerJoin(leagues, eq(tl.leagueId, leagues.id))
     .where(where)
     .orderBy(orderByExpr)
     .limit(pageSize)
@@ -111,17 +116,12 @@ export async function listTeams(
       name: r.name,
       slug: r.slug,
       logoUrl: r.logoUrl,
-      country: r.country,
       city: r.city,
-      shortName: r.shortName,
-      foundedYear: r.foundedYear,
-      arena: r.arena,
-      primaryColor: r.primaryColor,
       league: {
         id: r.leagueId,
         name: r.leagueName,
         slug: r.leagueSlug,
-        country: r.leagueCountry,
+        region: r.leagueRegion,
       },
       playerCount: Number(r.playerCount ?? 0),
     })),
@@ -136,7 +136,16 @@ export type TeamOption = { id: string; name: string; slug: string; leagueSlug: s
 
 export async function listTeamOptions(limit = 300): Promise<TeamOption[]> {
   const db = getDb()
+  const tl = db.$with("tl").as(
+    db
+      .selectDistinct({
+        teamId: playerSeasonStats.teamId,
+        leagueId: playerSeasonStats.leagueId,
+      })
+      .from(playerSeasonStats),
+  )
   const rows = await db
+    .with(tl)
     .select({
       id: teams.id,
       name: teams.name,
@@ -144,7 +153,8 @@ export async function listTeamOptions(limit = 300): Promise<TeamOption[]> {
       leagueSlug: leagues.slug,
     })
     .from(teams)
-    .innerJoin(leagues, eq(teams.leagueId, leagues.id))
+    .innerJoin(tl, eq(teams.id, tl.teamId))
+    .innerJoin(leagues, eq(tl.leagueId, leagues.id))
     .orderBy(asc(teams.name))
     .limit(limit)
   return rows
@@ -155,55 +165,39 @@ export type TeamProfile = {
   name: string
   slug: string
   logoUrl: string | null
-  country: string | null
   city: string | null
-  shortName: string | null
-  foundedYear: number | null
-  arena: string | null
-  arenaCapacity: number | null
-  websiteUrl: string | null
-  primaryColor: string | null
-  sourceId: string
-  league: {
-    id: string
-    name: string
-    slug: string
-    country: string
-    source: string
-  }
+  league: { id: string; name: string; slug: string; region: string }
   roster: PlayerListItem[]
   staff: CoachListItem[]
 }
 
 export const getTeamBySlug = cached(
-  async (
-  leagueSlug: string,
-  slug: string,
-): Promise<TeamProfile | null> => {
+  async (leagueSlug: string, slug: string): Promise<TeamProfile | null> => {
   const db = getDb()
+  const tl = db.$with("tl").as(
+    db
+      .selectDistinct({
+        teamId: playerSeasonStats.teamId,
+        leagueId: playerSeasonStats.leagueId,
+      })
+      .from(playerSeasonStats),
+  )
   const rows = await db
+    .with(tl)
     .select({
       id: teams.id,
       name: teams.name,
       slug: teams.slug,
       logoUrl: teams.logoUrl,
-      country: teams.country,
       city: teams.city,
-      shortName: teams.shortName,
-      foundedYear: teams.foundedYear,
-      arena: teams.arena,
-      arenaCapacity: teams.arenaCapacity,
-      websiteUrl: teams.websiteUrl,
-      primaryColor: teams.primaryColor,
-      sourceId: teams.sourceId,
       leagueId: leagues.id,
       leagueName: leagues.name,
       leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
-      leagueSource: leagues.source,
+      leagueRegion: leagues.region,
     })
     .from(teams)
-    .innerJoin(leagues, eq(teams.leagueId, leagues.id))
+    .innerJoin(tl, eq(teams.id, tl.teamId))
+    .innerJoin(leagues, eq(tl.leagueId, leagues.id))
     .where(and(eq(leagues.slug, leagueSlug), eq(teams.slug, slug)))
     .limit(1)
 
@@ -229,21 +223,12 @@ export const getTeamBySlug = cached(
     name: r.name,
     slug: r.slug,
     logoUrl: r.logoUrl,
-    country: r.country,
     city: r.city,
-    shortName: r.shortName,
-    foundedYear: r.foundedYear,
-    arena: r.arena,
-    arenaCapacity: r.arenaCapacity,
-    websiteUrl: r.websiteUrl,
-    primaryColor: r.primaryColor,
-    sourceId: r.sourceId,
     league: {
       id: r.leagueId,
       name: r.leagueName,
       slug: r.leagueSlug,
-      country: r.leagueCountry,
-      source: r.leagueSource,
+      region: r.leagueRegion,
     },
     roster: roster.items,
     staff,

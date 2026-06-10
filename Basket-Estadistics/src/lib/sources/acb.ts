@@ -2,9 +2,9 @@ import {
   type SourceAdapter,
   type SourceCoach,
   type SourcePlayer,
-  type SourceStats,
   type SourceTeam,
   type SourceTeamStats,
+  type ExtractedPlayerStat,
   SOURCE_META,
 } from "@/lib/sources/types"
 import { parseHeightToCm } from "@/lib/sync/slug"
@@ -104,9 +104,9 @@ function findBalancedObject(
   let i = start
   while (i < rsc.length && /\s/.test(rsc[i] ?? "")) i++
   if (rsc[i] !== "{") return null
-  let depth = 0
-  let inStr = false
-  let escape = false
+  let depth = 0,
+    inStr = false,
+    escape = false
   for (let k = i; k < rsc.length; k++) {
     const c = rsc[k]
     if (inStr) {
@@ -132,9 +132,9 @@ function findBalancedArray(
   let i = start
   while (i < rsc.length && /\s/.test(rsc[i] ?? "")) i++
   if (rsc[i] !== "[") return null
-  let depth = 0
-  let inStr = false
-  let escape = false
+  let depth = 0,
+    inStr = false,
+    escape = false
   for (let k = i; k < rsc.length; k++) {
     const c = rsc[k]
     if (inStr) {
@@ -182,9 +182,8 @@ function extractRscArray(rsc: string, key: string): Raw[] {
 }
 
 function unwrapTeam(t: Raw): Raw {
-  if (t && typeof t === "object" && (t.latest || t.selected)) {
+  if (t && typeof t === "object" && (t.latest || t.selected))
     return ((t.latest ?? t.selected) as Raw) ?? t
-  }
   return t
 }
 
@@ -244,15 +243,15 @@ async function resolveSlug(clubId: number, teams?: AcbTeam[]): Promise<string> {
   const list = teams ?? (await fetchTeamsList())
   const t = list.find((x) => x.clubId === clubId)
   if (!t) return `club-${clubId}`
-  const m = t.name
+  const slug = t.name
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-  const slug = `${m}-${clubId}`
-  slugCache.set(clubId, slug)
-  return slug
+  const result = `${slug}-${clubId}`
+  slugCache.set(clubId, result)
+  return result
 }
 
 async function fetchRoster(clubId: number): Promise<{
@@ -491,7 +490,7 @@ export const acbAdapter: SourceAdapter = {
     return out
   },
 
-  async fetchStats(): Promise<SourceStats[]> {
+  async fetchStats(): Promise<ExtractedPlayerStat[]> {
     const brYear = SEASON.endsWith("-25")
       ? "2025"
       : SEASON.endsWith("-24")
@@ -511,51 +510,103 @@ export const acbAdapter: SourceAdapter = {
 
     const acbPlayers = await this.fetchPlayers()
     const nameToAcbId = new Map<string, string>()
-    for (const p of acbPlayers) {
+    for (const p of acbPlayers)
       nameToAcbId.set(normalizeName(p.fullName), p.sourceId)
+    const resolvePlayerId = (brName: string): string | undefined => {
+      const key = normalizeName(brName)
+      const exact = nameToAcbId.get(key)
+      if (exact) return exact
+      // BR sometimes uses nicknames or drops second surnames; accept the
+      // roster player only when last name + first initial are unambiguous.
+      const tokens = key.split(" ").filter(Boolean)
+      const last = tokens[tokens.length - 1]
+      const initial = tokens[0]?.[0]
+      if (!last || !initial) return undefined
+      const hits = acbPlayers.filter((p) => {
+        const pt = normalizeName(p.fullName).split(" ").filter(Boolean)
+        return pt.includes(last) && pt[0]?.[0] === initial
+      })
+      return hits.length === 1 ? hits[0].sourceId : undefined
     }
     const teams = await fetchTeamsList()
+    // BR uses short anglicized team names ("Baskonia") while the ACB feed has
+    // official ones ("Baskonia Vitoria-Gasteiz"); index every alias normalized
+    // and fall back to token containment so those stat rows are not dropped.
     const teamNameToId = new Map<string, string>()
-    for (const t of teams) teamNameToId.set(t.name.toLowerCase(), t.sourceId)
+    for (const t of teams) {
+      for (const alias of [t.name, t.shortName, t.abbreviation]) {
+        if (alias) teamNameToId.set(normalizeName(alias), t.sourceId)
+      }
+    }
+    const resolveTeamId = (brName: string): string | undefined => {
+      const key = normalizeName(brName)
+      const exact = teamNameToId.get(key)
+      if (exact) return exact
+      const tokens = key.split(" ").filter((w) => w.length > 2)
+      if (tokens.length === 0) return undefined
+      const hits = teams.filter((t) => {
+        const hay = normalizeName(`${t.name} ${t.shortName}`)
+        return tokens.every((w) => hay.includes(w))
+      })
+      return hits.length === 1 ? hits[0].sourceId : undefined
+    }
 
-    const out: SourceStats[] = []
+    const out: ExtractedPlayerStat[] = []
     for (const row of brRows) {
       const cells = new Map<string, string>()
       const cellRe =
         /<t[hd]\b[^>]*\bdata-stat="([^"]+)"[^>]*>([\s\S]*?)<\/t[hd]>/g
       let cm: RegExpExecArray | null
-      while ((cm = cellRe.exec(row)) !== null) {
+      while ((cm = cellRe.exec(row)) !== null)
         cells.set(cm[1], cm[2].replace(/<[^>]+>/g, "").trim())
-      }
       const playerName = cells.get("player")
       if (!playerName) continue
-      const acbId = nameToAcbId.get(normalizeName(playerName))
+      const acbId = resolvePlayerId(playerName)
       if (!acbId) continue
       const teamName = cells.get("team_name")?.replace(/\*+$/, "").trim()
-      const teamSourceId = teamName
-        ? teamNameToId.get(teamName.toLowerCase())
-        : undefined
+      const teamSourceId = teamName ? resolveTeamId(teamName) : undefined
+      const g = Number(cells.get("g")) || 0
+      const mp = Number(cells.get("mp_per_g")) || 0
+      const pts = Number(cells.get("pts_per_g")) || 0
+      const reb = Number(cells.get("trb_per_g")) || 0
+      const ast = Number(cells.get("ast_per_g")) || 0
+      const stl = Number(cells.get("stl_per_g")) || 0
+      const blk = Number(cells.get("blk_per_g")) || 0
+      const tov = Number(cells.get("tov_per_g")) || 0
+      const fgm = Number(cells.get("fg")) || 0
+      const fga = Number(cells.get("fga")) || 0
+      const threeM = Number(cells.get("fg3")) || 0
+      const threeA = Number(cells.get("fg3a")) || 0
+      const ftm = Number(cells.get("ft")) || 0
+      const fta = Number(cells.get("fta")) || 0
+      const tsPct =
+        fga > 0 ? Number((pts / (2 * (fga + 0.44 * fta))).toFixed(3)) : null
       out.push({
         playerSourceId: acbId,
         season: SEASON_YEAR,
         teamSourceId,
-        gamesPlayed: Number(cells.get("g")) || 0,
-        minutesPerGame: Number(cells.get("mp_per_g")) || undefined,
-        points: Number(cells.get("pts_per_g")) || undefined,
-        rebounds: Number(cells.get("trb_per_g")) || undefined,
-        assists: Number(cells.get("ast_per_g")) || undefined,
-        steals: Number(cells.get("stl_per_g")) || undefined,
-        blocks: Number(cells.get("blk_per_g")) || undefined,
-        turnovers: Number(cells.get("tov_per_g")) || undefined,
-        fgPct: cells.get("fg_pct")
-          ? Number(Number(cells.get("fg_pct")).toFixed(3))
-          : undefined,
-        threePct: cells.get("fg3_pct")
-          ? Number(Number(cells.get("fg3_pct")).toFixed(3))
-          : undefined,
-        ftPct: cells.get("ft_pct")
-          ? Number(Number(cells.get("ft_pct")).toFixed(3))
-          : undefined,
+        gamesPlayed: g,
+        minutesTotal: Math.round(mp * g),
+        pointsTotal: Math.round(pts * g),
+        reboundsTotal: Math.round(reb * g),
+        assistsTotal: Math.round(ast * g),
+        stealsTotal: Math.round(stl * g),
+        blocksTotal: Math.round(blk * g),
+        turnoversTotal: Math.round(tov * g),
+        fgMade: Math.round(fgm * g),
+        fgAttempted: Math.round(fga * g),
+        threeMade: Math.round(threeM * g),
+        threeAttempted: Math.round(threeA * g),
+        ftMade: Math.round(ftm * g),
+        ftAttempted: Math.round(fta * g),
+        offensiveRebounds: null,
+        defensiveRebounds: null,
+        foulsTotal: null,
+        plusMinus: null,
+        per: null,
+        trueShootingPct: tsPct,
+        winShares: null,
+        bpm: null,
       })
     }
     return out

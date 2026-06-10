@@ -8,9 +8,8 @@ type StaffItem = {
   nationality: string | null
   age: number | null
   photoUrl: string | null
-  licenseType: string | null
   team: { id: string; name: string; slug: string; logoUrl: string | null }
-  league: { id: string; name: string; slug: string; country: string }
+  league: { id: string; name: string; slug: string; region: string }
 }
 
 type Props = { staff: StaffItem[] }

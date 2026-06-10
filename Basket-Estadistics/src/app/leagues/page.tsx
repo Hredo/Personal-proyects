@@ -20,7 +20,7 @@ export default async function LeaguesPage() {
   ])
 
   return (
-    <div className="relative pb-8 sm:pb-12">
+    <div className="full-bleed relative pb-8 sm:pb-12">
       <DirectoryHero
         eyebrow="Coverage"
         title={
@@ -31,6 +31,7 @@ export default async function LeaguesPage() {
         description="Six professional leagues, one scouting engine. Each hub shows the current season, the top three scorers and direct jumps into the player and team directories."
       />
 
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <FadeIn delay={0.1} className="mt-8">
         <GlobalStatsBand counts={counts} />
       </FadeIn>
@@ -41,6 +42,7 @@ export default async function LeaguesPage() {
             <LeagueOverview data={lg} index={i} />
           </FadeIn>
         ))}
+      </div>
       </div>
     </div>
   )

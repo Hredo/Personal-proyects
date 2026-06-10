@@ -8,35 +8,38 @@ import { getInitials } from "@/lib/format"
 
 type Props = {
   player: {
-    id: string
     fullName: string
     slug: string
     position: string | null
-    photoUrl: string | null
-    league: { id: string; name: string; slug: string; country: string }
+    imageUrl: string | null
+    league: { name: string; slug: string }
     team: {
-      id: string
       name: string
       slug: string
       logoUrl: string | null
     } | null
     stats: {
-      year: number
+      seasonName: string
       gamesPlayed: number
-      points: number | null
-      rebounds: number | null
-      assists: number | null
+      pointsTotal: number | null
+      reboundsTotal: number | null
+      assistsTotal: number | null
     } | null
   }
   rank?: number
 }
 
+function perGame(total: number | null, gp: number): number | null {
+  if (total == null || gp === 0) return null
+  return total / gp
+}
+
 export function PlayerCardElegant({ player, rank }: Props) {
   const initials = getInitials(player.fullName)
   const s = player.stats
-  const ppg = s?.points != null ? s.points.toFixed(1) : "—"
-  const rpg = s?.rebounds != null ? s.rebounds.toFixed(1) : "—"
-  const apg = s?.assists != null ? s.assists.toFixed(1) : "—"
+  const ppg = s?.pointsTotal != null ? perGame(s.pointsTotal, s.gamesPlayed)?.toFixed(1) ?? "—" : "—"
+  const rpg = s?.reboundsTotal != null ? perGame(s.reboundsTotal, s.gamesPlayed)?.toFixed(1) ?? "—" : "—"
+  const apg = s?.assistsTotal != null ? perGame(s.assistsTotal, s.gamesPlayed)?.toFixed(1) ?? "—" : "—"
   const accent = leagueAccent(player.league.slug)
   const { ref, onPointerMove } = useSpotlight<HTMLAnchorElement>()
 
@@ -68,7 +71,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
           className="absolute inset-0 z-[1] bg-gradient-to-t from-surface-1 via-surface-1/30 to-transparent"
         />
         <SmartImage
-          src={player.photoUrl}
+            src={player.imageUrl}
           alt={player.fullName}
           fit="cover"
           className="h-full w-full object-cover transition-transform duration-[700ms] ease-fluid group-hover:scale-[1.06]"

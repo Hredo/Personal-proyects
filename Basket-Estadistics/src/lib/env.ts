@@ -13,7 +13,7 @@ const serverSchema = z.object({
     .default("development"),
   DATABASE_URL: z.preprocess(
     emptyToUndefined,
-    z.string().min(1).default("file:./data/basket.db"),
+    z.string().min(1, "DATABASE_URL is required"),
   ),
   SESSION_SECRET: z.preprocess(
     emptyToUndefined,

@@ -12,9 +12,8 @@ type Props = {
     name: string
     slug: string
     logoUrl: string | null
-    country: string | null
-    primaryColor: string | null
-    league: { id: string; name: string; slug: string; country: string }
+    city: string | null
+    league: { id: string; name: string; slug: string; region: string }
     playerCount: number
   }
 }
@@ -22,7 +21,7 @@ type Props = {
 export function TeamCardElegant({ team }: Props) {
   const initials = getInitials(team.name, 3)
   const league = leagueAccent(team.league.slug)
-  const accent = team.primaryColor ?? league.color
+  const accent = league.color
   const { ref, onPointerMove } = useSpotlight<HTMLAnchorElement>()
 
   return (
@@ -77,9 +76,9 @@ export function TeamCardElegant({ team }: Props) {
           <h3 className="truncate font-display text-base font-bold tracking-[-0.01em] text-ink-50 sm:text-lg">
             {team.name}
           </h3>
-          {team.country ? (
+          {team.city || team.league.region ? (
             <p className="mt-0.5 truncate text-xs text-ink-400">
-              {team.country}
+              {team.city ?? team.league.region}
             </p>
           ) : null}
         </div>
