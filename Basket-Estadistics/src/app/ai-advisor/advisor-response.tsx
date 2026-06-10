@@ -33,7 +33,7 @@ export function AdvisorResponse({ data }: { data: AdvisorOutput }) {
             <div className="flex items-center gap-2 mb-1">
               <span className="text-2xl">{data.intentEmoji}</span>
               <span className="text-[10px] uppercase tracking-widest text-ink-400">
-                Análisis para
+                Analysis for
               </span>
             </div>
             <h2 className="text-xl font-bold text-ink-50">{data.team.name}</h2>
@@ -46,9 +46,9 @@ export function AdvisorResponse({ data }: { data: AdvisorOutput }) {
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-ink-300">
           <span className="rounded-md bg-ink-700/40 px-2 py-1">
-            <span className="text-ink-500">Plantilla</span> ·{" "}
+            <span className="text-ink-500">Roster</span> ·{" "}
             <span className="font-mono font-semibold text-ink-100">
-              {data.team.rosterSize} jug
+              {data.team.rosterSize} players
             </span>
           </span>
         </div>
@@ -76,19 +76,19 @@ export function AdvisorResponse({ data }: { data: AdvisorOutput }) {
             />
           </svg>
           <h3 className="text-sm font-semibold text-ink-100">
-            Diagnóstico del equipo
+            Team diagnosis
           </h3>
         </div>
         <p className="text-sm leading-relaxed text-ink-300">{data.analysis}</p>
         <div className="mt-3 rounded-lg border-l-2 border-brand-500/60 bg-brand-500/5 px-3 py-2 text-xs text-ink-200">
           <span className="font-semibold text-brand-300">
-            Hueco detectado:{" "}
+            Detected gap:{" "}
           </span>
           {data.gap}
         </div>
         {data.team.topPlayers.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span className="text-ink-500">Núcleo actual:</span>
+            <span className="text-ink-500">Current core:</span>
             {data.team.topPlayers.map((p) => (
               <span
                 key={p}
@@ -123,7 +123,7 @@ export function AdvisorResponse({ data }: { data: AdvisorOutput }) {
             />
           </svg>
           <h3 className="text-sm font-semibold text-ink-100">
-            Candidatos recomendados
+            Recommended candidates
           </h3>
         </motion.div>
 
@@ -154,7 +154,7 @@ export function AdvisorResponse({ data }: { data: AdvisorOutput }) {
             />
           </svg>
           <h3 className="text-sm font-semibold text-ink-200">
-            Antes de negociar
+            Before you negotiate
           </h3>
         </div>
         <ul className="space-y-1.5 text-xs text-ink-300">
@@ -203,7 +203,7 @@ function RecruitCard({
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-400">
             <span>{rec.position}</span>
             <span className="text-ink-600">·</span>
-            <span>{rec.age} años</span>
+            <span>{rec.age} y/o</span>
           </div>
         </div>
         <div className="shrink-0 text-right">
@@ -226,7 +226,7 @@ function RecruitCard({
 
       <div className="mt-3 pl-2">
         <p className="text-sm leading-relaxed text-ink-200">
-          <span className="text-brand-300 font-semibold">Encaje: </span>
+          <span className="text-brand-300 font-semibold">Fit: </span>
           {rec.fit}
         </p>
       </div>

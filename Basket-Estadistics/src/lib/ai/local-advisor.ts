@@ -48,315 +48,315 @@ const RECRUITS: Record<string, Recruit[]> = {
   defender: [
     {
       name: "Alex Caruso",
-      position: "Base/Escolta",
+      position: "Guard",
       league: "NBA",
       age: 30,
       contractValue: "$9M",
-      strengths: ["Defensa perimetral elite", "IQ baloncestístico", "Robos"],
-      fit: "Cierra líneas de pase, ancla defensiva perimetral",
-      market: "Libre / MLE",
+      strengths: ["Elite perimeter defense", "Basketball IQ", "Steals"],
+      fit: "Closes passing lanes, perimeter defensive anchor",
+      market: "Free agent / MLE",
     },
     {
       name: "Marcus Smart",
-      position: "Escolta",
+      position: "Shooting guard",
       league: "NBA",
       age: 30,
       contractValue: "$18M",
-      strengths: ["Defensor del año 2022", "Liderazgo", "Versatilidad"],
-      fit: "Aporta intensidad y comunicación defensiva",
-      market: "Traspaso",
+      strengths: ["2022 Defensive Player of the Year", "Leadership", "Versatility"],
+      fit: "Brings intensity and defensive communication",
+      market: "Trade",
     },
     {
       name: "Jrue Holiday",
-      position: "Base",
+      position: "Point guard",
       league: "NBA",
       age: 34,
       contractValue: "$36M",
-      strengths: ["Defensa de élite", "Experiencia playoffs", "Doble vía"],
-      fit: "Base defensivo y referente competitivo",
-      market: "Traspaso",
+      strengths: ["Elite defense", "Playoff experience", "Two-way play"],
+      fit: "Defensive point guard and competitive reference",
+      market: "Trade",
     },
     {
       name: "Dyson Daniels",
-      position: "Base",
+      position: "Point guard",
       league: "NBA",
       age: 21,
       contractValue: "$7M",
-      strengths: ["Líder en robos NBA", "Longitud 2.03m", "Energía"],
-      fit: "Especialista defensivo joven con gran proyección",
-      market: "Renovación",
+      strengths: ["NBA steals leader", "2.03m length", "Energy"],
+      fit: "Young defensive specialist with huge upside",
+      market: "Re-sign",
     },
     {
       name: "Nicolas Batum",
-      position: "Ala",
+      position: "Forward",
       league: "NBA",
       age: 35,
       contractValue: "$11M",
-      strengths: ["Versatilidad defensiva", "Experiencia", "Triple"],
-      fit: "Veterano polivalente para rotations",
-      market: "Libre",
+      strengths: ["Defensive versatility", "Experience", "Three-point shot"],
+      fit: "Versatile veteran for the rotation",
+      market: "Free agent",
     },
     {
       name: "Vincent Poirier",
-      position: "Pívot",
+      position: "Center",
       league: "EuroLeague",
       age: 30,
       contractValue: "€1.8M",
-      strengths: ["Protección de aro", "Rebote", "Taponador"],
-      fit: "Ancla interior defensiva para la rotación",
-      market: "Libre",
+      strengths: ["Rim protection", "Rebounding", "Shot blocking"],
+      fit: "Defensive interior anchor for the rotation",
+      market: "Free agent",
     },
   ],
   scorer: [
     {
       name: "Buddy Hield",
-      position: "Escolta",
+      position: "Shooting guard",
       league: "NBA",
       age: 31,
       contractValue: "$21M",
-      strengths: ["Tiro exterior élite", "Volumen", "Rango 7m"],
-      fit: "Abre defensas con tiro de tres rápido",
-      market: "Traspaso",
+      strengths: ["Elite outside shooting", "Volume", "7m range"],
+      fit: "Opens up defenses with a quick three-point shot",
+      market: "Trade",
     },
     {
       name: "Bogdan Bogdanovic",
-      position: "Escolta/Ala",
+      position: "Wing",
       league: "NBA",
       age: 31,
       contractValue: "$20M",
-      strengths: ["Creador de tiro", "Pick and pop", "Experiencia"],
-      fit: "Generador de offense con experiencia europea",
-      market: "Libre",
+      strengths: ["Shot creation", "Pick and pop", "Experience"],
+      fit: "Offense generator with European experience",
+      market: "Free agent",
     },
     {
       name: "Khris Middleton",
-      position: "Alero",
+      position: "Small forward",
       league: "NBA",
       age: 33,
       contractValue: "$33M",
-      strengths: ["Mid-range", "Clutch scorer", "Tamaño"],
-      fit: "Anotador secundario en situaciones clutch",
-      market: "Traspaso",
+      strengths: ["Mid-range", "Clutch scorer", "Size"],
+      fit: "Secondary scorer for clutch situations",
+      market: "Trade",
     },
     {
       name: "Malik Monk",
-      position: "Escolta",
+      position: "Shooting guard",
       league: "NBA",
       age: 26,
       contractValue: "$15M",
-      strengths: ["Sexto hombre", "Tiro en suspensión", "Creación"],
-      fit: "Motor de anotación desde el banquillo",
-      market: "Libre",
+      strengths: ["Sixth man", "Jump shot", "Creation"],
+      fit: "Scoring engine off the bench",
+      market: "Free agent",
     },
     {
       name: "Dzanan Musa",
-      position: "Alero",
+      position: "Small forward",
       league: "EuroLeague",
       age: 25,
       contractValue: "€3.5M",
-      strengths: ["Anotador puro", "1x1", "Tiro en suspensión"],
-      fit: "Ala anotadora para rotación europea",
-      market: "Disponible",
+      strengths: ["Pure scorer", "One-on-one", "Jump shot"],
+      fit: "Scoring wing for a European rotation",
+      market: "Available",
     },
   ],
   playmaker: [
     {
       name: "D'Angelo Russell",
-      position: "Base",
+      position: "Point guard",
       league: "NBA",
       age: 28,
       contractValue: "$19M",
-      strengths: ["Pick and roll", "Tiro de tres", "Creación"],
-      fit: "Base director con experiencia en sistemas modernos",
-      market: "Traspaso",
+      strengths: ["Pick and roll", "Three-point shot", "Creation"],
+      fit: "Floor general with experience in modern systems",
+      market: "Trade",
     },
     {
       name: "Mike Conley",
-      position: "Base",
+      position: "Point guard",
       league: "NBA",
       age: 36,
       contractValue: "$24M",
-      strengths: ["Director veterano", "Tiro", "Liderazgo"],
-      fit: "Mentor y director titular, gran profesional",
-      market: "Libre",
+      strengths: ["Veteran floor general", "Shooting", "Leadership"],
+      fit: "Mentor and starting playmaker, consummate professional",
+      market: "Free agent",
     },
     {
       name: "Sergio Llull",
-      position: "Escolta",
+      position: "Shooting guard",
       league: "EuroLeague",
       age: 36,
       contractValue: "€2.5M",
-      strengths: ["Tiro clutch", "Velocidad", "Experiencia"],
-      fit: "Veterano clutch para banquillo",
-      market: "Renovación",
+      strengths: ["Clutch shooting", "Speed", "Experience"],
+      fit: "Clutch veteran for the bench",
+      market: "Re-sign",
     },
     {
       name: "Vasilije Micic",
-      position: "Base",
+      position: "Point guard",
       league: "EuroLeague",
       age: 30,
       contractValue: "€5M",
-      strengths: ["Pick and roll", "Tiro", "Experiencia NBA"],
-      fit: "Base europeo con experiencia en la NBA",
-      market: "Traspaso",
+      strengths: ["Pick and roll", "Shooting", "NBA experience"],
+      fit: "European point guard with NBA experience",
+      market: "Trade",
     },
   ],
   wing: [
     {
       name: "Andrew Wiggins",
-      position: "Alero",
+      position: "Small forward",
       league: "NBA",
       age: 29,
       contractValue: "$28M",
-      strengths: ["Atlético", "Defensa perimetral", "Transición"],
-      fit: "3&D con motor para ser titular",
-      market: "Traspaso",
+      strengths: ["Athleticism", "Perimeter defense", "Transition"],
+      fit: "3&D with the motor to start",
+      market: "Trade",
     },
     {
       name: "Tobias Harris",
-      position: "Ala-Pívot",
+      position: "Power forward",
       league: "NBA",
       age: 32,
       contractValue: "$39M",
-      strengths: ["Mid-range", "Tamaño", "Versatilidad"],
-      fit: "Ala versátil para línea de cuatro",
-      market: "Libre",
+      strengths: ["Mid-range", "Size", "Versatility"],
+      fit: "Versatile forward for the four spot",
+      market: "Free agent",
     },
     {
       name: "Kelly Oubre Jr.",
-      position: "Alero",
+      position: "Small forward",
       league: "NBA",
       age: 28,
       contractValue: "$12M",
-      strengths: ["Atlético", "Tiro en suspensión", "Energía"],
-      fit: "Ala atlética para pequeñas alineaciones",
-      market: "Libre",
+      strengths: ["Athleticism", "Jump shot", "Energy"],
+      fit: "Athletic wing for small-ball lineups",
+      market: "Free agent",
     },
     {
       name: "Mario Hezonja",
-      position: "Alero",
+      position: "Small forward",
       league: "EuroLeague",
       age: 29,
       contractValue: "€4M",
-      strengths: ["Tamaño", "Tiro", "Versatilidad"],
-      fit: "Alero europeo completo con experiencia NBA",
-      market: "Libre",
+      strengths: ["Size", "Shooting", "Versatility"],
+      fit: "Complete European wing with NBA experience",
+      market: "Free agent",
     },
   ],
   big: [
     {
       name: "Jonas Valanciunas",
-      position: "Pívot",
+      position: "Center",
       league: "NBA",
       age: 32,
       contractValue: "$18M",
-      strengths: ["Rebote ofensivo", "Post-up", "Tamaño"],
-      fit: "Pívot clásico para juego interior",
-      market: "Traspaso",
+      strengths: ["Offensive rebounding", "Post-up", "Size"],
+      fit: "Classic center for the interior game",
+      market: "Trade",
     },
     {
       name: "Al Horford",
-      position: "Pívot",
+      position: "Center",
       league: "NBA",
       age: 38,
       contractValue: "$9M",
-      strengths: ["Tiro exterior", "Defensa", "Versatilidad"],
-      fit: "5 moderno con tiro, defensa y experiencia",
-      market: "Libre / MLE",
+      strengths: ["Outside shooting", "Defense", "Versatility"],
+      fit: "Modern five with shooting, defense and experience",
+      market: "Free agent / MLE",
     },
     {
       name: "Tibor Pleiss",
-      position: "Pívot",
+      position: "Center",
       league: "EuroLeague",
       age: 35,
       contractValue: "€2M",
-      strengths: ["Tamaño 2.21m", "Tiro", "Experiencia"],
-      fit: "Pívot europeo con capacidad de tiro",
-      market: "Libre",
+      strengths: ["2.21m size", "Shooting", "Experience"],
+      fit: "European center who can shoot",
+      market: "Free agent",
     },
     {
       name: "Willy Hernangomez",
-      position: "Pívot",
+      position: "Center",
       league: "EuroLeague",
       age: 30,
       contractValue: "€1.5M",
-      strengths: ["Post moves", "Rebote", "Acero español"],
-      fit: "Pívot con experiencia NBA/EuroLeague",
-      market: "Libre",
+      strengths: ["Post moves", "Rebounding", "Toughness"],
+      fit: "Center with NBA and EuroLeague experience",
+      market: "Free agent",
     },
   ],
   cheap: [
     {
       name: "Alex Len",
-      position: "Pívot",
+      position: "Center",
       league: "NBA",
       age: 31,
       contractValue: "Min",
-      strengths: ["Tamaño 2.13m", "Protección de aro", "Rebote"],
-      fit: "Pívot económico para rotación corta",
+      strengths: ["2.13m size", "Rim protection", "Rebounding"],
+      fit: "Budget center for a short rotation",
       market: "Veteran minimum",
     },
     {
       name: "Lonnie Walker IV",
-      position: "Escolta",
+      position: "Shooting guard",
       league: "NBA",
       age: 25,
       contractValue: "Min",
-      strengths: ["Atlético", "Tiro en suspensión", "Highlights"],
-      fit: "Joven con upside en contrato mínimo",
+      strengths: ["Athleticism", "Jump shot", "Highlights"],
+      fit: "Young player with upside on a minimum deal",
       market: "Veteran minimum",
     },
     {
       name: "Juan Nuñez",
-      position: "Base",
+      position: "Point guard",
       league: "ACB",
       age: 20,
       contractValue: "€0.4M",
-      strengths: ["Visión de juego", "Velocidad", "Potencial"],
-      fit: "Base español joven con proyección NBA",
-      market: "Buy-out bajo",
+      strengths: ["Court vision", "Speed", "Potential"],
+      fit: "Young Spanish point guard with NBA projection",
+      market: "Low buy-out",
     },
   ],
   star: [
     {
       name: "Trae Young",
-      position: "Base",
+      position: "Point guard",
       league: "NBA",
       age: 26,
       contractValue: "$46M",
-      strengths: ["Pick and roll", "Tiro lejano", "Asistencias"],
-      fit: "Estrella generadora de offense",
-      market: "Traspaso estrella",
+      strengths: ["Pick and roll", "Deep range", "Assists"],
+      fit: "Offense-generating star",
+      market: "Star trade",
     },
     {
       name: "Donovan Mitchell",
-      position: "Escolta",
+      position: "Shooting guard",
       league: "NBA",
       age: 28,
       contractValue: "$35M",
-      strengths: ["Anotador élite", "Velocidad", "Clutch"],
-      fit: "Alá-pívot anotador All-Star",
-      market: "Traspaso estrella",
+      strengths: ["Elite scorer", "Speed", "Clutch"],
+      fit: "All-Star scoring guard",
+      market: "Star trade",
     },
     {
       name: "Karl-Anthony Towns",
-      position: "Pívot",
+      position: "Center",
       league: "NBA",
       age: 29,
       contractValue: "$60M",
-      strengths: ["Tiro de 3", "Post-up", "Rebote"],
-      fit: "Pívot All-Star con tiro exterior",
-      market: "Traspaso estrella",
+      strengths: ["Three-point shot", "Post-up", "Rebounding"],
+      fit: "All-Star center with outside shooting",
+      market: "Star trade",
     },
     {
       name: "Luka Doncic",
-      position: "Base",
+      position: "Point guard",
       league: "NBA",
       age: 25,
       contractValue: "$43M",
-      strengths: ["MVP calibre", "Triple-doble", "Generación"],
-      fit: "Franquicia transformadora, máximo nivel",
-      market: "Solo superstar trade",
+      strengths: ["MVP calibre", "Triple-doubles", "Creation"],
+      fit: "Franchise-transforming talent, highest level",
+      market: "Superstar trade only",
     },
   ],
 }
@@ -366,42 +366,42 @@ const INTENT_META: Record<
   { label: string; emoji: string; color: string }
 > = {
   defender: {
-    label: "Refuerzo defensivo",
+    label: "Defensive reinforcement",
     emoji: "🛡️",
     color: "from-blue-500/20 to-cyan-500/20",
   },
   scorer: {
-    label: "Anotador / tirador",
+    label: "Scorer / shooter",
     emoji: "🎯",
     color: "from-orange-500/20 to-red-500/20",
   },
   playmaker: {
-    label: "Base organizador",
+    label: "Floor general",
     emoji: "🎮",
     color: "from-purple-500/20 to-pink-500/20",
   },
   wing: {
-    label: "Alero versátil",
+    label: "Versatile wing",
     emoji: "💪",
     color: "from-emerald-500/20 to-teal-500/20",
   },
   big: {
-    label: "Refuerzo interior",
+    label: "Interior reinforcement",
     emoji: "🏀",
     color: "from-amber-500/20 to-orange-500/20",
   },
   cheap: {
-    label: "Opción económica",
+    label: "Budget option",
     emoji: "💰",
     color: "from-slate-500/20 to-zinc-500/20",
   },
   star: {
-    label: "Movimiento estrella",
+    label: "Star move",
     emoji: "⭐",
     color: "from-yellow-500/20 to-amber-500/20",
   },
   general: {
-    label: "Análisis general",
+    label: "General analysis",
     emoji: "🏀",
     color: "from-brand-500/20 to-brand-400/20",
   },
@@ -482,7 +482,7 @@ function pickRecommendations(
 function analyzeTeamGaps(roster: PlayerListItem[]): string {
   const counts = getPositionBreakdown(roster)
   const total = roster.length
-  if (total === 0) return "No hay información suficiente de la plantilla."
+  if (total === 0) return "Not enough roster information available."
 
   const guards = (counts["G"] || 0) + (counts["1"] || 0) + (counts["2"] || 0)
   const wings = (counts["F"] || 0) + (counts["3"] || 0) + (counts["4"] || 0)
@@ -490,11 +490,11 @@ function analyzeTeamGaps(roster: PlayerListItem[]): string {
 
   const gaps: string[] = []
   if (guards / total < 0.3)
-    gaps.push("Refuerzos en posiciones exteriores (bases y escoltas)")
-  if (wings / total < 0.25) gaps.push("Refuerzo en aletas y ala-pívots")
-  if (bigs / total < 0.2) gaps.push("Profundidad interior limitada")
+    gaps.push("Backcourt reinforcements (point guards and shooting guards)")
+  if (wings / total < 0.25) gaps.push("Help at the forward spots")
+  if (bigs / total < 0.2) gaps.push("Limited interior depth")
   if (gaps.length === 0)
-    gaps.push("Plantilla bien balanceada, cualquier posición es viable")
+    gaps.push("Well-balanced roster — any position is viable")
 
   return gaps[0]
 }
@@ -522,15 +522,15 @@ export async function buildLocalAdvice(
 
   const priorities = [
     {
-      label: "Prioridad alta",
+      label: "High priority",
       color: "bg-brand-500/20 text-brand-300 border-brand-500/30",
     },
     {
-      label: "Opción sólida",
+      label: "Solid option",
       color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
     },
     {
-      label: "Apuesta de valor",
+      label: "Value bet",
       color: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
     },
   ]
@@ -546,7 +546,7 @@ export async function buildLocalAdvice(
       rosterSize: team.roster.length,
       topPlayers: team.roster.slice(0, 4).map((p) => p.fullName),
     },
-    analysis: `Tu consulta se centra en un **${meta.label.toLowerCase()}**. Basándome en el análisis de la plantilla actual, esta incorporación podría aportar un perfil diferencial en la rotación.`,
+    analysis: `Your query targets a **${meta.label.toLowerCase()}**. Based on the current roster analysis, this signing could bring a differential profile to the rotation.`,
     gap,
     recommendations: recs.map((r, i) => ({
       ...r,
@@ -554,10 +554,10 @@ export async function buildLocalAdvice(
       priorityColor: priorities[i].color,
     })),
     considerations: [
-      "Verifica el espacio salarial antes de iniciar negociaciones",
-      "Prioriza perfiles que complementen (no dupliquen) a jugadores clave",
-      "El mercado cambia rápido — los valores son estimaciones actuales",
-      "Considera la cláusula de rescisión si el jugador está bajo contrato",
+      "Check the salary cap space before opening negotiations",
+      "Prioritise profiles that complement (not duplicate) your key players",
+      "The market moves fast — values are current estimates",
+      "Factor in the buy-out clause if the player is under contract",
     ],
   }
 }
@@ -635,6 +635,32 @@ const QUERY_STOPWORDS = new Set([
   "del",
   "al",
   "lo",
+  // English query words
+  "the",
+  "and",
+  "for",
+  "with",
+  "without",
+  "what",
+  "which",
+  "how",
+  "would",
+  "could",
+  "should",
+  "about",
+  "think",
+  "good",
+  "great",
+  "sign",
+  "signing",
+  "player",
+  "team",
+  "option",
+  "want",
+  "need",
+  "looking",
+  "strong",
+  "best",
 ])
 
 function tokenizeQuery(query: string): string[] {
@@ -713,14 +739,14 @@ export { findPlayerInQuery, formatStat, estimateContractValue, getLeagueBadge }
 
 function estimateContractValue(profile: PlayerProfile): string {
   const latest = profile.seasons[0]
-  if (!latest || latest.points === null) return "N/D"
+  if (!latest || latest.points === null) return "N/A"
   const ppg = latest.points
   if (ppg >= 25) return "Max / $50M+"
   if (ppg >= 20) return "All-Star / $30-50M"
-  if (ppg >= 15) return "Titular / $15-25M"
-  if (ppg >= 10) return "Rotación / $5-12M"
-  if (ppg >= 5) return "Rol / $1-4M"
-  return "Mínimo / <€1M"
+  if (ppg >= 15) return "Starter / $15-25M"
+  if (ppg >= 10) return "Rotation / $5-12M"
+  if (ppg >= 5) return "Role / $1-4M"
+  return "Minimum / <€1M"
 }
 
 function buildPlayerSpecificAdvice(
@@ -750,8 +776,8 @@ function buildPlayerSpecificAdvice(
     : []
 
   const statsLine =
-    stats.length > 0 ? stats.join(" · ") : "Sin estadísticas de temporada"
-  const currentTeam = profile.team?.name ?? "Agente libre / sin equipo"
+    stats.length > 0 ? stats.join(" · ") : "No season stats available"
+  const currentTeam = profile.team?.name ?? "Free agent / no team"
   const leagueLine = `${profile.league.name}${profile.nationality ? ` · ${profile.nationality}` : ""}`
 
   const intent: Intent = "scorer"
@@ -762,65 +788,65 @@ function buildPlayerSpecificAdvice(
     latest?.points !== undefined &&
     latest.points >= 15
   ) {
-    strengths.push("Anotador probado")
+    strengths.push("Proven scorer")
   }
   if (
     latest?.assists !== null &&
     latest?.assists !== undefined &&
     latest.assists >= 5
   ) {
-    strengths.push("Generador de juego")
+    strengths.push("Playmaking")
   }
   if (
     latest?.threePct !== null &&
     latest?.threePct !== undefined &&
     latest.threePct >= 36
   ) {
-    strengths.push("Tiro exterior fiable")
+    strengths.push("Reliable outside shooting")
   }
   if (
     latest?.rebounds !== null &&
     latest?.rebounds !== undefined &&
     latest.rebounds >= 7
   ) {
-    strengths.push("Reboteador sólido")
+    strengths.push("Solid rebounder")
   }
   if (
     latest?.steals !== null &&
     latest?.steals !== undefined &&
     latest.steals >= 1.5
   ) {
-    strengths.push("Generador de robos")
+    strengths.push("Creates steals")
   }
   if (
     latest?.blocks !== null &&
     latest?.blocks !== undefined &&
     latest.blocks >= 1
   ) {
-    strengths.push("Protección de aro")
+    strengths.push("Rim protection")
   }
   if (strengths.length === 0)
-    strengths.push("Perfil complementario", "Disponible para traspaso")
+    strengths.push("Complementary profile", "Available via trade")
 
   const sameLeague = profile.league.slug === team.league.slug
 
   const fitParts: string[] = []
   if (sameLeague) {
     fitParts.push(
-      `Ya juega en ${profile.league.name} por lo que la adaptación sería inmediata.`,
+      `Already plays in ${profile.league.name}, so the adaptation would be immediate.`,
     )
   } else {
     fitParts.push(
-      `Proviene de ${profile.league.name} — requiere periodo de adaptación al sistema de ${team.league.name}.`,
+      `Comes from ${profile.league.name} — needs an adaptation period to the ${team.league.name} game.`,
     )
   }
   if (age !== null) {
     if (age <= 25)
-      fitParts.push(`Con ${age} años entra en su ventana de mayor upside.`)
-    else if (age <= 30) fitParts.push(`A los ${age} años está en su prime.`)
+      fitParts.push(`At ${age}, he is entering his highest-upside window.`)
+    else if (age <= 30) fitParts.push(`At ${age}, he is in his prime.`)
     else
       fitParts.push(
-        `A los ${age} años aporta veteranía y experiencia competitiva.`,
+        `At ${age}, he brings veteran presence and competitive experience.`,
       )
   }
   if (
@@ -828,20 +854,20 @@ function buildPlayerSpecificAdvice(
     latest?.points !== undefined &&
     latest.points >= 18
   ) {
-    fitParts.push("Marcador diferencial — asumirá posesiones clave en clutch.")
+    fitParts.push("Differential scorer — will take the key clutch possessions.")
   }
 
   const alternativeRecs = pickRecommendations(intent, 2, team.league.name)
 
   const alternative = (r: Recruit) => ({
     ...r,
-    priority: "Opción alternativa",
+    priority: "Alternative option",
     priorityColor: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30",
   })
 
   return {
     intent,
-    intentLabel: `Análisis de ${profile.fullName}`,
+    intentLabel: `Analysis of ${profile.fullName}`,
     intentEmoji: "🔍",
     team: {
       name: team.name,
@@ -850,14 +876,14 @@ function buildPlayerSpecificAdvice(
       rosterSize: team.roster.length,
       topPlayers: team.roster.slice(0, 4).map((p) => p.fullName),
     },
-    analysis: `**${profile.fullName}** (${profile.position ?? "Posición N/D"}${age ? `, ${age} años` : ""}) actualmente en **${currentTeam}** (${leagueLine}). ${statsLine}. ${fitParts.join(" ")}`,
+    analysis: `**${profile.fullName}** (${profile.position ?? "Position N/A"}${age ? `, ${age} y/o` : ""}) currently at **${currentTeam}** (${leagueLine}). ${statsLine}. ${fitParts.join(" ")}`,
     gap: sameLeague
-      ? `Encaje directo con la plantilla de ${team.league.name}`
-      : `Encaje cross-league: requiere estudio de salario y adaptación al sistema ${team.league.name}`,
+      ? `Direct fit with the ${team.league.name} roster`
+      : `Cross-league fit: requires a salary review and adaptation to the ${team.league.name} system`,
     recommendations: [
       {
         name: profile.fullName,
-        position: profile.position ?? "N/D",
+        position: profile.position ?? "N/A",
         league: getLeagueBadge(profile.league.name) as
           | "NBA"
           | "EuroLeague"
@@ -866,19 +892,19 @@ function buildPlayerSpecificAdvice(
         contractValue: estimateContractValue(profile),
         strengths,
         fit: fitParts.join(" "),
-        market: "Evaluación personalizada",
-        priority: "Candidato solicitado",
+        market: "Custom evaluation",
+        priority: "Requested candidate",
         priorityColor: "bg-brand-500/20 text-brand-300 border-brand-500/30",
       },
       ...alternativeRecs.map(alternative),
     ],
     considerations: [
-      `Verifica la situación contractual actual de ${profile.fullName} con ${currentTeam}`,
+      `Check ${profile.fullName}'s current contract situation with ${currentTeam}`,
       sameLeague
-        ? "Al estar en la misma liga, el ajuste salarial y la compra son más predecibles"
-        : "Una operación cross-league implica cláusulas de rescisión y periodos de adaptación",
-      "Compara su perfil estadístico con el núcleo actual antes de iniciar negociaciones",
-      "Considera el impacto en el límite salarial y en el chemistry del vestuario",
+        ? "Being in the same league, the salary fit and buy-out are more predictable"
+        : "A cross-league move involves buy-out clauses and adaptation periods",
+      "Compare his statistical profile against your current core before negotiating",
+      "Consider the impact on the salary cap and locker-room chemistry",
     ],
   }
 }
