@@ -172,7 +172,7 @@ export function MessageActions({
 
   return (
     <div className="mt-1.5 flex items-center gap-1.5">
-      <ActionButton label="Copiar" onClick={handleCopy} active={copied}>
+      <ActionButton label="Copy" onClick={handleCopy} active={copied}>
         <AnimatePresence mode="wait" initial={false}>
           {copied ? (
             <motion.span
@@ -199,21 +199,21 @@ export function MessageActions({
         </AnimatePresence>
       </ActionButton>
       <ActionButton
-        label="Me gusta"
+        label="Like"
         onClick={onLike}
         active={reaction === "up"}
       >
         <ThumbsUpIcon />
       </ActionButton>
       <ActionButton
-        label="No me gusta"
+        label="Dislike"
         onClick={onDislike}
         active={reaction === "down"}
       >
         <ThumbsDownIcon />
       </ActionButton>
       <ActionButton
-        label="Rehacer respuesta"
+        label="Regenerate response"
         onClick={onRedo}
         disabled={!canRedo}
       >

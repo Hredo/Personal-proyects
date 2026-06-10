@@ -17,7 +17,7 @@ export function InputArea({
   onSend,
   disabled = false,
   loading = false,
-  placeholder = "Escribe tu mensaje...",
+  placeholder = "Type your message…",
   team,
   messages,
 }: Props) {
@@ -67,17 +67,17 @@ export function InputArea({
           autoCapitalize="off"
           spellCheck={false}
           maxLength={2000}
-          aria-label="Pregunta para el asesor"
+          aria-label="Ask the advisor"
           aria-describedby={helpId}
-          className="flex-1 rounded-xl border border-ink-700 bg-ink-800/60 px-4 py-2.5 text-sm text-ink-50 placeholder-ink-400 outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-40"
+          className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-ink-50 outline-none transition placeholder:text-ink-400 hover:border-white/20 focus:border-brand-400/60 focus:bg-white/[0.06] focus:ring-2 focus:ring-brand-500/25 disabled:opacity-40"
         />
         <DownloadMenu team={team} messages={messages} disabled={disabled} />
         <button
           type="submit"
           disabled={disabled || loading || !input.trim()}
-          aria-label="Enviar mensaje"
+          aria-label="Send message"
           aria-keyshortcuts="Control+Enter"
-          title="Enviar (Ctrl+Enter)"
+          title="Send (Ctrl+Enter)"
           className="shrink-0 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-950 transition hover:bg-brand-400 active:scale-95 disabled:opacity-40 disabled:active:scale-100"
         >
           {loading ? (
@@ -120,15 +120,15 @@ export function InputArea({
         </button>
       </div>
       <p id={helpId} className="mt-1.5 px-1 text-[10px] text-ink-500">
-        Preguntas en español se procesan más rápido · Pulsa{" "}
-        <kbd className="rounded border border-ink-700 bg-ink-800/60 px-1 font-mono text-[9px] text-ink-300">
+        Press{" "}
+        <kbd className="rounded border border-white/10 bg-white/[0.04] px-1 font-mono text-[9px] text-ink-300">
           Ctrl
         </kbd>
         {" + "}
-        <kbd className="rounded border border-ink-700 bg-ink-800/60 px-1 font-mono text-[9px] text-ink-300">
+        <kbd className="rounded border border-white/10 bg-white/[0.04] px-1 font-mono text-[9px] text-ink-300">
           Enter
         </kbd>{" "}
-        para enviar
+        to send · Answers can take a few seconds
       </p>
     </form>
   )

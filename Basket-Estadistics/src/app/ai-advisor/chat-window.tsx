@@ -94,13 +94,24 @@ export function ChatWindow({
             </div>
           </div>
           <h3 className="text-lg font-semibold text-ink-100">
-            Asesor de Fichajes
+            Scouting Advisor
           </h3>
-          <p className="mt-2 text-sm text-ink-400 leading-relaxed">
-            Selecciona un equipo y pregúntale qué fichajes recomienda para
-            reforzar la plantilla. Analizo tu roster, detecto necesidades y
-            sugiero jugadores reales del mercado.
+          <p className="mt-2 text-sm leading-relaxed text-ink-400">
+            Select a team above and ask which signings would strengthen the
+            roster. The advisor analyses your lineup, detects gaps and
+            suggests real players from the market.
           </p>
+          <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-ink-500">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-[10px] font-bold text-brand-300">
+              1
+            </span>
+            Pick a team
+            <span aria-hidden className="text-ink-600">→</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] font-mono text-[10px] font-bold text-brand-300">
+              2
+            </span>
+            Ask your question
+          </div>
         </motion.div>
       </div>
     )
@@ -112,7 +123,7 @@ export function ChatWindow({
           role="log"
           aria-live="polite"
           aria-relevant="additions"
-          aria-label="Conversación con el asesor"
+          aria-label="Advisor conversation"
           className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
         >
       {messages.map((msg, idx) => {
@@ -126,7 +137,7 @@ export function ChatWindow({
               key={msg.id}
               ref={isLastAi ? internalLastRef : undefined}
               tabIndex={isLastAi ? -1 : undefined}
-              aria-label={isLastAi ? "Última respuesta del asesor" : undefined}
+              aria-label={isLastAi ? "Latest advisor response" : undefined}
               className="focus:outline-none"
             >
               <AdvisorResponse data={msg.data} />
@@ -148,7 +159,7 @@ export function ChatWindow({
             key={msg.id}
             ref={isLastAi ? internalLastRef : undefined}
             tabIndex={isLastAi ? -1 : undefined}
-            aria-label={isLastAi ? "Última respuesta del asesor" : undefined}
+            aria-label={isLastAi ? "Latest advisor response" : undefined}
             className="focus:outline-none"
           >
             <MessageBubble
@@ -189,7 +200,7 @@ export function ChatWindow({
               />
             </div>
             <span className="text-xs text-ink-400">
-              Analizando plantilla y mercado...
+              Analysing roster and market…
             </span>
           </div>
         </motion.div>
@@ -258,8 +269,8 @@ function CopyAction({
         }
         onCopy()
       }}
-      aria-label="Copiar respuesta"
-      title="Copiar"
+      aria-label="Copy response"
+      title="Copy"
       className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-ink-300 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-ink-100"
     >
       <svg
@@ -288,9 +299,9 @@ function LikeAction({
     <button
       type="button"
       onClick={onClick}
-      aria-label="Me gusta esta respuesta"
+      aria-label="Like this response"
       aria-pressed={active}
-      title="Me gusta"
+      title="Like"
       className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition ${
         active
           ? "border-brand-400/50 bg-brand-500/15 text-brand-200"
@@ -323,9 +334,9 @@ function DislikeAction({
     <button
       type="button"
       onClick={onClick}
-      aria-label="No me gusta esta respuesta"
+      aria-label="Dislike this response"
       aria-pressed={active}
-      title="No me gusta"
+      title="Dislike"
       className={`inline-flex h-7 w-7 items-center justify-center rounded-md border transition ${
         active
           ? "border-brand-400/50 bg-brand-500/15 text-brand-200"
@@ -359,8 +370,8 @@ function RedoAction({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label="Rehacer respuesta"
-      title="Rehacer"
+      aria-label="Regenerate response"
+      title="Regenerate"
       className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.03] text-ink-300 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-ink-100 disabled:cursor-not-allowed disabled:opacity-30"
     >
       <svg

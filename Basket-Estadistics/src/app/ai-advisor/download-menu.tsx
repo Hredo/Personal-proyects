@@ -197,19 +197,19 @@ export function DownloadMenu({ team, messages, disabled = false }: Props) {
     {
       id: "markdown",
       label: "Markdown (.md)",
-      hint: "Texto plano, ideal para pegar en docs o Notion",
+      hint: "Plain text — paste into docs or Notion",
       run: ({ team, messages }) => exportToMarkdown({ team, messages }),
     },
     {
       id: "pdf",
       label: "PDF (.pdf)",
-      hint: "Documento formateado con análisis y fichas",
+      hint: "Formatted document with analysis and player cards",
       run: ({ team, messages }) => exportToPdf({ team, messages }),
     },
     {
       id: "word",
       label: "Word (.docx)",
-      hint: "Documento editable con todas las secciones",
+      hint: "Editable document with every section",
       run: ({ team, messages }) => exportToWord({ team, messages }),
     },
   ]
@@ -235,11 +235,12 @@ export function DownloadMenu({ team, messages, disabled = false }: Props) {
         disabled={isDisabled}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Descargar conversación"
+        aria-label="Download conversation"
+        data-tour="export"
         title={
           isEmpty
-            ? "Inicia una conversación para descargar"
-            : "Descargar conversación"
+            ? "Start a conversation to download it"
+            : "Download conversation"
         }
         className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ink-700 bg-ink-800/60 text-ink-200 transition hover:border-brand-500/50 hover:bg-ink-800 hover:text-brand-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-ink-700 disabled:hover:bg-ink-800/60 disabled:hover:text-ink-200"
       >
@@ -258,7 +259,7 @@ export function DownloadMenu({ team, messages, disabled = false }: Props) {
           >
             <div className="px-2.5 pb-1.5 pt-1.5">
               <p className="text-[10px] font-bold uppercase tracking-widest text-ink-400">
-                Formato de descarga
+                Download format
               </p>
             </div>
             <div className="space-y-0.5">

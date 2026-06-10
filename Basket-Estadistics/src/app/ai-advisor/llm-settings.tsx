@@ -198,42 +198,45 @@ export function LlmSettings({ mode, onModeChange }: Props) {
   const steps = [
     {
       n: 1,
-      title: "Instala Ollama",
-      body: "Descarga la app desde",
+      title: "Install Ollama",
+      body: "Download the app from",
       link: { label: "ollama.com", href: "https://ollama.com/download" },
     },
     {
       n: 2,
-      title: "Descarga el modelo",
-      body: "Abre la terminal y ejecuta:",
+      title: "Pull the model",
+      body: "Open a terminal and run:",
       cmd: "ollama pull llama3.1:8b",
     },
     {
       n: 3,
-      title: "Arranca el servicio",
-      body: "Si no usas la app, ejecuta:",
+      title: "Start the service",
+      body: "If you don't use the app, run:",
       cmd: "ollama serve",
     },
     {
       n: 4,
-      title: "Refresca esta página",
-      body: "Detectaremos Ollama automáticamente.",
+      title: "Refresh this page",
+      body: "We'll detect Ollama automatically.",
     },
   ]
 
   return (
-    <div className="w-full border-b border-white/5 bg-ink-950/30 px-4 py-2">
+    <div className="w-full border-b border-white/10 bg-ink-950/30 px-4 py-2 sm:px-5">
       <div className="flex items-center gap-2">
+        <span className="hidden font-mono text-[10px] uppercase tracking-widest text-ink-500 sm:inline">
+          2 · AI engine
+        </span>
         <button
           type="button"
           onClick={() => setOpen((p) => !p)}
           aria-expanded={open}
           aria-controls="llm-settings-panel"
-          aria-label="Configurar modelo de lenguaje local"
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/5 bg-white/[0.02] px-2 py-1 text-[11px] text-ink-400 transition hover:border-white/10 hover:bg-white/[0.05] hover:text-ink-200"
+          aria-label="Configure local language model"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-ink-300 transition hover:border-white/25 hover:bg-white/[0.06] hover:text-ink-100"
         >
           <CpuIcon />
-          <span>Modo LLM</span>
+          <span>LLM mode</span>
           {status === "checking" ? (
             <Spinner />
           ) : detected ? (
@@ -253,7 +256,7 @@ export function LlmSettings({ mode, onModeChange }: Props) {
             className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300"
           >
             <span aria-hidden className="h-1 w-1 rounded-full bg-emerald-400" />
-            Usando {firstModel}
+            Using {firstModel}
           </span>
         )}
 
@@ -261,17 +264,17 @@ export function LlmSettings({ mode, onModeChange }: Props) {
           <button
             type="button"
             onClick={handleToggle}
-            className="rounded-md px-2 py-1 text-[11px] font-semibold text-brand-300 transition hover:bg-brand-500/10"
+            className="rounded-full border border-brand-500/40 bg-brand-500/10 px-2.5 py-1 text-[11px] font-semibold text-brand-300 transition hover:bg-brand-500/20"
           >
-            Activar mi LLM
+            Enable my LLM
           </button>
         )}
 
         <Link
           href="/account/ai-keys"
-          className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-ink-400 transition hover:text-ink-100"
+          className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-ink-400 underline-offset-2 transition hover:text-ink-100 hover:underline"
         >
-          Más IAs &amp; API keys →
+          More AIs &amp; API keys →
         </Link>
       </div>
 
@@ -288,7 +291,7 @@ export function LlmSettings({ mode, onModeChange }: Props) {
             <div className="mt-2 rounded-xl border border-white/5 bg-ink-900/60 p-3">
               {status === "checking" && (
                 <p className="flex items-center gap-2 text-[11px] text-ink-400">
-                  <Spinner /> Buscando Ollama en localhost:11434...
+                  <Spinner /> Looking for Ollama on localhost:11434…
                 </p>
               )}
 
@@ -297,11 +300,11 @@ export function LlmSettings({ mode, onModeChange }: Props) {
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <p className="text-[11px] font-semibold text-emerald-300">
-                        Ollama detectado
+                        Ollama detected
                       </p>
                       <p className="mt-0.5 text-[10px] text-ink-400">
-                        {models.length} modelo{models.length === 1 ? "" : "s"}{" "}
-                        disponible{models.length === 1 ? "" : "s"}
+                        {models.length} model{models.length === 1 ? "" : "s"}{" "}
+                        available
                       </p>
                     </div>
                     <button
@@ -313,7 +316,7 @@ export function LlmSettings({ mode, onModeChange }: Props) {
                           : "bg-brand-500 text-ink-950 hover:bg-brand-400"
                       }`}
                     >
-                      {isActive ? "Desactivar" : "Usar mi LLM"}
+                      {isActive ? "Disable" : "Use my LLM"}
                     </button>
                   </div>
 
@@ -336,9 +339,9 @@ export function LlmSettings({ mode, onModeChange }: Props) {
                   )}
 
                   <p className="border-t border-white/5 pt-2 text-[10px] leading-relaxed text-ink-500">
-                    Tus datos salen del navegador sólo hacia tu Ollama local. Si
-                    Ollama no responde, el asesor usa automáticamente el modo
-                    determinista.
+                    Your data only leaves the browser towards your local
+                    Ollama. If Ollama doesn&apos;t respond, the advisor
+                    automatically falls back to basic mode.
                   </p>
                 </div>
               )}
@@ -351,8 +354,8 @@ export function LlmSettings({ mode, onModeChange }: Props) {
                       className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-500"
                     />
                     <p className="text-[11px] text-ink-300">
-                      Ollama no está corriendo. Para usar tu propio LLM sigue
-                      estos pasos:
+                      Ollama isn&apos;t running. To use your own LLM, follow
+                      these steps:
                     </p>
                   </div>
                   <ol className="space-y-2 pl-1">
@@ -389,7 +392,7 @@ export function LlmSettings({ mode, onModeChange }: Props) {
                               <button
                                 type="button"
                                 onClick={() => handleCopy(s.cmd!)}
-                                aria-label={`Copiar comando: ${s.cmd}`}
+                                aria-label={`Copy command: ${s.cmd}`}
                                 className="flex h-5 w-5 items-center justify-center rounded text-ink-400 transition hover:bg-white/5 hover:text-ink-100"
                               >
                                 {copied === s.cmd ? (
@@ -412,7 +415,7 @@ export function LlmSettings({ mode, onModeChange }: Props) {
                       onClick={() => void checkOllama()}
                       className="text-[10px] font-semibold text-brand-300 hover:underline"
                     >
-                      Reintentar detección
+                      Retry detection
                     </button>
                   </div>
                 </div>

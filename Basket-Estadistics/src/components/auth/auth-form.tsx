@@ -216,7 +216,7 @@ export function AuthForm({ variant, stats }: AuthFormProps) {
   }
 
   return (
-    <div className="flex min-h-dvh w-full bg-ink-950">
+    <div className="flex min-h-dvh w-full">
       <div className="flex w-full flex-col lg:w-[42%] xl:w-[40%]">
         <div className="flex items-center justify-between px-6 pt-6 sm:px-10 sm:pt-8">
           <Link
