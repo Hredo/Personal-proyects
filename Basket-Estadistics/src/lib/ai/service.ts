@@ -77,7 +77,7 @@ Tu tarea es analizar las necesidades de un equipo y proporcionar recomendaciones
 
 INFORMACIÓN DEL EQUIPO:
 - Nombre: ${name}
-- Liga: ${league.name} (${league.country})
+- Liga: ${league.name} (${league.region})
 - Plantilla actual: ${rosterNote}
 
 CONSULTA DEL USUARIO:

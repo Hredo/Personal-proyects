@@ -36,18 +36,12 @@ function setError(msg: string): void {
 
 function buildPlayerContext(profile: PlayerProfile): string {
   const latest = profile.seasons[0]
-  const age = profile.birthdate
-    ? Math.floor(
-        (Date.now() - new Date(profile.birthdate).getTime()) /
-          (1000 * 60 * 60 * 24 * 365.25),
-      )
-    : null
 
   const lines: string[] = []
   lines.push(`# Jugador mencionado en la consulta`)
   lines.push(`- Nombre: ${profile.fullName}`)
   lines.push(`- Slug: ${profile.slug}`)
-  lines.push(`- Liga: ${profile.league.name} (${profile.league.country})`)
+  lines.push(`- Liga: ${profile.league.name} (${profile.league.region})`)
   if (profile.team) {
     lines.push(`- Equipo actual: ${profile.team.name}`)
   } else {
@@ -55,37 +49,27 @@ function buildPlayerContext(profile: PlayerProfile): string {
   }
   if (profile.position) lines.push(`- Posición: ${profile.position}`)
   if (profile.nationality) lines.push(`- Nacionalidad: ${profile.nationality}`)
-  if (age !== null) lines.push(`- Edad: ${age} años`)
   if (profile.heightCm)
     lines.push(`- Altura: ${(profile.heightCm / 100).toFixed(2)} m`)
 
   if (latest) {
-    const fmtPct = (v: number | null | undefined): string => {
-      if (v === null || v === undefined) return "—"
-      const asPercent = v <= 1 ? v * 100 : v
-      return `${asPercent.toFixed(1)}%`
-    }
+    const gp = latest.gamesPlayed || 1
     lines.push("")
-    lines.push(`Última temporada registrada (${latest.year}):`)
+    lines.push(`Última temporada registrada (${latest.seasonName}):`)
     if (latest.gamesPlayed !== null)
       lines.push(`- Partidos: ${latest.gamesPlayed}`)
-    if (latest.minutesPerGame !== null)
-      lines.push(`- Minutos por partido: ${formatStat(latest.minutesPerGame)}`)
-    if (latest.points !== null)
-      lines.push(`- Puntos: ${formatStat(latest.points)} PPG`)
-    if (latest.rebounds !== null)
-      lines.push(`- Rebotes: ${formatStat(latest.rebounds)} RPG`)
-    if (latest.assists !== null)
-      lines.push(`- Asistencias: ${formatStat(latest.assists)} APG`)
-    if (latest.steals !== null)
-      lines.push(`- Robos: ${formatStat(latest.steals)} SPG`)
-    if (latest.blocks !== null)
-      lines.push(`- Tapones: ${formatStat(latest.blocks)} BPG`)
-    if (latest.turnovers !== null)
-      lines.push(`- Pérdidas: ${formatStat(latest.turnovers)} TOPG`)
-    if (latest.fgPct !== null) lines.push(`- TC: ${fmtPct(latest.fgPct)}`)
-    if (latest.threePct !== null) lines.push(`- 3P: ${fmtPct(latest.threePct)}`)
-    if (latest.ftPct !== null) lines.push(`- TL: ${fmtPct(latest.ftPct)}`)
+    if (latest.pointsTotal !== null)
+      lines.push(`- Puntos: ${formatStat(latest.pointsTotal / gp)} PPG`)
+    if (latest.reboundsTotal !== null)
+      lines.push(`- Rebotes: ${formatStat(latest.reboundsTotal / gp)} RPG`)
+    if (latest.assistsTotal !== null)
+      lines.push(`- Asistencias: ${formatStat(latest.assistsTotal / gp)} APG`)
+    if (latest.stealsTotal !== null)
+      lines.push(`- Robos: ${formatStat(latest.stealsTotal / gp)} SPG`)
+    if (latest.blocksTotal !== null)
+      lines.push(`- Tapones: ${formatStat(latest.blocksTotal / gp)} BPG`)
+    if (latest.turnoversTotal !== null)
+      lines.push(`- Pérdidas: ${formatStat(latest.turnoversTotal / gp)} TOPG`)
   } else {
     lines.push("")
     lines.push(`Sin estadísticas de temporada registradas en la base de datos.`)
@@ -103,7 +87,7 @@ function buildTeamContext(team: TeamProfile): string {
   const lines: string[] = []
   lines.push(`# Equipo del usuario`)
   lines.push(`- Nombre: ${team.name}`)
-  lines.push(`- Liga: ${team.league.name} (${team.league.country})`)
+  lines.push(`- Liga: ${team.league.name} (${team.league.region})`)
   lines.push(`- Plantilla: ${team.roster.length} jugadores`)
 
   const positions = team.roster.reduce<Record<string, number>>((acc, p) => {

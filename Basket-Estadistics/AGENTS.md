@@ -9,7 +9,7 @@ Basketball statistics tracking application. This project is part of the Personal
 - Language: TypeScript
 - Framework: React / Next.js (App Router)
 - Styling: Tailwind CSS
-- Database: TBD
+- Database: PostgreSQL (Neon)
 - Package Manager: pnpm
 
 ## Project Conventions
@@ -47,8 +47,7 @@ public/         - Static assets
 ### `listPlayers` query (`src/lib/data/players.ts`)
 - A player can appear in BOTH EuroLeague and ACB filters (their league is derived from `player_stats` joined with `seasons`, not from `players.source`).
 - The "all leagues" view dedupes players by `lower(full_name)` using a `ROW_NUMBER() OVER (PARTITION BY lower(full_name))` in a CTE.
-- SQLite does NOT support `QUALIFY` — must use `WITH ... AS (...)` + `WHERE rn = 1`.
-- The `memberships` CTE must `UNION ALL` (a) `player_stats` joined with `seasons` and (b) players with no stats joined with `leagues` by source. BOTH branches must project the same columns (including `games_played` as nullable in the fallback branch) since the downstream `ranked` CTE uses `coalesce(games_played, 0)`.
+- The `memberships` CTE must `UNION ALL` (a) `player_season_stats` joined with `seasons` and (b) players with no stats joined with `leagues` by source. BOTH branches must project the same columns (including `games_played` as nullable in the fallback branch) since the downstream `ranked` CTE uses `coalesce(games_played, 0)`.
 - When referencing columns from the `memberships`/`ranked` CTEs in `ORDER BY`/window functions, use the un-prefixed column name (e.g. `points`, not `m.points`).
 - The count query (`countSql`) and the list query (`fullSql`) are TWO separate queries — both need the same CTE scaffolding.
 

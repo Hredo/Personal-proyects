@@ -26,7 +26,7 @@ type Props = {
     role: "head_coach" | "assistant_coach" | "staff"
     photoUrl: string | null
     team: { id: string; name: string; slug: string; logoUrl: string | null }
-    league: { id: string; name: string; slug: string; country: string }
+    league: { id: string; name: string; slug: string; region: string }
   }
 }
 

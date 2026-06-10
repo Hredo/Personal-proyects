@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { and, asc, eq, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
-import { leagues, players, teams } from "@/lib/db/schema"
+import { leagues, playerSeasonStats, players, teams } from "@/lib/db/schema"
 import { rateLimit, clientIp } from "@/lib/security/ai-advisor"
 
 export const dynamic = "force-dynamic"
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
   const conditions = []
   if (q) {
     conditions.push(
-      like(sql`lower(${players.fullName})`, `%${q.toLowerCase()}%`),
+      like(sql`lower(${players.firstName} || ' ' || ${players.lastName})`, `%${q.toLowerCase()}%`),
     )
   }
   if (LEAGUES.has(league)) {
@@ -75,9 +75,9 @@ export async function GET(req: Request) {
     .select({
       id: players.id,
       slug: players.slug,
-      fullName: players.fullName,
-      source: players.source,
-      photoUrl: players.photoUrl,
+      fullName: sql<string>`${players.firstName} || ' ' || ${players.lastName}`,
+      source: leagues.slug,
+      photoUrl: players.imageUrl,
       position: players.position,
       nationality: players.nationality,
       teamId: teams.id,
@@ -87,13 +87,14 @@ export async function GET(req: Request) {
       leagueId: leagues.id,
       leagueName: leagues.name,
       leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
+      leagueCountry: leagues.region,
     })
     .from(players)
-    .innerJoin(leagues, eq(players.source, leagues.source))
-    .leftJoin(teams, eq(players.currentTeamId, teams.id))
+    .innerJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
+    .innerJoin(leagues, eq(playerSeasonStats.leagueId, leagues.id))
+    .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .where(where)
-    .orderBy(asc(players.fullName))
+    .orderBy(asc(sql`${players.firstName} || ' ' || ${players.lastName}`))
     .limit(limitNum)
 
   const ranked = q ? rankByQuery(rows, q.toLowerCase()) : rows

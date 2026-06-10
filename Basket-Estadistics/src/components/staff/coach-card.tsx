@@ -29,9 +29,8 @@ type Props = {
     nationality: string | null
     age: number | null
     photoUrl: string | null
-    licenseType: string | null
     team: { id: string; name: string; slug: string; logoUrl: string | null }
-    league: { id: string; name: string; slug: string; country: string }
+    league: { id: string; name: string; slug: string; region: string }
   }
   index?: number
 }
@@ -71,9 +70,6 @@ export function CoachCard({ coach, index = 0 }: Props) {
           <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-ink-300 sm:text-xs">
             {coach.nationality ? <span>{coach.nationality}</span> : null}
             {coach.age != null ? <span>· {coach.age} y.o.</span> : null}
-            {coach.licenseType ? (
-              <span>· License {coach.licenseType}</span>
-            ) : null}
           </p>
 
           <p className="mt-0.5 truncate text-[11px] text-ink-400 sm:text-xs">
@@ -119,14 +115,6 @@ export function CoachCard({ coach, index = 0 }: Props) {
           </p>
           <p className="truncate text-[11px] font-semibold text-ink-100 sm:text-xs">
             {coach.team.name}
-          </p>
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-[9px] uppercase tracking-wider text-ink-500 sm:text-[10px]">
-            License
-          </p>
-          <p className="truncate text-[11px] font-semibold text-ink-100 sm:text-xs">
-            {coach.licenseType ?? "—"}
           </p>
         </div>
       </div>

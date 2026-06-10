@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import {
   leagues,
-  playerStats,
+  playerSeasonStats,
   players,
   seasons,
   teams,
@@ -13,25 +13,22 @@ export type ComparePlayer = {
   id: string
   slug: string
   fullName: string
-  photoUrl: string | null
+  imageUrl: string | null
   position: string | null
   nationality: string | null
   team: { id: string; name: string; slug: string; logoUrl: string | null } | null
-  league: { id: string; name: string; slug: string; country: string }
+  league: { id: string; name: string; slug: string; region: string }
   stats: {
     seasonId: string
-    year: number
+    seasonName: string
     gamesPlayed: number
-    minutesPerGame: number | null
-    points: number | null
-    rebounds: number | null
-    assists: number | null
-    steals: number | null
-    blocks: number | null
-    turnovers: number | null
-    fgPct: number | null
-    threePct: number | null
-    ftPct: number | null
+    pointsTotal: number | null
+    reboundsTotal: number | null
+    assistsTotal: number | null
+    stealsTotal: number | null
+    blocksTotal: number | null
+    turnoversTotal: number | null
+    per: number | null
   } | null
 }
 
@@ -42,8 +39,8 @@ export const getPlayerForCompare = cached(
     .select({
       id: players.id,
       slug: players.slug,
-      fullName: players.fullName,
-      photoUrl: players.photoUrl,
+      fullName: players.firstName,
+      imageUrl: players.imageUrl,
       position: players.position,
       nationality: players.nationality,
       teamId: teams.id,
@@ -53,11 +50,12 @@ export const getPlayerForCompare = cached(
       leagueId: leagues.id,
       leagueName: leagues.name,
       leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
+      leagueRegion: leagues.region,
     })
     .from(players)
-    .innerJoin(leagues, eq(players.source, leagues.source))
-    .leftJoin(teams, eq(players.currentTeamId, teams.id))
+    .innerJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
+    .innerJoin(leagues, eq(playerSeasonStats.leagueId, leagues.id))
+    .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .where(eq(players.slug, slug))
     .limit(1)
 
@@ -67,57 +65,48 @@ export const getPlayerForCompare = cached(
   const statRows = await db
     .select({
       seasonId: seasons.id,
-      year: seasons.year,
-      gamesPlayed: playerStats.gamesPlayed,
-      minutesPerGame: playerStats.minutesPerGame,
-      points: playerStats.points,
-      rebounds: playerStats.rebounds,
-      assists: playerStats.assists,
-      steals: playerStats.steals,
-      blocks: playerStats.blocks,
-      turnovers: playerStats.turnovers,
-      fgPct: playerStats.fgPct,
-      threePct: playerStats.threePct,
-      ftPct: playerStats.ftPct,
+      seasonName: seasons.name,
+      gamesPlayed: playerSeasonStats.gamesPlayed,
+      pointsTotal: playerSeasonStats.pointsTotal,
+      reboundsTotal: playerSeasonStats.reboundsTotal,
+      assistsTotal: playerSeasonStats.assistsTotal,
+      stealsTotal: playerSeasonStats.stealsTotal,
+      blocksTotal: playerSeasonStats.blocksTotal,
+      turnoversTotal: playerSeasonStats.turnoversTotal,
+      per: playerSeasonStats.per,
     })
-    .from(playerStats)
-    .innerJoin(seasons, eq(playerStats.seasonId, seasons.id))
+    .from(playerSeasonStats)
+    .innerJoin(seasons, eq(playerSeasonStats.seasonId, seasons.id))
     .where(
       and(
-        eq(playerStats.playerId, r.id),
-        eq(seasons.leagueId, r.leagueId),
+        eq(playerSeasonStats.playerId, r.id),
+        eq(playerSeasonStats.leagueId, r.leagueId),
       ),
     )
-    .orderBy(desc(seasons.year))
+    .orderBy(desc(seasons.name))
     .limit(1)
 
   return {
     id: r.id,
     slug: r.slug,
     fullName: r.fullName,
-    photoUrl: r.photoUrl,
+    imageUrl: r.imageUrl,
     position: r.position,
     nationality: r.nationality,
     league: {
       id: r.leagueId,
       name: r.leagueName,
       slug: r.leagueSlug,
-      country: r.leagueCountry,
+      region: r.leagueRegion,
     },
     team:
       r.teamId && r.teamName && r.teamSlug
-        ? {
-            id: r.teamId,
-            name: r.teamName,
-            slug: r.teamSlug,
-            logoUrl: r.teamLogo,
-          }
+        ? { id: r.teamId, name: r.teamName, slug: r.teamSlug, logoUrl: r.teamLogo }
         : null,
     stats: statRows[0] ?? null,
   }
   },
   "getPlayerForCompare",
-  ["players", "player-stats"],
+  ["players", "player-season-stats"],
   3600,
 )
-

@@ -84,23 +84,6 @@ export type SourcePlayer = {
   licenseType?: string
 }
 
-export type SourceStats = {
-  playerSourceId: string
-  season: number
-  teamSourceId?: string
-  gamesPlayed: number
-  minutesPerGame?: number
-  points?: number
-  rebounds?: number
-  assists?: number
-  steals?: number
-  blocks?: number
-  turnovers?: number
-  fgPct?: number
-  threePct?: number
-  ftPct?: number
-}
-
 export type SourceCoach = {
   sourceId: string
   fullName: string
@@ -129,6 +112,34 @@ export type SourceTeamStats = {
   sos?: number
 }
 
+export type ExtractedPlayerStat = {
+  playerSourceId: string
+  teamSourceId?: string
+  season: number
+  gamesPlayed: number
+  minutesTotal: number | null
+  pointsTotal: number | null
+  reboundsTotal: number | null
+  assistsTotal: number | null
+  stealsTotal: number | null
+  blocksTotal: number | null
+  turnoversTotal: number | null
+  fgMade: number | null
+  fgAttempted: number | null
+  threeMade: number | null
+  threeAttempted: number | null
+  ftMade: number | null
+  ftAttempted: number | null
+  offensiveRebounds: number | null
+  defensiveRebounds: number | null
+  foulsTotal: number | null
+  plusMinus: number | null
+  per: number | null
+  trueShootingPct: number | null
+  winShares: number | null
+  bpm: number | null
+}
+
 export type SourceAdapter = {
   id: SourceId
   displayName: string
@@ -137,7 +148,7 @@ export type SourceAdapter = {
   seasonCode: string
   fetchTeams(): Promise<SourceTeam[]>
   fetchPlayers(): Promise<SourcePlayer[]>
-  fetchStats(): Promise<SourceStats[]>
+  fetchStats(): Promise<ExtractedPlayerStat[]>
   fetchCoaches(): Promise<SourceCoach[]>
   fetchTeamStats(): Promise<SourceTeamStats[]>
   fetchTeamDetails?(

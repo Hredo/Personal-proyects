@@ -56,13 +56,14 @@ export async function POST(req: Request) {
   let inserted = false
   let duplicate = false
   try {
-    const res = await db.run(sql`
+    const res = await db.execute(sql`
       insert into waitlist_entries (email, created_at, source)
       values (${email}, ${Math.floor(Date.now() / 1000)}, ${source ?? null})
       on conflict (email) do nothing
     `)
-    const changes = (res as { changes?: number }).changes ?? 0
-    inserted = changes > 0
+    const rawRes = res as unknown as { count: number }
+    const rowCount = rawRes.count ?? 0
+    inserted = rowCount > 0
     duplicate = !inserted
   } catch (err) {
     console.error("[waitlist] db insert failed", err)

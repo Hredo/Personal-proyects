@@ -3,8 +3,6 @@ import { TeamHero } from "@/components/teams/team-hero"
 import { TeamRosterGrid } from "@/components/teams/team-roster-grid"
 import { TeamStaffList } from "@/components/teams/team-staff-list"
 import { TeamThemeScope } from "@/components/teams/team-theme-scope"
-import { buildTeamPalette, type TeamPalette } from "@/lib/theme/team-color"
-import { TEAM_COLORS_BY_SOURCE } from "@/lib/theme/team-colors"
 
 type Props = {
   team: {
@@ -12,63 +10,24 @@ type Props = {
     name: string
     slug: string
     logoUrl: string | null
-    country: string | null
     city: string | null
-    shortName: string | null
-    foundedYear: number | null
-    arena: string | null
-    arenaCapacity: number | null
-    websiteUrl: string | null
-    primaryColor: string | null
-    sourceId: string
-    league: { name: string; slug: string; country: string }
+    league: { name: string; slug: string; region: string }
     roster: Parameters<typeof TeamRosterGrid>[0]["players"]
     staff: Parameters<typeof TeamStaffList>[0]["staff"]
   }
 }
 
-function resolveColor(
-  primaryColor: string | null,
-  leagueSlug: string,
-  sourceId: string,
-): string | null {
-  if (primaryColor) return primaryColor
-  const map = TEAM_COLORS_BY_SOURCE[leagueSlug]
-  if (!map) return null
-  return map[sourceId] ?? null
-}
-
-function buildPaletteFor(
-  primaryColor: string | null,
-  leagueSlug: string,
-  sourceId: string,
-): TeamPalette | null {
-  const hex = resolveColor(primaryColor, leagueSlug, sourceId)
-  if (!hex) return null
-  return buildTeamPalette(hex, leagueSlug)
-}
-
 export function TeamDetailView({ team }: Props) {
-  const palette = buildPaletteFor(
-    team.primaryColor,
-    team.league.slug,
-    team.sourceId,
-  )
+  const palette = null
   return (
     <TeamThemeScope palette={palette}>
       <div className="team-detail-page py-8">
         <FadeIn>
           <TeamHero
             name={team.name}
-            shortName={team.shortName}
             logoUrl={team.logoUrl}
             league={team.league}
             city={team.city}
-            country={team.country}
-            foundedYear={team.foundedYear}
-            arena={team.arena}
-            arenaCapacity={team.arenaCapacity}
-            websiteUrl={team.websiteUrl}
           />
         </FadeIn>
 

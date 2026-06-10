@@ -1,4 +1,4 @@
-import { eq, isNull, and, or, sql } from "drizzle-orm"
+import { eq, isNull, or } from "drizzle-orm"
 import { getDb, closeDb } from "@/lib/db/client"
 import { players } from "@/lib/db/schema"
 
@@ -51,17 +51,10 @@ function parseLbToKg(s: string | undefined): number | undefined {
   return Math.round(Number(m[1]) * 0.453592)
 }
 
-function parseBirthdate(s: string | undefined): string | null {
-  if (!s) return null
-  const m = s.match(/(\d{4}-\d{2}-\d{2})/)
-  return m ? m[1] : null
-}
-
 function parseEuroLeaguePlayerPage(html: string): {
   position?: string
   heightCm?: number
   weightKg?: number
-  birthdate?: string
   nationality?: string
 } {
   const out: ReturnType<typeof parseEuroLeaguePlayerPage> = {}
@@ -83,8 +76,6 @@ function parseEuroLeaguePlayerPage(html: string): {
       if (kg) out.weightKg = kg
     }
   }
-  const bMatch = html.match(/data-birth="([^"]+)"/)
-  if (bMatch) out.birthdate = parseBirthdate(bMatch[1]) ?? undefined
   const natMatch = html.match(
     /<strong>\s*Born:\s*<\/strong>[\s\S]{0,2000}?in\s+([A-Za-z\s,\-]+?)\s*<\/span>/i,
   )
@@ -105,15 +96,11 @@ async function backfillEuroLeaguePlayers(): Promise<{
     .select()
     .from(players)
     .where(
-      and(
-        eq(players.source, "euroleague"),
-        or(
-          isNull(players.position),
-          isNull(players.heightCm),
-          isNull(players.weightKg),
-          isNull(players.birthdate),
-          isNull(players.nationality),
-        ),
+      or(
+        isNull(players.position),
+        isNull(players.heightCm),
+        isNull(players.weightKg),
+        isNull(players.nationality),
       ),
     )
   console.log(`[euroleague] ${all.length} players to backfill`)
@@ -129,22 +116,20 @@ async function backfillEuroLeaguePlayers(): Promise<{
       while (attempt < maxAttempts) {
         attempt++
         try {
-          const url = `${BR_BASE}/international/players/${p.sourceId}.html`
+          const url = `${BR_BASE}/international/players/${p.id}.html`
           const html = await fetchWithTimeout(url, BR_HEADERS)
           const parsed = parseEuroLeaguePlayerPage(html)
           const fillIns: Partial<typeof players.$inferInsert> = {}
           if (parsed.position && !p.position) fillIns.position = parsed.position
           if (parsed.heightCm && !p.heightCm) fillIns.heightCm = parsed.heightCm
           if (parsed.weightKg && !p.weightKg) fillIns.weightKg = parsed.weightKg
-          if (parsed.birthdate && !p.birthdate)
-            fillIns.birthdate = parsed.birthdate
           if (parsed.nationality && !p.nationality)
             fillIns.nationality = parsed.nationality
           if (Object.keys(fillIns).length > 0) {
             await db.update(players).set(fillIns).where(eq(players.id, p.id))
             updated++
             console.log(
-              `  [${i}/${all.length}] ${p.fullName}: ${Object.keys(fillIns).join(",")}`,
+              `  [${i}/${all.length}] ${p.firstName} ${p.lastName}: ${Object.keys(fillIns).join(",")}`,
             )
           }
           break
@@ -155,7 +140,7 @@ async function backfillEuroLeaguePlayers(): Promise<{
             await new Promise((r) => setTimeout(r, backoff))
             continue
           }
-          console.warn(`  [${i}/${all.length}] ${p.fullName}: FAILED ${msg}`)
+          console.warn(`  [${i}/${all.length}] ${p.firstName} ${p.lastName}: FAILED ${msg}`)
           break
         }
       }
@@ -176,7 +161,7 @@ type NbaEnv = {
 
 async function fetchNbaPlayerInfo(
   playerId: string,
-): Promise<{ position?: string; birthdate?: string }> {
+): Promise<{ position?: string }> {
   const url = `${NBA_BASE}/commonplayerinfo?LeagueID=00&PlayerID=${playerId}`
   for (let attempt = 1; attempt <= 4; attempt++) {
     const res = await fetch(url, { headers: NBA_HEADERS })
@@ -191,9 +176,6 @@ async function fetchNbaPlayerInfo(
         obj[set.headers[i]] = row[i] ?? null
       return {
         position: obj.POSITION ? String(obj.POSITION) : undefined,
-        birthdate: obj.BIRTHDATE
-          ? String(obj.BIRTHDATE).substring(0, 10)
-          : undefined,
       }
     }
     if (res.status === 429 || res.status >= 500) {
@@ -214,7 +196,7 @@ async function backfillNbaPlayers(): Promise<{
   const all = await db
     .select()
     .from(players)
-    .where(and(eq(players.source, "nba"), isNull(players.position)))
+    .where(isNull(players.position))
   console.log(`[nba] ${all.length} players to backfill`)
   let updated = 0
   let i = 0
@@ -224,20 +206,19 @@ async function backfillNbaPlayers(): Promise<{
       const p = queue.shift()!
       i++
       try {
-        const info = await fetchNbaPlayerInfo(p.sourceId)
+        const info = await fetchNbaPlayerInfo(p.id)
         const fillIns: Partial<typeof players.$inferInsert> = {}
         if (info.position) fillIns.position = info.position
-        if (info.birthdate) fillIns.birthdate = info.birthdate
         if (Object.keys(fillIns).length > 0) {
           await db.update(players).set(fillIns).where(eq(players.id, p.id))
           updated++
           console.log(
-            `  [${i}/${all.length}] ${p.fullName}: ${Object.keys(fillIns).join(",")}`,
+            `  [${i}/${all.length}] ${p.firstName} ${p.lastName}: ${Object.keys(fillIns).join(",")}`,
           )
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        console.warn(`  [${i}/${all.length}] ${p.fullName}: FAILED ${msg}`)
+        console.warn(`  [${i}/${all.length}] ${p.firstName} ${p.lastName}: FAILED ${msg}`)
       }
       await new Promise((r) => setTimeout(r, 50))
     }

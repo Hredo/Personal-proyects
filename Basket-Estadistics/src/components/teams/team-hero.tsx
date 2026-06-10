@@ -2,30 +2,18 @@ import { TeamLogoHero } from "@/components/teams/team-logo-hero"
 
 type Props = {
   name: string
-  shortName: string | null
   logoUrl: string | null
-  league: { name: string; slug: string; country: string }
+  league: { name: string; slug: string; region: string }
   city: string | null
-  country: string | null
-  foundedYear: number | null
-  arena: string | null
-  arenaCapacity: number | null
-  websiteUrl: string | null
 }
 
 export function TeamHero({
   name,
-  shortName,
   logoUrl,
   league,
   city,
-  country,
-  foundedYear,
-  arena,
-  arenaCapacity,
-  websiteUrl,
 }: Props) {
-  const location = [city, country].filter(Boolean).join(", ") || null
+  const location = city
   return (
     <section
       className="team-hero gh-sheen relative overflow-hidden rounded-3xl border border-hairline px-6 py-10 shadow-[var(--shadow-elev-1)] sm:px-10 sm:py-14"
@@ -49,7 +37,7 @@ export function TeamHero({
         style={{ background: "var(--team-500)" }}
       />
       <div className="relative grid grid-cols-1 items-center gap-10 md:grid-cols-[minmax(260px,360px)_1fr]">
-        <TeamLogoHero src={logoUrl} name={name} shortName={shortName} />
+        <TeamLogoHero src={logoUrl} name={name} shortName={null} />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--team-300)]">
             <span
@@ -62,12 +50,6 @@ export function TeamHero({
               <>
                 <span className="text-ink-500">·</span>
                 <span className="text-ink-300">{location}</span>
-              </>
-            ) : null}
-            {foundedYear ? (
-              <>
-                <span className="text-ink-500">·</span>
-                <span className="text-ink-300">Founded {foundedYear}</span>
               </>
             ) : null}
           </div>
@@ -83,30 +65,6 @@ export function TeamHero({
           >
             {name}
           </h1>
-          {arena ? (
-            <p className="mt-3 text-sm text-ink-200">
-              <span className="text-ink-400">Home:</span>{" "}
-              <span className="font-semibold text-ink-100">{arena}</span>
-              {arenaCapacity ? (
-                <span className="text-ink-400">
-                  {" "}
-                  · {arenaCapacity.toLocaleString("en-US")} seats
-                </span>
-              ) : null}
-            </p>
-          ) : null}
-          {websiteUrl ? (
-            <p className="mt-1 text-sm">
-              <a
-                href={websiteUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="text-[var(--team-300)] transition hover:text-[var(--team-200)]"
-              >
-                {websiteUrl.replace(/^https?:\/\//, "")} ↗
-              </a>
-            </p>
-          ) : null}
         </div>
       </div>
     </section>

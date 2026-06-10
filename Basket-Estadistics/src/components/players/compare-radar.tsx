@@ -20,37 +20,64 @@ const AXES: Axis[] = [
     key: "scoring",
     label: "Anotación",
     max: 32,
-    pick: (p) => num(p.stats?.points),
+    pick: (p) =>
+      num(
+        p.stats != null
+          ? (p.stats.pointsTotal ?? 0) / (p.stats.gamesPlayed || 1)
+          : null,
+      ),
   },
   {
     key: "playmaking",
     label: "Asistencias",
     max: 11,
-    pick: (p) => num(p.stats?.assists),
+    pick: (p) =>
+      num(
+        p.stats != null
+          ? (p.stats.assistsTotal ?? 0) / (p.stats.gamesPlayed || 1)
+          : null,
+      ),
   },
   {
     key: "rebounding",
     label: "Rebote",
     max: 13,
-    pick: (p) => num(p.stats?.rebounds),
+    pick: (p) =>
+      num(
+        p.stats != null
+          ? (p.stats.reboundsTotal ?? 0) / (p.stats.gamesPlayed || 1)
+          : null,
+      ),
   },
   {
     key: "defense",
     label: "Defensa",
     max: 4.5,
-    pick: (p) => sumOrNull(num(p.stats?.steals), num(p.stats?.blocks)),
+    pick: (p) => {
+      if (!p.stats) return null
+      const st = p.stats
+      return sumOrNull(
+        num(st.stealsTotal != null ? st.stealsTotal / (st.gamesPlayed || 1) : null),
+        num(st.blocksTotal != null ? st.blocksTotal / (st.gamesPlayed || 1) : null),
+      )
+    },
   },
   {
     key: "efficiency",
-    label: "FG%",
-    max: 0.65,
-    pick: (p) => num(p.stats?.fgPct),
+    label: "PER",
+    max: 35,
+    pick: (p) => num(p.stats?.per),
   },
   {
     key: "range",
-    label: "3P%",
-    max: 0.5,
-    pick: (p) => num(p.stats?.threePct),
+    label: "Pérdidas",
+    max: 5,
+    pick: (p) =>
+      num(
+        p.stats != null
+          ? (p.stats.turnoversTotal ?? 0) / (p.stats.gamesPlayed || 1)
+          : null,
+      ),
   },
 ]
 

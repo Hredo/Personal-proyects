@@ -11,8 +11,7 @@ export type CoachListItem = {
   nationality: string | null
   age: number | null
   photoUrl: string | null
-  licenseType: string | null
-  league: { id: string; name: string; slug: string; country: string }
+  league: { id: string; name: string; slug: string; region: string }
   team: { id: string; name: string; slug: string; logoUrl: string | null }
 }
 
@@ -78,11 +77,10 @@ export async function listCoaches(
       nationality: coaches.nationality,
       age: coaches.age,
       photoUrl: coaches.photoUrl,
-      licenseType: coaches.licenseType,
       leagueId: leagues.id,
       leagueName: leagues.name,
       leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
+      leagueRegion: leagues.region,
       teamId: teams.id,
       teamName: teams.name,
       teamSlug: teams.slug,
@@ -107,12 +105,11 @@ export async function listCoaches(
       nationality: r.nationality,
       age: r.age,
       photoUrl: r.photoUrl,
-      licenseType: r.licenseType,
       league: {
         id: r.leagueId,
         name: r.leagueName,
         slug: r.leagueSlug,
-        country: r.leagueCountry,
+        region: r.leagueRegion,
       },
       team: {
         id: r.teamId,
@@ -168,11 +165,10 @@ export async function listCoachesByTeam(
       nationality: coaches.nationality,
       age: coaches.age,
       photoUrl: coaches.photoUrl,
-      licenseType: coaches.licenseType,
       leagueId: leagues.id,
       leagueName: leagues.name,
       leagueSlug: leagues.slug,
-      leagueCountry: leagues.country,
+      leagueRegion: leagues.region,
       teamId: teams.id,
       teamName: teams.name,
       teamSlug: teams.slug,
@@ -192,12 +188,11 @@ export async function listCoachesByTeam(
     nationality: r.nationality,
     age: r.age,
     photoUrl: r.photoUrl,
-    licenseType: r.licenseType,
     league: {
       id: r.leagueId,
       name: r.leagueName,
       slug: r.leagueSlug,
-      country: r.leagueCountry,
+      region: r.leagueRegion,
     },
     team: {
       id: r.teamId,

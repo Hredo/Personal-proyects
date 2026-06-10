@@ -60,7 +60,7 @@ export function isAdmin(u: SessionUser | null | undefined): boolean {
   return userPlan(u ?? null) === "admin"
 }
 
-export function planLabel(p: Plan): string {
+export function planLabel(p: Plan | "admin"): string {
   if (p === "admin") return "Admin"
   if (p === "pro") return "Pro"
   return "Free"

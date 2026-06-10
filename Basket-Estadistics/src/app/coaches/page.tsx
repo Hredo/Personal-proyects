@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { DirectoryControls } from "@/components/ui/directory-controls"
 import { CoachesInfiniteView } from "@/components/staff/coaches-infinite-view"
 import { DirectoryHero } from "@/components/ui/directory-hero"
+import { StickyFilterBar } from "@/components/ui/sticky-filter-bar"
 import { listCoaches, type ListCoachesInput } from "@/lib/data/staff"
 
 type SearchParams = Partial<
@@ -55,7 +56,7 @@ export default async function CoachesPage(props: {
   const result = await listCoaches(input)
 
   return (
-    <div className="pb-10 sm:pb-14">
+    <div className="full-bleed relative pb-10 sm:pb-14">
       <DirectoryHero
         eyebrow="Directory · Staff"
         title="Coaches"
@@ -69,16 +70,15 @@ export default async function CoachesPage(props: {
         ]}
       />
 
-      <div className="sticky top-[68px] z-30 -mx-4 mb-7 mt-7 px-4 py-3 sm:-mx-6 sm:px-6">
-        <div className="gh-glass rounded-2xl px-3 py-2.5 sm:px-4">
-          <DirectoryControls
-            basePath="/coaches"
-            kind="coaches"
-            total={result.total}
-            showing={result.items.length}
-          />
-        </div>
-      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <StickyFilterBar>
+        <DirectoryControls
+          basePath="/coaches"
+          kind="coaches"
+          total={result.total}
+          showing={result.items.length}
+        />
+      </StickyFilterBar>
 
       <CoachesInfiniteView
         key={`${input.query ?? ""}|${input.league ?? ""}|${input.role ?? ""}`}
@@ -87,6 +87,7 @@ export default async function CoachesPage(props: {
         league={input.league ?? ""}
         role={input.role ?? ""}
       />
+      </div>
     </div>
   )
 }

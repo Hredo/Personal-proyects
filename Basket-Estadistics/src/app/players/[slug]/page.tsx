@@ -4,10 +4,9 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { and, eq, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
-import { players, playerStats, seasons } from "@/lib/db/schema"
+import { players, playerSeasonStats } from "@/lib/db/schema"
 import { getPlayerBySlug } from "@/lib/data/players"
 import { FadeIn } from "@/components/animations/fade-in"
-import { StatBar } from "@/components/players/stat-bar"
 import { SmartImage } from "@/components/ui/smart-image"
 import { Eyebrow } from "@/components/ui/eyebrow"
 import { leagueAccent } from "@/components/ui/league-badge"
@@ -22,12 +21,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const profile = await getPlayerBySlug(slug)
   if (!profile) return { title: "Player not found" }
+  const season0 = profile.seasons[0]
+  const ppg =
+    season0 && season0.pointsTotal != null && season0.gamesPlayed > 0
+      ? season0.pointsTotal / season0.gamesPlayed
+      : null
   const description = `${profile.fullName} — ${
     profile.position ?? "Player"
   } at ${profile.team?.name ?? "free agent"} in ${profile.league.name}. ${
-    profile.seasons[0]?.points
-      ? `Averaging ${profile.seasons[0].points.toFixed(1)} PPG.`
-      : ""
+    ppg ? `Averaging ${ppg.toFixed(1)} PPG.` : ""
   }`
   return {
     title: profile.fullName,
@@ -42,6 +44,11 @@ function formatHeight(cm: number | null): string {
   const ft = Math.floor(totalIn / 12)
   const inches = Math.round(totalIn - ft * 12)
   return `${ft}'${inches}" (${cm} cm)`
+}
+
+function perGame(total: number | null, gp: number): number | null {
+  if (total == null || gp === 0) return null
+  return total / gp
 }
 
 function formatWeight(kg: number | null): string {
@@ -79,20 +86,21 @@ async function findComparisonCandidates(
     .select({
       id: players.id,
       slug: players.slug,
-      fullName: players.fullName,
-      points: sql<number | null>`max(${playerStats.points})`,
+      fullName:
+        sql<string>`${players.firstName} || ' ' || ${players.lastName}`,
+      points:
+        sql<number | null>`max(coalesce(${playerSeasonStats.pointsTotal}, 0))`,
     })
     .from(players)
-    .leftJoin(playerStats, eq(playerStats.playerId, players.id))
-    .leftJoin(seasons, eq(playerStats.seasonId, seasons.id))
+    .leftJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
     .where(
       and(
-        eq(seasons.leagueId, leagueId),
+        eq(playerSeasonStats.leagueId, leagueId),
         sql`${players.id} <> ${excludePlayerId}`,
       ),
     )
     .groupBy(players.id)
-    .orderBy(sql`max(coalesce(${playerStats.points}, 0)) desc`)
+    .orderBy(sql`max(coalesce(${playerSeasonStats.pointsTotal}, 0)) desc`)
     .limit(6)
   return rows as Array<{
     id: string
@@ -126,10 +134,9 @@ export default async function PlayerPage({ params }: Props) {
       slug: profile.slug,
       position: profile.position,
       nationality: profile.nationality,
-      birthdate: profile.birthdate,
       heightCm: profile.heightCm,
       weightKg: profile.weightKg,
-      photoUrl: profile.photoUrl,
+      photoUrl: profile.imageUrl,
       teamName: profile.team?.name ?? null,
       leagueName: profile.league.name,
     }),
@@ -141,7 +148,7 @@ export default async function PlayerPage({ params }: Props) {
 
   return (
     <div
-      className="relative pb-6 pt-6 sm:pb-10 sm:pt-10"
+      className="full-bleed relative pb-6 pt-6 sm:pb-10 sm:pt-10"
       style={{ ["--lg" as string]: accent.color }}
     >
       <JsonLd data={structuredData} />
@@ -151,6 +158,7 @@ export default async function PlayerPage({ params }: Props) {
         style={{ background: "var(--lg)" }}
       />
       <div aria-hidden className="absolute inset-x-0 -top-6 -z-10 h-60 bg-dot-field opacity-40" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <FadeIn>
         <Link
           href="/players"
@@ -170,7 +178,7 @@ export default async function PlayerPage({ params }: Props) {
                 style={{ background: "var(--lg)" }}
               />
               <SmartImage
-                src={profile.photoUrl}
+                src={profile.imageUrl}
                 alt={profile.fullName}
                 fit="cover"
                 eager
@@ -183,14 +191,6 @@ export default async function PlayerPage({ params }: Props) {
               <dl className="mt-3 space-y-2">
                 <Row k="Position" v={profile.position ?? "—"} />
                 <Row k="Nationality" v={profile.nationality ?? "—"} />
-                <Row
-                  k="Born"
-                  v={`${formatBirth(profile.birthdate)}${
-                    ageFrom(profile.birthdate)
-                      ? ` (${ageFrom(profile.birthdate)} y.o.)`
-                      : ""
-                  }`}
-                />
                 <Row k="Height" v={formatHeight(profile.heightCm)} />
                 <Row k="Weight" v={formatWeight(profile.weightKg)} />
                 <Row
@@ -235,7 +235,7 @@ export default async function PlayerPage({ params }: Props) {
               {season ? (
                 <p className="mt-3 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-400">
                   <span className="h-1.5 w-1.5 animate-ticker rounded-full bg-positive" />
-                  Season {season.year} · {season.gamesPlayed} games
+                  Season {season.seasonName} · {season.gamesPlayed} games
                 </p>
               ) : null}
             </header>
@@ -250,21 +250,21 @@ export default async function PlayerPage({ params }: Props) {
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
                   <StatTile
                     label="Points"
-                    value={season.points}
+                    value={perGame(season.pointsTotal, season.gamesPlayed)}
                     unit="PPG"
                     highlight
                   />
                   <StatTile
                     label="Rebounds"
-                    value={season.rebounds}
+                    value={perGame(season.reboundsTotal, season.gamesPlayed)}
                     unit="RPG"
                   />
-                  <StatTile label="Assists" value={season.assists} unit="APG" />
-                  <StatTile label="Steals" value={season.steals} unit="SPG" />
-                  <StatTile label="Blocks" value={season.blocks} unit="BPG" />
+                  <StatTile label="Assists" value={perGame(season.assistsTotal, season.gamesPlayed)} unit="APG" />
+                  <StatTile label="Steals" value={perGame(season.stealsTotal, season.gamesPlayed)} unit="SPG" />
+                  <StatTile label="Blocks" value={perGame(season.blocksTotal, season.gamesPlayed)} unit="BPG" />
                   <StatTile
                     label="Turnovers"
-                    value={season.turnovers}
+                    value={perGame(season.turnoversTotal, season.gamesPlayed)}
                     unit="TOPG"
                   />
                 </div>
@@ -275,39 +275,6 @@ export default async function PlayerPage({ params }: Props) {
               No season stats on record for this player yet.
             </div>
           )}
-
-          {season ? (
-            <FadeIn>
-              <section>
-                <h2 className="gh-eyebrow mb-4">
-                  Efficiency
-                </h2>
-                <div className="gh-card space-y-3 p-4 sm:p-5">
-                  <StatBar
-                    label="FG%"
-                    value={season.fgPct}
-                    max={1}
-                    format={(n) => `${(n * 100).toFixed(1)}%`}
-                    hint="league ~46%"
-                  />
-                  <StatBar
-                    label="3P%"
-                    value={season.threePct}
-                    max={1}
-                    format={(n) => `${(n * 100).toFixed(1)}%`}
-                    hint="league ~35%"
-                  />
-                  <StatBar
-                    label="FT%"
-                    value={season.ftPct}
-                    max={1}
-                    format={(n) => `${(n * 100).toFixed(1)}%`}
-                    hint="league ~78%"
-                  />
-                </div>
-              </section>
-            </FadeIn>
-          ) : null}
 
           {candidates.length > 0 ? (
             <FadeIn>
@@ -351,6 +318,7 @@ export default async function PlayerPage({ params }: Props) {
             </section>
           </FadeIn>
         </div>
+      </div>
       </div>
     </div>
   )

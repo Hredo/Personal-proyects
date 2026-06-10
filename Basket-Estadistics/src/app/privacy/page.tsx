@@ -99,7 +99,7 @@ export default function PrivacyPage() {
 
       <Section title="4. Where the data lives">
         <p>
-          The waitlist table lives in a SQLite database on the server, with
+          The waitlist table lives in a PostgreSQL database on the server, with
           backups managed by the hosting provider. The hosting region is the EU.
           Waitlist notification emails (when enabled) are sent via Resend, a
           transactional email provider compliant with GDPR.

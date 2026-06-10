@@ -3,6 +3,7 @@ import { listPlayers, type ListPlayersInput } from "@/lib/data/players"
 import { DirectoryControls } from "@/components/ui/directory-controls"
 import { PlayersInfiniteView } from "@/components/players/players-infinite-view"
 import { DirectoryHero } from "@/components/ui/directory-hero"
+import { StickyFilterBar } from "@/components/ui/sticky-filter-bar"
 
 type SearchParams = Partial<
   Record<keyof ListPlayersInput | "q" | "page", string>
@@ -61,7 +62,7 @@ export default async function PlayersPage(props: {
   const result = await listPlayers(input)
 
   return (
-    <div className="pb-10 sm:pb-14">
+    <div className="full-bleed relative pb-10 sm:pb-14">
       <DirectoryHero
         eyebrow="Directory · Players"
         title="Players"
@@ -75,16 +76,15 @@ export default async function PlayersPage(props: {
         ]}
       />
 
-      <div className="sticky top-[68px] z-30 -mx-4 mb-7 mt-7 px-4 py-3 sm:-mx-6 sm:px-6">
-        <div className="gh-glass rounded-2xl px-3 py-2.5 sm:px-4">
-          <DirectoryControls
-            basePath="/players"
-            kind="players"
-            total={result.total}
-            showing={result.items.length}
-          />
-        </div>
-      </div>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <StickyFilterBar>
+        <DirectoryControls
+          basePath="/players"
+          kind="players"
+          total={result.total}
+          showing={result.items.length}
+        />
+      </StickyFilterBar>
 
       <PlayersInfiniteView
         key={`${input.query ?? ""}|${input.league ?? ""}|${input.sort ?? "points"}|${input.order ?? "desc"}`}
@@ -94,6 +94,7 @@ export default async function PlayersPage(props: {
         sort={input.sort ?? "points"}
         order={input.order ?? "desc"}
       />
+      </div>
     </div>
   )
 }

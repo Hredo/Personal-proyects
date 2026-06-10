@@ -2,7 +2,7 @@ import type { TeamProfile } from "@/lib/data/teams"
 import type { PlayerListItem, PlayerProfile } from "@/lib/data/players"
 import { getPlayerBySlug } from "@/lib/data/players"
 import { getDb } from "@/lib/db/client"
-import { leagues, players, teams } from "@/lib/db/schema"
+import { leagues, playerSeasonStats, players, teams } from "@/lib/db/schema"
 import { and, asc, eq, like, or, sql, type SQL } from "drizzle-orm"
 import { formatStat } from "@/lib/format"
 
@@ -681,7 +681,7 @@ async function findPlayerInQuery(query: string): Promise<PlayerProfile | null> {
   // player's full name (case-insensitive). This collapses the N round-trips
   // of the previous implementation into one DB hit.
   const db = getDb()
-  const nameLower = sql<string>`lower(${players.fullName})`
+  const nameLower = sql<string>`lower(concat(${players.firstName}, ' ', ${players.lastName}))`
 
   // 1. Combined AND query: every token must match.
   const andConditions = tokens.map((t) => like(nameLower, `%${t}%`))
@@ -720,15 +720,14 @@ async function pickPlayer(
   const rows = await db
     .select({
       slug: players.slug,
-      fullName: players.fullName,
-      leagueSlug: leagues.slug,
+      fullName: sql<string>`${players.firstName} || ' ' || ${players.lastName}`,
     })
     .from(players)
-    .innerJoin(leagues, eq(players.source, leagues.source))
-    .leftJoin(teams, eq(players.currentTeamId, teams.id))
+    .innerJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
+    .innerJoin(leagues, eq(playerSeasonStats.leagueId, leagues.id))
+    .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .where(whereClause)
-    // Prefer shorter names (e.g. "Luka Doncic" before "Luka Doncic Jr.").
-    .orderBy(asc(sql`length(${players.fullName})`))
+    .orderBy(asc(sql`length(concat(${players.firstName}, ' ', ${players.lastName}))`))
     .limit(1)
   const r = rows[0]
   if (!r) return undefined
@@ -739,8 +738,8 @@ export { findPlayerInQuery, formatStat, estimateContractValue, getLeagueBadge }
 
 function estimateContractValue(profile: PlayerProfile): string {
   const latest = profile.seasons[0]
-  if (!latest || latest.points === null) return "N/A"
-  const ppg = latest.points
+  if (!latest || latest.pointsTotal === null || latest.gamesPlayed === 0) return "N/A"
+  const ppg = latest.pointsTotal / latest.gamesPlayed
   if (ppg >= 25) return "Max / $50M+"
   if (ppg >= 20) return "All-Star / $30-50M"
   if (ppg >= 15) return "Starter / $15-25M"
@@ -754,24 +753,22 @@ function buildPlayerSpecificAdvice(
   profile: PlayerProfile,
 ): AdvisorOutput {
   const latest = profile.seasons[0]
-  const age = profile.birthdate
-    ? Math.floor(
-        (Date.now() - new Date(profile.birthdate).getTime()) /
-          (1000 * 60 * 60 * 24 * 365.25),
-      )
-    : null
+  const age = null as number | null
+
+  const gp = latest?.gamesPlayed || 1
+  const ppg = latest?.pointsTotal !== null && latest?.pointsTotal !== undefined ? latest.pointsTotal / gp : null
+  const apg = latest?.assistsTotal !== null && latest?.assistsTotal !== undefined ? latest.assistsTotal / gp : null
+  const rpg = latest?.reboundsTotal !== null && latest?.reboundsTotal !== undefined ? latest.reboundsTotal / gp : null
+  const spg = latest?.stealsTotal !== null && latest?.stealsTotal !== undefined ? latest.stealsTotal / gp : null
+  const bpg = latest?.blocksTotal !== null && latest?.blocksTotal !== undefined ? latest.blocksTotal / gp : null
 
   const stats = latest
     ? [
-        latest.points !== null ? `${formatStat(latest.points)} PPG` : null,
-        latest.rebounds !== null ? `${formatStat(latest.rebounds)} RPG` : null,
-        latest.assists !== null ? `${formatStat(latest.assists)} APG` : null,
-        latest.steals !== null ? `${formatStat(latest.steals)} SPG` : null,
-        latest.blocks !== null ? `${formatStat(latest.blocks)} BPG` : null,
-        latest.threePct !== null
-          ? `${formatStat(latest.threePct, 1, "%")} 3P`
-          : null,
-        latest.fgPct !== null ? `${formatStat(latest.fgPct, 1, "%")} FG` : null,
+        ppg !== null ? `${formatStat(ppg)} PPG` : null,
+        rpg !== null ? `${formatStat(rpg)} RPG` : null,
+        apg !== null ? `${formatStat(apg)} APG` : null,
+        spg !== null ? `${formatStat(spg)} SPG` : null,
+        bpg !== null ? `${formatStat(bpg)} BPG` : null,
       ].filter(Boolean)
     : []
 
@@ -783,46 +780,19 @@ function buildPlayerSpecificAdvice(
   const intent: Intent = "scorer"
 
   const strengths: string[] = []
-  if (
-    latest?.points !== null &&
-    latest?.points !== undefined &&
-    latest.points >= 15
-  ) {
+  if (ppg !== null && ppg >= 15) {
     strengths.push("Proven scorer")
   }
-  if (
-    latest?.assists !== null &&
-    latest?.assists !== undefined &&
-    latest.assists >= 5
-  ) {
+  if (apg !== null && apg >= 5) {
     strengths.push("Playmaking")
   }
-  if (
-    latest?.threePct !== null &&
-    latest?.threePct !== undefined &&
-    latest.threePct >= 36
-  ) {
-    strengths.push("Reliable outside shooting")
-  }
-  if (
-    latest?.rebounds !== null &&
-    latest?.rebounds !== undefined &&
-    latest.rebounds >= 7
-  ) {
+  if (rpg !== null && rpg >= 7) {
     strengths.push("Solid rebounder")
   }
-  if (
-    latest?.steals !== null &&
-    latest?.steals !== undefined &&
-    latest.steals >= 1.5
-  ) {
+  if (spg !== null && spg >= 1.5) {
     strengths.push("Creates steals")
   }
-  if (
-    latest?.blocks !== null &&
-    latest?.blocks !== undefined &&
-    latest.blocks >= 1
-  ) {
+  if (bpg !== null && bpg >= 1) {
     strengths.push("Rim protection")
   }
   if (strengths.length === 0)
@@ -849,11 +819,7 @@ function buildPlayerSpecificAdvice(
         `At ${age}, he brings veteran presence and competitive experience.`,
       )
   }
-  if (
-    latest?.points !== null &&
-    latest?.points !== undefined &&
-    latest.points >= 18
-  ) {
+  if (ppg !== null && ppg >= 18) {
     fitParts.push("Differential scorer — will take the key clutch possessions.")
   }
 

@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db/client"
 import {
   coaches,
   leagues,
-  playerStats,
+  playerSeasonStats,
   players,
   seasons,
   teams,
@@ -14,7 +14,7 @@ export type LeagueScorer = {
   playerId: string
   fullName: string
   slug: string
-  photoUrl: string | null
+  imageUrl: string | null
   team: { id: string; name: string; slug: string; logoUrl: string | null } | null
   ppg: number
 }
@@ -23,11 +23,9 @@ export type LeagueOverview = {
   id: string
   slug: string
   name: string
-  country: string
+  region: string
   logoUrl: string | null
-  source: string
   seasonLabel: string | null
-  seasonYear: number | null
   teamCount: number
   playerCount: number
   coachCount: number
@@ -45,48 +43,50 @@ type LeagueRow = {
   id: string
   slug: string
   name: string
-  country: string
+  region: string
   logoUrl: string | null
-  source: string
 }
 
-function formatSeasonLabel(year: number | null): string | null {
-  if (year == null) return null
-  const next = year + 1
-  const yy = String(next).slice(-2)
-  return `${year}-${yy}`
+function formatSeasonLabel(name: string | null): string | null {
+  if (!name) return null
+  return name
 }
 
 async function fetchLatestSeason(
   db: ReturnType<typeof getDb>,
   leagueId: string,
-): Promise<{ id: string; year: number } | null> {
+): Promise<{ id: string; name: string } | null> {
   const rows = await db
-    .select({ id: seasons.id, year: seasons.year })
+    .select({ id: seasons.id, name: seasons.name })
     .from(seasons)
-    .where(eq(seasons.leagueId, leagueId))
-    .orderBy(desc(seasons.year))
+    .innerJoin(
+      playerSeasonStats,
+      and(
+        eq(playerSeasonStats.seasonId, seasons.id),
+        eq(playerSeasonStats.leagueId, leagueId),
+      ),
+    )
+    .orderBy(desc(seasons.name))
     .limit(1)
-  const r = rows[0]
-  return r ? { id: r.id, year: r.year } : null
+  return rows[0] ?? null
 }
 
 async function fetchCounts(
   db: ReturnType<typeof getDb>,
-  league: LeagueRow,
+  leagueId: string,
 ): Promise<{ teamCount: number; playerCount: number; coachCount: number }> {
   const [t] = await db
-    .select({ c: sql<number>`count(*)` })
-    .from(teams)
-    .where(eq(teams.leagueId, league.id))
+    .select({ c: sql<number>`count(distinct team_id)` })
+    .from(playerSeasonStats)
+    .where(eq(playerSeasonStats.leagueId, leagueId))
   const [p] = await db
-    .select({ c: sql<number>`count(*)` })
-    .from(players)
-    .where(eq(players.source, league.source))
+    .select({ c: sql<number>`count(distinct player_id)` })
+    .from(playerSeasonStats)
+    .where(eq(playerSeasonStats.leagueId, leagueId))
   const [c] = await db
     .select({ c: sql<number>`count(*)` })
     .from(coaches)
-    .where(eq(coaches.leagueId, league.id))
+    .where(eq(coaches.leagueId, leagueId))
   return {
     teamCount: Number(t?.c ?? 0),
     playerCount: Number(p?.c ?? 0),
@@ -102,40 +102,35 @@ async function fetchTopScorers(
   const rows = await db
     .select({
       playerId: players.id,
-      fullName: players.fullName,
+      fullName: sql<string>`${players.firstName} || ' ' || ${players.lastName}`,
       slug: players.slug,
-      photoUrl: players.photoUrl,
-      ppg: playerStats.points,
+      imageUrl: players.imageUrl,
+      ppg: playerSeasonStats.pointsTotal,
       teamId: teams.id,
       teamName: teams.name,
       teamSlug: teams.slug,
       teamLogo: teams.logoUrl,
     })
-    .from(playerStats)
-    .innerJoin(players, eq(playerStats.playerId, players.id))
-    .leftJoin(teams, eq(playerStats.teamId, teams.id))
+    .from(playerSeasonStats)
+    .innerJoin(players, eq(playerSeasonStats.playerId, players.id))
+    .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .where(
       and(
-        eq(playerStats.seasonId, seasonId),
-        isNotNull(playerStats.points),
-        sql`${playerStats.gamesPlayed} >= 5`,
+        eq(playerSeasonStats.seasonId, seasonId),
+        isNotNull(playerSeasonStats.pointsTotal),
+        sql`${playerSeasonStats.gamesPlayed} >= 5`,
       ),
     )
-    .orderBy(sql`${playerStats.points} desc`)
+    .orderBy(sql`${playerSeasonStats.pointsTotal} desc`)
     .limit(limit)
   return rows.map((r) => ({
     playerId: r.playerId,
     fullName: r.fullName,
     slug: r.slug,
-    photoUrl: r.photoUrl,
+    imageUrl: r.imageUrl,
     ppg: Number(r.ppg ?? 0),
     team: r.teamId
-      ? {
-          id: r.teamId,
-          name: r.teamName ?? "",
-          slug: r.teamSlug ?? "",
-          logoUrl: r.teamLogo,
-        }
+      ? { id: r.teamId, name: r.teamName ?? "", slug: r.teamSlug ?? "", logoUrl: r.teamLogo }
       : null,
   }))
 }
@@ -148,9 +143,8 @@ export const listLeagueOverviews = cached(
       id: leagues.id,
       slug: leagues.slug,
       name: leagues.name,
-      country: leagues.country,
+      region: leagues.region,
       logoUrl: leagues.logoUrl,
-      source: leagues.source,
     })
     .from(leagues)
     .orderBy(ascLabel(leagues.name))
@@ -158,7 +152,7 @@ export const listLeagueOverviews = cached(
   const overviews = await Promise.all(
     baseRows.map(async (row): Promise<LeagueOverview> => {
       const [counts, season] = await Promise.all([
-        fetchCounts(db, row),
+        fetchCounts(db, row.id),
         fetchLatestSeason(db, row.id),
       ])
       const topScorers = season
@@ -168,11 +162,9 @@ export const listLeagueOverviews = cached(
         id: row.id,
         slug: row.slug,
         name: row.name,
-        country: row.country,
+        region: row.region,
         logoUrl: row.logoUrl,
-        source: row.source,
-        seasonLabel: formatSeasonLabel(season?.year ?? null),
-        seasonYear: season?.year ?? null,
+        seasonLabel: formatSeasonLabel(season?.name ?? null),
         teamCount: counts.teamCount,
         playerCount: counts.playerCount,
         coachCount: counts.coachCount,
@@ -183,7 +175,7 @@ export const listLeagueOverviews = cached(
   return overviews
   },
   "listLeagueOverviews",
-  ["leagues", "seasons", "team-stats"],
+  ["leagues", "seasons", "player-season-stats"],
   600,
 )
 
@@ -194,18 +186,10 @@ function ascLabel(column: typeof leagues.name) {
 export const getGlobalLeagueCounts = cached(
   async (): Promise<GlobalLeagueCounts> => {
     const db = getDb()
-    const [l] = await db
-      .select({ c: sql<number>`count(*)` })
-      .from(leagues)
-    const [p] = await db
-      .select({ c: sql<number>`count(*)` })
-      .from(players)
-    const [t] = await db
-      .select({ c: sql<number>`count(*)` })
-      .from(teams)
-    const [c] = await db
-      .select({ c: sql<number>`count(*)` })
-      .from(coaches)
+    const [l] = await db.select({ c: sql<number>`count(*)` }).from(leagues)
+    const [p] = await db.select({ c: sql<number>`count(*)` }).from(players)
+    const [t] = await db.select({ c: sql<number>`count(*)` }).from(teams)
+    const [c] = await db.select({ c: sql<number>`count(*)` }).from(coaches)
     return {
       leagues: Number(l?.c ?? 0),
       players: Number(p?.c ?? 0),

@@ -1,9 +1,9 @@
 import { fetchJson } from "@/lib/sources/fetcher"
 import {
+  type ExtractedPlayerStat,
   type SourceAdapter,
   type SourceCoach,
   type SourcePlayer,
-  type SourceStats,
   type SourceTeam,
   type SourceTeamStats,
   SOURCE_META,
@@ -196,7 +196,7 @@ export const nbaAdapter: SourceAdapter = {
             foundedYear: obj.YEARFOUNDED ? Number(obj.YEARFOUNDED) : undefined,
           })
         } catch {
-          // ignore — keep default values
+          // ignore
         }
       }),
     )
@@ -232,7 +232,7 @@ export const nbaAdapter: SourceAdapter = {
     return out
   },
 
-  async fetchStats(): Promise<SourceStats[]> {
+  async fetchStats(): Promise<ExtractedPlayerStat[]> {
     const season = SOURCE_META.nba.seasonCode
     const url =
       `${BASE_URL}/leaguegamelog?LeagueID=00&Season=${season}` +
@@ -259,6 +259,10 @@ export const nbaAdapter: SourceAdapter = {
         fg3a: number
         ftm: number
         fta: number
+        offReb: number
+        defReb: number
+        pf: number
+        plusMinus: number
       }
     >()
 
@@ -270,19 +274,9 @@ export const nbaAdapter: SourceAdapter = {
         playerId: key,
         teamId: r.TEAM_ID ? String(r.TEAM_ID) : undefined,
         games: 0,
-        min: 0,
-        pts: 0,
-        reb: 0,
-        ast: 0,
-        stl: 0,
-        blk: 0,
-        tov: 0,
-        fgm: 0,
-        fga: 0,
-        fg3m: 0,
-        fg3a: 0,
-        ftm: 0,
-        fta: 0,
+        min: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, tov: 0,
+        fgm: 0, fga: 0, fg3m: 0, fg3a: 0, ftm: 0, fta: 0,
+        offReb: 0, defReb: 0, pf: 0, plusMinus: 0,
       }
       entry.games += 1
       entry.min += Number(r.MIN ?? 0) || 0
@@ -298,29 +292,45 @@ export const nbaAdapter: SourceAdapter = {
       entry.fg3a += Number(r.FG3A ?? 0) || 0
       entry.ftm += Number(r.FTM ?? 0) || 0
       entry.fta += Number(r.FTA ?? 0) || 0
+      entry.offReb += Number(r.OREB ?? 0) || 0
+      entry.defReb += Number(r.DREB ?? 0) || 0
+      entry.pf += Number(r.PF ?? 0) || 0
+      entry.plusMinus += Number(r.PLUS_MINUS ?? 0) || 0
       accum.set(key, entry)
     }
 
-    const out: SourceStats[] = []
+    const out: ExtractedPlayerStat[] = []
     for (const entry of accum.values()) {
       const g = entry.games
-      const safeRatio = (num: number, den: number) =>
-        den > 0 ? Number((num / den).toFixed(3)) : undefined
+      const tsPct = entry.fga > 0
+        ? Number(((entry.pts) / (2 * (entry.fga + 0.44 * entry.fta))).toFixed(3))
+        : null
       out.push({
         playerSourceId: entry.playerId,
         season: SOURCE_META.nba.season,
         teamSourceId: entry.teamId,
         gamesPlayed: g,
-        minutesPerGame: g > 0 ? Number((entry.min / g).toFixed(2)) : undefined,
-        points: g > 0 ? Number((entry.pts / g).toFixed(2)) : undefined,
-        rebounds: g > 0 ? Number((entry.reb / g).toFixed(2)) : undefined,
-        assists: g > 0 ? Number((entry.ast / g).toFixed(2)) : undefined,
-        steals: g > 0 ? Number((entry.stl / g).toFixed(2)) : undefined,
-        blocks: g > 0 ? Number((entry.blk / g).toFixed(2)) : undefined,
-        turnovers: g > 0 ? Number((entry.tov / g).toFixed(2)) : undefined,
-        fgPct: safeRatio(entry.fgm, entry.fga),
-        threePct: safeRatio(entry.fg3m, entry.fg3a),
-        ftPct: safeRatio(entry.ftm, entry.fta),
+        minutesTotal: entry.min,
+        pointsTotal: entry.pts,
+        reboundsTotal: entry.reb,
+        assistsTotal: entry.ast,
+        stealsTotal: entry.stl,
+        blocksTotal: entry.blk,
+        turnoversTotal: entry.tov,
+        fgMade: entry.fgm,
+        fgAttempted: entry.fga,
+        threeMade: entry.fg3m,
+        threeAttempted: entry.fg3a,
+        ftMade: entry.ftm,
+        ftAttempted: entry.fta,
+        offensiveRebounds: entry.offReb,
+        defensiveRebounds: entry.defReb,
+        foulsTotal: entry.pf,
+        plusMinus: entry.plusMinus,
+        per: null,
+        trueShootingPct: tsPct,
+        winShares: null,
+        bpm: null,
       })
     }
     return out

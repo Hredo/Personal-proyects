@@ -17,7 +17,7 @@ export function DirectoryHero({
   stats?: Stat[]
 }) {
   return (
-    <header className="relative isolate overflow-hidden pb-2 pt-10 sm:pt-14">
+    <header className="full-bleed relative isolate overflow-hidden pb-2 pt-10 sm:pt-14">
       <div
         aria-hidden
         className="absolute -top-28 left-[-6%] -z-10 h-72 w-[640px] animate-aurora rounded-full bg-brand-500/12 blur-3xl"
@@ -26,6 +26,7 @@ export function DirectoryHero({
         aria-hidden
         className="absolute inset-x-0 -top-10 -z-10 h-72 bg-dot-field opacity-50"
       />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
       <div className="flex flex-col gap-7 md:flex-row md:items-end md:justify-between">
         <div>
           <Reveal>
@@ -51,6 +52,7 @@ export function DirectoryHero({
             </div>
           </Reveal>
         ) : null}
+      </div>
       </div>
     </header>
   )

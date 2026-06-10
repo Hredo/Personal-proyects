@@ -63,6 +63,14 @@ function safeDiv(a: number | null, b: number | null): number | null {
   return a / b
 }
 
+function tot(
+  v: number | null | undefined,
+  gp: number | null | undefined,
+): number | null {
+  if (v == null) return null
+  return v / ((gp ?? 1) || 1)
+}
+
 function compareNumbers(
   a: number | null,
   b: number | null,
@@ -80,30 +88,28 @@ function compareNumbers(
 
 function detectArchetype(stats: Stats | null, position: string | null): string {
   if (!stats) return position ?? "No profile"
-  const pts = num(stats.points) ?? 0
-  const ast = num(stats.assists) ?? 0
-  const reb = num(stats.rebounds) ?? 0
-  const blk = num(stats.blocks) ?? 0
-  const stl = num(stats.steals) ?? 0
-  const tp = num(stats.threePct) ?? 0
-  const fg = num(stats.fgPct) ?? 0
+  const gp = stats.gamesPlayed || 1
+  const pts = num(tot(stats.pointsTotal, gp)) ?? 0
+  const ast = num(tot(stats.assistsTotal, gp)) ?? 0
+  const reb = num(tot(stats.reboundsTotal, gp)) ?? 0
+  const blk = num(tot(stats.blocksTotal, gp)) ?? 0
+  const stl = num(tot(stats.stealsTotal, gp)) ?? 0
 
   if (pts >= 24 && ast >= 6) return "Creating star"
-  if (pts >= 22 && tp >= 0.38) return "Perimeter scorer"
-  if (pts >= 20 && fg >= 0.5) return "Efficient finisher"
+  if (pts >= 22) return "Perimeter scorer"
+  if (pts >= 20) return "Efficient finisher"
   if (ast >= 7) return "Floor general"
   if (reb >= 10 && blk >= 1.2) return "Defensive big"
   if (reb >= 9 && pts >= 14) return "Dominant interior"
-  if (stl >= 1.5 && tp >= 0.36) return "Versatile 3&D"
+  if (stl >= 1.5) return "Versatile 3&D"
   if (blk >= 1.5) return "Rim protector"
-  if (tp >= 0.4) return "Shooting specialist"
   if (pts <= 8 && ast <= 3) return "Rotation / Bench"
   return "Balanced role"
 }
 
 function categoryScoring(a: ComparePlayer, b: ComparePlayer): CategoryResult {
-  const av = num(a.stats?.points ?? null)
-  const bv = num(b.stats?.points ?? null)
+  const av = num(tot(a.stats?.pointsTotal, a.stats?.gamesPlayed))
+  const bv = num(tot(b.stats?.pointsTotal, b.stats?.gamesPlayed))
   const cmp = compareNumbers(av, bv)
   return {
     key: "scoring",
@@ -127,8 +133,8 @@ function categoryPlaymaking(
   a: ComparePlayer,
   b: ComparePlayer,
 ): CategoryResult {
-  const av = num(a.stats?.assists ?? null)
-  const bv = num(b.stats?.assists ?? null)
+  const av = num(tot(a.stats?.assistsTotal, a.stats?.gamesPlayed))
+  const bv = num(tot(b.stats?.assistsTotal, b.stats?.gamesPlayed))
   const cmp = compareNumbers(av, bv)
   return {
     key: "playmaking",
@@ -152,8 +158,8 @@ function categoryRebounding(
   a: ComparePlayer,
   b: ComparePlayer,
 ): CategoryResult {
-  const av = num(a.stats?.rebounds ?? null)
-  const bv = num(b.stats?.rebounds ?? null)
+  const av = num(tot(a.stats?.reboundsTotal, a.stats?.gamesPlayed))
+  const bv = num(tot(b.stats?.reboundsTotal, b.stats?.gamesPlayed))
   const cmp = compareNumbers(av, bv)
   return {
     key: "rebounding",
@@ -174,10 +180,10 @@ function categoryRebounding(
 }
 
 function categoryDefense(a: ComparePlayer, b: ComparePlayer): CategoryResult {
-  const aStl = num(a.stats?.steals ?? null) ?? 0
-  const aBlk = num(a.stats?.blocks ?? null) ?? 0
-  const bStl = num(b.stats?.steals ?? null) ?? 0
-  const bBlk = num(b.stats?.blocks ?? null) ?? 0
+  const aStl = num(tot(a.stats?.stealsTotal, a.stats?.gamesPlayed)) ?? 0
+  const aBlk = num(tot(a.stats?.blocksTotal, a.stats?.gamesPlayed)) ?? 0
+  const bStl = num(tot(b.stats?.stealsTotal, b.stats?.gamesPlayed)) ?? 0
+  const bBlk = num(tot(b.stats?.blocksTotal, b.stats?.gamesPlayed)) ?? 0
   const av = aStl + aBlk
   const bv = bStl + bBlk
   const av2 = Number.isFinite(av) && av > 0 ? av : null
@@ -208,12 +214,12 @@ function categoryEfficiency(
   a: ComparePlayer,
   b: ComparePlayer,
 ): CategoryResult {
-  const aFg = num(a.stats?.fgPct ?? null)
-  const aTp = num(a.stats?.threePct ?? null)
-  const aFt = num(a.stats?.ftPct ?? null)
-  const bFg = num(b.stats?.fgPct ?? null)
-  const bTp = num(b.stats?.threePct ?? null)
-  const bFt = num(b.stats?.ftPct ?? null)
+  const aFg = null
+  const aTp = null
+  const aFt = null
+  const bFg = null
+  const bTp = null
+  const bFt = null
   const aAvg = avg([aFg, aTp, aFt])
   const bAvg = avg([bFg, bTp, bFt])
   const cmp = compareNumbers(aAvg, bAvg)
@@ -242,31 +248,27 @@ function categoryAvailability(
   a: ComparePlayer,
   b: ComparePlayer,
 ): CategoryResult {
-  const aMin = num(a.stats?.minutesPerGame ?? null)
-  const bMin = num(b.stats?.minutesPerGame ?? null)
   const aGp = num(a.stats?.gamesPlayed ?? null)
   const bGp = num(b.stats?.gamesPlayed ?? null)
-  const aLoad = aMin != null && aGp != null ? aMin * aGp : (aMin ?? aGp)
-  const bLoad = bMin != null && bGp != null ? bMin * bGp : (bMin ?? bGp)
-  const cmp = compareNumbers(aLoad, bLoad)
+  const cmp = compareNumbers(aGp, bGp)
   return {
     key: "availability",
-    label: "Workload / Minutes",
+    label: "Games played",
     emoji: "⏱️",
     winner: cmp.winner,
     margin: cmp.margin,
-    aValue: aLoad,
-    bValue: bLoad,
+    aValue: aGp,
+    bValue: bGp,
     formatted: {
-      a: `${fmt1(aMin)} min · ${aGp ?? "—"} GP`,
-      b: `${fmt1(bMin)} min · ${bGp ?? "—"} GP`,
+      a: `${aGp ?? "—"} GP`,
+      b: `${bGp ?? "—"} GP`,
     },
     summary:
       cmp.winner === "tie" || cmp.winner === "n/a"
-        ? "Comparable workload."
+        ? "Comparable games played."
         : cmp.winner === "a"
-          ? `${a.fullName} takes on more total minutes this season.`
-          : `${b.fullName} takes on more total minutes this season.`,
+          ? `${a.fullName} has played ${aGp} games this season.`
+          : `${b.fullName} has played ${bGp} games this season.`,
   }
 }
 
@@ -303,8 +305,8 @@ function buildInsights(
     })
   }
 
-  const aTo = num(a.stats?.turnovers ?? null)
-  const bTo = num(b.stats?.turnovers ?? null)
+  const aTo = num(tot(a.stats?.turnoversTotal, a.stats?.gamesPlayed))
+  const bTo = num(tot(b.stats?.turnoversTotal, b.stats?.gamesPlayed))
   if (aTo != null && bTo != null) {
     if (aTo > bTo + 0.6) {
       insights.push({
@@ -321,8 +323,8 @@ function buildInsights(
     }
   }
 
-  const aAst = num(a.stats?.assists ?? null)
-  const bAst = num(b.stats?.assists ?? null)
+  const aAst = num(tot(a.stats?.assistsTotal, a.stats?.gamesPlayed))
+  const bAst = num(tot(b.stats?.assistsTotal, b.stats?.gamesPlayed))
   const aAstTo = safeDiv(aAst, aTo)
   const bAstTo = safeDiv(bAst, bTo)
   if (aAstTo != null && bAstTo != null) {
@@ -340,23 +342,6 @@ function buildInsights(
         text: `AST/TO ratio ${bAstTo.toFixed(2)} — very secure decision-maker.`,
       })
     }
-  }
-
-  const aTp = num(a.stats?.threePct ?? null)
-  const bTp = num(b.stats?.threePct ?? null)
-  if (aTp != null && aTp >= 0.4) {
-    insights.push({
-      kind: "strength",
-      player: "a",
-      text: `Elite perimeter shooter (${(aTp * 100).toFixed(1)}% from three).`,
-    })
-  }
-  if (bTp != null && bTp >= 0.4) {
-    insights.push({
-      kind: "strength",
-      player: "b",
-      text: `Elite perimeter shooter (${(bTp * 100).toFixed(1)}% from three).`,
-    })
   }
 
   if (a.league.slug !== b.league.slug) {
