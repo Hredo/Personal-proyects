@@ -49,13 +49,13 @@ async function main() {
   console.log(`1. Basic SELECT: ${ok === 1 ? "PASS" : "FAIL"}`)
 
   // 2. List existing tables
-  const tables = await sql`
+  const tables = await sql<{ table_name: string }[]>`
     SELECT table_name
     FROM information_schema.tables
     WHERE table_schema = 'public'
     ORDER BY table_name
   `
-  console.log(`2. Tables in public schema: ${tables.length > 0 ? tables.map((r: any) => r.table_name).join(", ") : "(none)"}`)
+  console.log(`2. Tables in public schema: ${tables.length > 0 ? tables.map((r) => r.table_name).join(", ") : "(none)"}`)
 
   // 3. Test Drizzle ORM client
   const db = drizzle(sql, { schema })

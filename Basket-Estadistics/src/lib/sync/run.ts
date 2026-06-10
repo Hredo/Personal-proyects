@@ -102,9 +102,10 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
     const teamIdBySourceId = new Map<string, string>()
 
     for (const st of sourceTeams) {
-      const slug = uniqueSlug(st.name, usedTeamSlugs)
-      let row = teamBySlug.get(slug)
+      const baseSlug = slugify(st.name) || `team-${st.sourceId}`
+      let row = teamBySlug.get(baseSlug)
       if (!row) {
+        const slug = uniqueSlug(baseSlug, usedTeamSlugs)
         const [inserted] = await db
           .insert(teams)
           .values({
@@ -115,7 +116,7 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
           })
           .returning()
         row = inserted
-        usedTeamSlugs.add(slug)
+        teamBySlug.set(slug, row)
       }
       teamIdBySourceId.set(st.sourceId, row.id)
       totals.teams++
