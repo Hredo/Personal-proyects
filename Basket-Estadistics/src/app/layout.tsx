@@ -100,6 +100,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${geist.variable} ${archivo.variable} ${jetbrainsMono.variable}`}
     >
       <body className="font-sans" suppressHydrationWarning>

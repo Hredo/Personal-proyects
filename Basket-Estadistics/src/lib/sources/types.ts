@@ -67,6 +67,7 @@ export type SourceTeam = {
   arenaCapacity?: number
   websiteUrl?: string
   primaryColor?: string
+  secondaryColor?: string
 }
 
 export type SourcePlayer = {
@@ -123,7 +124,6 @@ export type ExtractedPlayerStat = {
   assistsTotal: number | null
   stealsTotal: number | null
   blocksTotal: number | null
-  turnoversTotal: number | null
   fgMade: number | null
   fgAttempted: number | null
   threeMade: number | null

@@ -1,10 +1,10 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { getPlayerForCompare, type ComparePlayer } from "@/lib/data/compare"
+import { getPlayerForCompare } from "@/lib/data/compare"
 import { CompareSearch } from "@/components/players/compare-search"
-import { CompareBar } from "@/components/players/compare-bar"
 import { CompareRadar } from "@/components/players/compare-radar"
 import { CompareAi } from "@/components/players/compare-ai"
+import { CompareStatsTable } from "@/components/players/compare-stats-table"
 import { FadeIn } from "@/components/animations/fade-in"
 import { Reveal } from "@/components/animations/reveal"
 import { Eyebrow } from "@/components/ui/eyebrow"
@@ -18,36 +18,6 @@ export const metadata: Metadata = {
 }
 
 type Search = { a?: string; b?: string }
-
-type SeasonStats = NonNullable<ComparePlayer["stats"]>
-
-function perGame(total: number | null, gp: number): number | null {
-  if (total == null || gp === 0) return null
-  return total / gp
-}
-
-const STAT_KEYS: Array<{
-  key: string
-  label: string
-  getValue: (s: SeasonStats) => number | null
-  fmt: (n: number) => string
-  max: number
-  lowerBetter?: boolean
-}> = [
-  { key: "points", label: "Points / G", getValue: (s) => perGame(s.pointsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 35 },
-  { key: "rebounds", label: "Rebounds / G", getValue: (s) => perGame(s.reboundsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 15 },
-  { key: "assists", label: "Assists / G", getValue: (s) => perGame(s.assistsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 12 },
-  { key: "steals", label: "Steals / G", getValue: (s) => perGame(s.stealsTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 3 },
-  { key: "blocks", label: "Blocks / G", getValue: (s) => perGame(s.blocksTotal, s.gamesPlayed), fmt: (n) => n.toFixed(1), max: 3 },
-  {
-    key: "turnovers",
-    label: "Turnovers / G",
-    getValue: (s) => perGame(s.turnoversTotal, s.gamesPlayed),
-    fmt: (n) => n.toFixed(1),
-    max: 5,
-    lowerBetter: true,
-  },
-]
 
 export default async function ComparePage(props: {
   searchParams: Promise<Search>
@@ -76,8 +46,8 @@ export default async function ComparePage(props: {
             Side-by-side <span className="text-gradient-brand">scouting.</span>
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-sm leading-relaxed text-ink-300 sm:text-base">
-            Pick any two players and compare their production per game and per
-            possession. The green bar flags the leader on every line.
+            Pick any two players and compare every stat per game. The coloured
+            values flag the leader on each line.
           </p>
         </header>
       </Reveal>
@@ -107,43 +77,20 @@ export default async function ComparePage(props: {
 
       {playerA && playerB ? (
         <Reveal>
-          <section className="mt-6 grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[1fr]">
-            <div className="gh-card p-5 sm:p-6">
-              <h2 className="gh-eyebrow">Multi-stat radar</h2>
-              <div className="mt-4 aspect-square w-full">
-                <CompareRadar a={playerA} b={playerB} />
+          <section className="mt-6 sm:mt-8">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
+              <div className="gh-card p-4 sm:p-5">
+                <h2 className="gh-eyebrow">Full stats</h2>
+                <div className="mt-4">
+                  <CompareStatsTable a={playerA} b={playerB} />
+                </div>
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-ink-400">
-                Each axis is scaled against an elite ceiling — more area covered
-                means a more complete profile.
-              </p>
-            </div>
-          </section>
-        </Reveal>
-      ) : null}
-
-      {playerA && playerB ? (
-        <Reveal>
-          <section className="mt-6 gh-card p-5 sm:mt-8 sm:p-6">
-            <h2 className="gh-eyebrow">Per-game production</h2>
-            <div className="mt-5 space-y-5">
-              {STAT_KEYS.map((s) => {
-                const av = playerA.stats ? s.getValue(playerA.stats) : null
-                const bv = playerB.stats ? s.getValue(playerB.stats) : null
-                return (
-                  <CompareBar
-                    key={s.key}
-                    label={s.label}
-                    aName={playerA.fullName}
-                    bName={playerB.fullName}
-                    a={av}
-                    b={bv}
-                    max={s.max}
-                    fmt={s.fmt}
-                    lowerBetter={s.lowerBetter ?? false}
-                  />
-                )
-              })}
+              <div className="gh-card p-4 sm:p-5">
+                <h2 className="gh-eyebrow">Radar</h2>
+                <div className="mt-4 aspect-square w-full">
+                  <CompareRadar a={playerA} b={playerB} />
+                </div>
+              </div>
             </div>
           </section>
         </Reveal>

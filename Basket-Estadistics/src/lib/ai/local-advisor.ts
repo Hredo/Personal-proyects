@@ -1,5 +1,5 @@
 import type { TeamProfile } from "@/lib/data/teams"
-import type { PlayerListItem, PlayerProfile } from "@/lib/data/players"
+import type { PlayerProfile } from "@/lib/data/players"
 import { getPlayerBySlug } from "@/lib/data/players"
 import { getDb } from "@/lib/db/client"
 import { leagues, playerSeasonStats, players, teams } from "@/lib/db/schema"
@@ -428,7 +428,7 @@ function detectIntent(q: string): Intent {
 }
 
 function getPositionBreakdown(
-  roster: PlayerListItem[],
+  roster: TeamProfile["roster"],
 ): Record<string, number> {
   const counts: Record<string, number> = {}
   for (const p of roster) {
@@ -479,7 +479,7 @@ function pickRecommendations(
   return shuffle(pool).slice(0, count)
 }
 
-function analyzeTeamGaps(roster: PlayerListItem[]): string {
+function analyzeTeamGaps(roster: TeamProfile["roster"]): string {
   const counts = getPositionBreakdown(roster)
   const total = roster.length
   if (total === 0) return "Not enough roster information available."

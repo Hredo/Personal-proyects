@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { SmartImage } from "@/components/ui/smart-image"
+import { PctBar } from "@/components/ui/pct-bar"
 import {
   formatHeight,
   formatStat,
@@ -27,10 +28,9 @@ type Props = {
     heightCm: number | null
     weightKg: number | null
     imageUrl: string | null
-    league: { name: string; slug: string; region: string }
+    league: { name: string; slug: string }
     team: {
       name: string
-      slug: string
       logoUrl: string | null
     } | null
     stats: {
@@ -41,7 +41,9 @@ type Props = {
       assistsTotal: number | null
       stealsTotal: number | null
       blocksTotal: number | null
-      turnoversTotal: number | null
+      fgPct: number | null
+      threePct: number | null
+      ftPct: number | null
       per: number | null
     } | null
   }
@@ -123,9 +125,10 @@ export function PlayerCard({ player, index = 0 }: Props) {
         <Stat label="BPG" value={formatStat(pg(s?.blocksTotal, s?.gamesPlayed), 1)} />
       </div>
 
-      <div className="mt-2 hidden grid-cols-2 gap-2 border-t border-white/5 pt-2 font-mono sm:grid">
-        <Stat label="TO" value={formatStat(pg(s?.turnoversTotal, s?.gamesPlayed), 1)} muted />
-        <Stat label="PER" value={formatStat(s?.per, 1)} muted />
+      <div className="mt-2 hidden grid-cols-3 gap-x-3 gap-y-1.5 border-t border-white/5 pt-2 sm:grid">
+        <PctBar label="FG%" value={s?.fgPct} showLabel size="sm" />
+        <PctBar label="3P%" value={s?.threePct} showLabel size="sm" />
+        <PctBar label="FT%" value={s?.ftPct} showLabel size="sm" />
       </div>
 
       <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-widest text-ink-500">
@@ -150,12 +153,10 @@ function Stat({
   label,
   value,
   highlight = false,
-  muted = false,
 }: {
   label: string
   value: string
   highlight?: boolean
-  muted?: boolean
 }) {
   return (
     <div className="min-w-0">
@@ -164,7 +165,7 @@ function Stat({
       </p>
       <p
         className={`truncate text-[11px] font-semibold sm:text-xs ${
-          highlight ? "text-brand-300" : muted ? "text-ink-200" : "text-ink-100"
+          highlight ? "text-brand-300" : "text-ink-100"
         }`}
       >
         {value}

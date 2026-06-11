@@ -19,7 +19,7 @@ const Body = z.object({
   hp: z.string().max(0).optional(),
 })
 
-const NOTIFY_TO = "Hrvaldes22@gmail.com"
+const NOTIFY_TO = SITE.contact
 const NOTIFY_FROM = "waitlist@globalhoopstats.com"
 
 export async function POST(req: Request) {

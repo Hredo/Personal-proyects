@@ -9,6 +9,7 @@ import {
 } from "@/lib/db/schema"
 import { cached } from "@/lib/data/cache"
 import { leagueSlugsFor } from "@/lib/league-groups"
+import { inArray } from "drizzle-orm"
 
 export type PlayerListItem = {
   id: string
@@ -30,7 +31,9 @@ export type PlayerListItem = {
     assistsTotal: number | null
     stealsTotal: number | null
     blocksTotal: number | null
-    turnoversTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
     per: number | null
   } | null
 }
@@ -103,7 +106,12 @@ export async function listPlayers(
         pss.assists_total,
         pss.steals_total,
         pss.blocks_total,
-        pss.turnovers_total,
+        pss.fg_made,
+        pss.fg_attempted,
+        pss.three_made,
+        pss.three_attempted,
+        pss.ft_made,
+        pss.ft_attempted,
         pss.per
       from ${playerSeasonStats} pss
       inner join ${seasons} s on s.id = pss.season_id
@@ -162,7 +170,12 @@ export async function listPlayers(
       assists_total,
       steals_total,
       blocks_total,
-      turnovers_total,
+      fg_made,
+      fg_attempted,
+      three_made,
+      three_attempted,
+      ft_made,
+      ft_attempted,
       per
     from ranked
     where rn = 1
@@ -197,85 +210,103 @@ export async function listPlayers(
     select count(*) as c from ranked where rn = 1
   `
 
-  const [countRow] = (await db.execute(countSql)) as Array<{ c: number | string }>
-  const total = Number(countRow?.c ?? 0)
+  try {
+    const [countRow] = (await db.execute(countSql)) as Array<{ c: number | string }>
+    const total = Number(countRow?.c ?? 0)
 
-  const rawRows = (await db.execute(fullSql)) as Array<{
-    player_id: string
-    full_name: string
-    slug: string
-    nationality: string | null
-    position: string | null
-    height_cm: number | null
-    weight_kg: number | null
-    image_url: string | null
-    league_id: string
-    league_name: string
-    league_slug: string
-    league_region: string
-    team_id: string | null
-    team_name: string | null
-    team_slug: string | null
-    team_logo: string | null
-    season_id: string | null
-    season_name: string | null
-    games_played: number | null
-    points_total: number | null
-    rebounds_total: number | null
-    assists_total: number | null
-    steals_total: number | null
-    blocks_total: number | null
-    turnovers_total: number | null
-    per: number | null
-  }>
+    const rawRows = (await db.execute(fullSql)) as Array<{
+      player_id: string
+      full_name: string
+      slug: string
+      nationality: string | null
+      position: string | null
+      height_cm: number | null
+      weight_kg: number | null
+      image_url: string | null
+      league_id: string
+      league_name: string
+      league_slug: string
+      league_region: string
+      team_id: string | null
+      team_name: string | null
+      team_slug: string | null
+      team_logo: string | null
+      season_id: string | null
+      season_name: string | null
+      games_played: number | null
+      points_total: number | null
+      rebounds_total: number | null
+      assists_total: number | null
+      steals_total: number | null
+      blocks_total: number | null
+      fg_made: number | null
+      fg_attempted: number | null
+      three_made: number | null
+      three_attempted: number | null
+      ft_made: number | null
+      ft_attempted: number | null
+      per: number | null
+    }>
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
-  return {
-    items: rawRows.map((r) => ({
-      id: r.player_id,
-      fullName: r.full_name,
-      slug: r.slug,
-      nationality: r.nationality,
-      position: r.position,
-      heightCm: r.height_cm,
-      weightKg: r.weight_kg,
-      imageUrl: r.image_url,
-      league: {
-        id: r.league_id,
-        name: r.league_name,
-        slug: r.league_slug,
-        region: r.league_region,
-      },
-      team:
-        r.team_id && r.team_name && r.team_slug
-          ? {
-              id: r.team_id,
-              name: r.team_name,
-              slug: r.team_slug,
-              logoUrl: r.team_logo,
-            }
-          : null,
-      stats:
-        r.games_played == null
-          ? null
-          : {
-              seasonId: r.season_id!,
-              seasonName: r.season_name ?? "",
-              gamesPlayed: r.games_played,
-              pointsTotal: r.points_total,
-              reboundsTotal: r.rebounds_total,
-              assistsTotal: r.assists_total,
-              stealsTotal: r.steals_total,
-              blocksTotal: r.blocks_total,
-              turnoversTotal: r.turnovers_total,
-              per: r.per,
-            },
-    })),
-    total,
-    page,
-    pageSize,
-    totalPages,
+    return {
+      items: rawRows.map((r) => ({
+        id: r.player_id,
+        fullName: r.full_name,
+        slug: r.slug,
+        nationality: r.nationality,
+        position: r.position,
+        heightCm: r.height_cm,
+        weightKg: r.weight_kg,
+        imageUrl: r.image_url,
+        league: {
+          id: r.league_id,
+          name: r.league_name,
+          slug: r.league_slug,
+          region: r.league_region,
+        },
+        team:
+          r.team_id && r.team_name && r.team_slug
+            ? {
+                id: r.team_id,
+                name: r.team_name,
+                slug: r.team_slug,
+                logoUrl: r.team_logo,
+              }
+            : null,
+        stats:
+          r.games_played == null
+            ? null
+            : {
+                seasonId: r.season_id!,
+                seasonName: r.season_name ?? "",
+                gamesPlayed: r.games_played,
+                pointsTotal: r.points_total,
+                reboundsTotal: r.rebounds_total,
+                assistsTotal: r.assists_total,
+                stealsTotal: r.steals_total,
+                blocksTotal: r.blocks_total,
+                fgPct: r.fg_made != null && r.fg_attempted != null && r.fg_attempted > 0 ? r.fg_made / r.fg_attempted : null,
+                threePct: r.three_made != null && r.three_attempted != null && r.three_attempted > 0 ? r.three_made / r.three_attempted : null,
+                ftPct: r.ft_made != null && r.ft_attempted != null && r.ft_attempted > 0 ? r.ft_made / r.ft_attempted : null,
+                per: r.per,
+              },
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages,
+    }
+  } catch (error) {
+    console.warn("[listPlayers] falling back to empty result", error)
+    return {
+      items: [],
+      total: 0,
+      page,
+      pageSize,
+      totalPages: 1,
+    }
   }
 }
 
@@ -299,7 +330,9 @@ export type PlayerProfile = {
     assistsTotal: number | null
     stealsTotal: number | null
     blocksTotal: number | null
-    turnoversTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
     per: number | null
   }>
 }
@@ -328,31 +361,69 @@ export const getPlayerBySlug = cached(
     })
     .from(players)
     .innerJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
+    .innerJoin(seasons, eq(playerSeasonStats.seasonId, seasons.id))
     .innerJoin(leagues, eq(playerSeasonStats.leagueId, leagues.id))
     .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .where(eq(players.slug, slug))
+    .orderBy(desc(seasons.name), desc(playerSeasonStats.gamesPlayed))
     .limit(1)
 
   const r = rows[0]
   if (!r) return null
 
-  const statRows = await db
+  const rawStatRows = await db
     .select({
       seasonId: seasons.id,
       seasonName: seasons.name,
+      teamName: teams.name,
       gamesPlayed: playerSeasonStats.gamesPlayed,
       pointsTotal: playerSeasonStats.pointsTotal,
       reboundsTotal: playerSeasonStats.reboundsTotal,
       assistsTotal: playerSeasonStats.assistsTotal,
       stealsTotal: playerSeasonStats.stealsTotal,
       blocksTotal: playerSeasonStats.blocksTotal,
-      turnoversTotal: playerSeasonStats.turnoversTotal,
+      fgMade: playerSeasonStats.fgMade,
+      fgAttempted: playerSeasonStats.fgAttempted,
+      threeMade: playerSeasonStats.threeMade,
+      threeAttempted: playerSeasonStats.threeAttempted,
+      ftMade: playerSeasonStats.ftMade,
+      ftAttempted: playerSeasonStats.ftAttempted,
       per: playerSeasonStats.per,
     })
     .from(playerSeasonStats)
     .innerJoin(seasons, eq(playerSeasonStats.seasonId, seasons.id))
+    .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .where(eq(playerSeasonStats.playerId, r.id))
-    .orderBy(desc(seasons.name))
+    .orderBy(
+      desc(seasons.name),
+      desc(playerSeasonStats.gamesPlayed),
+      sql`${playerSeasonStats.pointsTotal} desc nulls last`,
+    )
+
+  // Seasons and teams can be duplicated by sync (same label under different
+  // ids); keep one line per season + team identity but preserve genuine
+  // mid-season transfers, which carry distinct team names.
+  const seenLines = new Set<string>()
+  const statRows: PlayerProfile["seasons"] = []
+  for (const row of rawStatRows) {
+    const key = `${row.seasonName}::${(row.teamName ?? "").trim().toLowerCase()}`
+    if (seenLines.has(key)) continue
+    seenLines.add(key)
+    statRows.push({
+      seasonId: row.seasonId,
+      seasonName: row.seasonName,
+      gamesPlayed: row.gamesPlayed,
+      pointsTotal: row.pointsTotal,
+      reboundsTotal: row.reboundsTotal,
+      assistsTotal: row.assistsTotal,
+      stealsTotal: row.stealsTotal,
+      blocksTotal: row.blocksTotal,
+      fgPct: row.fgMade != null && row.fgAttempted != null && row.fgAttempted > 0 ? row.fgMade / row.fgAttempted : null,
+      threePct: row.threeMade != null && row.threeAttempted != null && row.threeAttempted > 0 ? row.threeMade / row.threeAttempted : null,
+      ftPct: row.ftMade != null && row.ftAttempted != null && row.ftAttempted > 0 ? row.ftMade / row.ftAttempted : null,
+      per: row.per,
+    })
+  }
 
   return {
     id: r.id,
@@ -460,6 +531,9 @@ export type AutocompletePlayer = {
     assistsTotal: number | null
     stealsTotal: number | null
     blocksTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
     per: number | null
   } | null
 }
@@ -486,7 +560,11 @@ function mapRow(
     seasonId: string | null; seasonName: string | null
     gamesPlayed: number | null
     pointsTotal: number | null; reboundsTotal: number | null; assistsTotal: number | null
-    stealsTotal: number | null; blocksTotal: number | null; per: number | null
+    stealsTotal: number | null; blocksTotal: number | null
+    fgMade: number | null; fgAttempted: number | null
+    threeMade: number | null; threeAttempted: number | null
+    ftMade: number | null; ftAttempted: number | null
+    per: number | null
   },
 ): AutocompletePlayer {
   return {
@@ -513,6 +591,9 @@ function mapRow(
           assistsTotal: r.assistsTotal,
           stealsTotal: r.stealsTotal,
           blocksTotal: r.blocksTotal,
+          fgPct: r.fgMade != null && r.fgAttempted != null && r.fgAttempted > 0 ? r.fgMade / r.fgAttempted : null,
+          threePct: r.threeMade != null && r.threeAttempted != null && r.threeAttempted > 0 ? r.threeMade / r.threeAttempted : null,
+          ftPct: r.ftMade != null && r.ftAttempted != null && r.ftAttempted > 0 ? r.ftMade / r.ftAttempted : null,
           per: r.per,
         }
       : null,
@@ -544,6 +625,12 @@ const AUTOCOMPLETE_COLUMNS = {
   assistsTotal: playerSeasonStats.assistsTotal,
   stealsTotal: playerSeasonStats.stealsTotal,
   blocksTotal: playerSeasonStats.blocksTotal,
+  fgMade: playerSeasonStats.fgMade,
+  fgAttempted: playerSeasonStats.fgAttempted,
+  threeMade: playerSeasonStats.threeMade,
+  threeAttempted: playerSeasonStats.threeAttempted,
+  ftMade: playerSeasonStats.ftMade,
+  ftAttempted: playerSeasonStats.ftAttempted,
   per: playerSeasonStats.per,
 } as const
 
@@ -561,7 +648,10 @@ async function runAutocomplete(
 
   const conditions = []
   if (pattern) conditions.push(like(nameExpr, pattern))
-  if (options.league) conditions.push(eq(leagues.slug, options.league))
+  if (options.league) {
+    const slugs = leagueSlugsFor(options.league)
+    if (slugs) conditions.push(inArray(leagues.slug, slugs))
+  }
   const where = conditions.length ? and(...conditions) : undefined
 
   const orderBy = (() => {
@@ -586,10 +676,20 @@ async function runAutocomplete(
     .leftJoin(teams, eq(playerSeasonStats.teamId, teams.id))
     .leftJoin(seasons, eq(playerSeasonStats.seasonId, seasons.id))
     .where(where)
-    .orderBy(orderBy)
-    .limit(limit)
+    .orderBy(orderBy, desc(sql`coalesce(${playerSeasonStats.gamesPlayed}, 0)`))
+    .limit(limit * 3)
 
-  return rows.map(mapRow)
+  // The join yields one row per stat line; duplicated seasons/teams from sync
+  // would repeat a player, so keep only their best row.
+  const seen = new Set<string>()
+  const deduped: typeof rows = []
+  for (const row of rows) {
+    if (seen.has(row.id)) continue
+    seen.add(row.id)
+    deduped.push(row)
+    if (deduped.length === limit) break
+  }
+  return deduped.map(mapRow)
 }
 
 export function rankByQuery(

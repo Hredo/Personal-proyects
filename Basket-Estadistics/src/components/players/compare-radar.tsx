@@ -69,15 +69,18 @@ const AXES: Axis[] = [
     pick: (p) => num(p.stats?.per),
   },
   {
-    key: "range",
-    label: "Pérdidas",
-    max: 5,
-    pick: (p) =>
-      num(
-        p.stats != null
-          ? (p.stats.turnoversTotal ?? 0) / (p.stats.gamesPlayed || 1)
-          : null,
-      ),
+    key: "shooting",
+    label: "Tiro",
+    max: 0.65,
+    pick: (p) => {
+      if (!p.stats) return null
+      const fg = p.stats.fgPct
+      const three = p.stats.threePct
+      const ft = p.stats.ftPct
+      const vals = [fg, three, ft].filter((v): v is number => v != null)
+      if (vals.length === 0) return null
+      return vals.reduce((a, b) => a + b, 0) / vals.length
+    },
   },
 ]
 

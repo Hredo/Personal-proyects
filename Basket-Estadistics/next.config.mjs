@@ -66,8 +66,8 @@ const nextConfig = {
     if (dev) {
       config.watchOptions = {
         ...(config.watchOptions ?? {}),
-        poll: 1500,
-        aggregateTimeout: 600,
+        poll: 300,
+        aggregateTimeout: 150,
         ignored: [
           "**/node_modules/**",
           "**/.git/**",

@@ -278,7 +278,6 @@ export const nbaAdapter: SourceAdapter = {
         ast: number
         stl: number
         blk: number
-        tov: number
         fgm: number
         fga: number
         fg3m: number
@@ -306,7 +305,6 @@ export const nbaAdapter: SourceAdapter = {
         ast: 0,
         stl: 0,
         blk: 0,
-        tov: 0,
         fgm: 0,
         fga: 0,
         fg3m: 0,
@@ -325,7 +323,6 @@ export const nbaAdapter: SourceAdapter = {
       entry.ast += Number(r.AST ?? 0) || 0
       entry.stl += Number(r.STL ?? 0) || 0
       entry.blk += Number(r.BLK ?? 0) || 0
-      entry.tov += Number(r.TOV ?? 0) || 0
       entry.fgm += Number(r.FGM ?? 0) || 0
       entry.fga += Number(r.FGA ?? 0) || 0
       entry.fg3m += Number(r.FG3M ?? 0) || 0
@@ -359,7 +356,6 @@ export const nbaAdapter: SourceAdapter = {
         assistsTotal: entry.ast,
         stealsTotal: entry.stl,
         blocksTotal: entry.blk,
-        turnoversTotal: entry.tov,
         fgMade: entry.fgm,
         fgAttempted: entry.fga,
         threeMade: entry.fg3m,

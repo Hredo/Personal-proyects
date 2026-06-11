@@ -13,6 +13,7 @@ export const config = {
     "/api/compare/ai/:path*",
     "/api/account/:path*",
     "/api/admin/:path*",
+    "/admin/:path*",
   ],
   runtime: "nodejs",
 }
@@ -25,6 +26,7 @@ const PROTECTED_PREFIXES = [
   "/api/compare/ai",
   "/api/account",
   "/api/admin",
+  "/admin",
 ]
 
 function isProtected(pathname: string): boolean {

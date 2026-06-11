@@ -4,7 +4,8 @@ import { and, desc, eq } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import { conversations } from "@/lib/db/schema"
 import { getCurrentUser } from "@/lib/auth/current-user"
-import { getAdvisorFreeUsage } from "@/lib/auth/free-usage"
+// NOTE: Import kept for when usage limits are re-enabled.
+// import { getAdvisorFreeUsage } from "@/lib/auth/free-usage"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -57,17 +58,18 @@ export async function POST(request: Request) {
       { status: 400 },
     )
   }
-  const usage = await getAdvisorFreeUsage(user.id, user.plan, user.role)
-  if (usage.remaining <= 0 && usage.limit !== Infinity) {
-    return NextResponse.json(
-      {
-        error: "free_quota_exceeded",
-        message:
-          "You used your free advisor preview. Upgrade to Pro for unlimited conversations.",
-      },
-      { status: 403 },
-    )
-  }
+  // NOTE: Free quota check disabled until re-enabled later.
+  // const usage = await getAdvisorFreeUsage(user.id, user.plan, user.role)
+  // if (usage.remaining <= 0 && usage.limit !== Infinity) {
+  //   return NextResponse.json(
+  //     {
+  //       error: "free_quota_exceeded",
+  //       message:
+  //         "You used your free advisor preview. Upgrade to Pro for unlimited conversations.",
+  //     },
+  //     { status: 403 },
+  //   )
+  // }
   const db = getDb()
   const id = crypto.randomUUID()
   const now = new Date()

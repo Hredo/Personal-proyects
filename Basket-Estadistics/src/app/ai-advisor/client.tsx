@@ -18,7 +18,8 @@ import {
   type LlmMode,
 } from "@/app/ai-advisor/llm-settings"
 import { AdvisorTour, TOUR_EVENT } from "@/app/ai-advisor/tour"
-import { PaywallModal } from "@/components/auth/paywall-modal"
+// NOTE: Import kept for when paywall is re-enabled.
+// import { PaywallModal } from "@/components/auth/paywall-modal"
 import type { TeamOption } from "@/types/teams"
 import type { AdvisorOutput } from "@/lib/ai/local-advisor"
 import type { Reaction } from "@/app/ai-advisor/message-actions"
@@ -123,7 +124,8 @@ export default function AIAdvisorClient() {
     null,
   )
   const [loadingConversation, setLoadingConversation] = useState(false)
-  const [paywall, setPaywall] = useState<"auth" | "quota" | null>(null)
+  // NOTE: paywall state kept for when paywall is re-enabled.
+  // const [paywall, setPaywall] = useState<"auth" | "quota" | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [aiNotConfigured, setAiNotConfigured] = useState(false)
   const [aiNoticeDismissed, setAiNoticeDismissed] = useState(false)
@@ -184,10 +186,11 @@ export default function AIAdvisorClient() {
         const res = await fetch(`/api/conversations/${id}`, {
           cache: "no-store",
         })
-        if (res.status === 401) {
-          setPaywall("auth")
-          return
-        }
+        // NOTE: Paywall disabled until re-enabled later.
+        // if (res.status === 401) {
+        //   setPaywall("auth")
+        //   return
+        // }
         if (!res.ok) return
         const data = (await res.json()) as {
           conversation: ConversationSummary
@@ -285,19 +288,20 @@ export default function AIAdvisorClient() {
           body: JSON.stringify(body),
         })
         const result = (await res.json()) as AdvisorApiResult
-        if (res.status === 401) {
-          setPaywall("auth")
-          setMessages((prev) => prev.filter((m) => m.id !== userId))
-          return
-        }
-        if (
-          res.status === 403 &&
-          (result as { error?: string })?.error === "free_quota_exceeded"
-        ) {
-          setPaywall("quota")
-          setMessages((prev) => prev.filter((m) => m.id !== userId))
-          return
-        }
+        // NOTE: Paywall disabled until re-enabled later.
+        // if (res.status === 401) {
+        //   setPaywall("auth")
+        //   setMessages((prev) => prev.filter((m) => m.id !== userId))
+        //   return
+        // }
+        // if (
+        //   res.status === 403 &&
+        //   (result as { error?: string })?.error === "free_quota_exceeded"
+        // ) {
+        //   setPaywall("quota")
+        //   setMessages((prev) => prev.filter((m) => m.id !== userId))
+        //   return
+        // }
         if (!res.ok && res.status === 429) {
           const aiId = ++idRef.current
           setMessages((prev) => [
@@ -381,17 +385,18 @@ export default function AIAdvisorClient() {
           }),
         })
         const result = (await r.json()) as AdvisorApiResult
-        if (r.status === 401) {
-          setPaywall("auth")
-          return
-        }
-        if (
-          r.status === 403 &&
-          (result as { error?: string })?.error === "free_quota_exceeded"
-        ) {
-          setPaywall("quota")
-          return
-        }
+        // NOTE: Paywall disabled until re-enabled later.
+        // if (r.status === 401) {
+        //   setPaywall("auth")
+        //   return
+        // }
+        // if (
+        //   r.status === 403 &&
+        //   (result as { error?: string })?.error === "free_quota_exceeded"
+        // ) {
+        //   setPaywall("quota")
+        //   return
+        // }
         const newAiId = ++idRef.current
         setMessages((cur) => [
           ...cur,
@@ -855,12 +860,13 @@ export default function AIAdvisorClient() {
 
       <AdvisorTour />
 
-      <PaywallModal
-        open={paywall !== null}
-        onClose={() => setPaywall(null)}
-        variant={paywall ?? "auth"}
-        feature="advisor"
-      />
+      {/* NOTE: Paywall disabled until re-enabled later. */}
+      {/* <PaywallModal */}
+      {/*   open={paywall !== null} */}
+      {/*   onClose={() => setPaywall(null)} */}
+      {/*   variant={paywall ?? "auth"} */}
+      {/*   feature="advisor" */}
+      {/* /> */}
     </div>
   )
 }

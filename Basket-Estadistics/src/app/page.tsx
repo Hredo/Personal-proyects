@@ -291,7 +291,8 @@ export default async function Home() {
               kicker="03 · AI advisor"
               title="Ask in plain language."
               body="Type a scouting question, get a sourced read with the numbers behind it."
-              pro
+              // NOTE: Pro badge disabled until re-enabled later.
+              // pro
             />
           </StaggerItem>
 
@@ -386,7 +387,8 @@ function BentoCard({
   title,
   body,
   href,
-  pro,
+  // NOTE: pro prop kept for when Pro badge is re-enabled.
+  // pro,
   big,
   children,
 }: {
@@ -394,7 +396,8 @@ function BentoCard({
   title: string
   body: string
   href?: string
-  pro?: boolean
+  // NOTE: pro prop kept for when Pro badge is re-enabled.
+  // pro?: boolean
   big?: boolean
   children?: React.ReactNode
 }) {
@@ -402,11 +405,12 @@ function BentoCard({
     <SpotlightCard className="gh-card gh-card-interactive group relative flex h-full flex-col overflow-hidden p-6 sm:p-7">
       <div className="flex items-center justify-between gap-3">
         <span className="gh-eyebrow">{kicker}</span>
-        {pro ? (
-          <span className="rounded-full border border-brand-500/40 bg-brand-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-brand-300">
-            Pro
-          </span>
-        ) : null}
+        {/* NOTE: Pro badge disabled until re-enabled later. */}
+        {/* {pro ? ( */}
+        {/*   <span className="rounded-full border border-brand-500/40 bg-brand-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-brand-300"> */}
+        {/*     Pro */}
+        {/*   </span> */}
+        {/* ) : null} */}
       </div>
       <h3
         className={

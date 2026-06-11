@@ -151,15 +151,14 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
     for (const sp of sourcePlayers) {
       const nameKey = sp.fullName.toLowerCase().trim().replace(/\s+/g, " ")
       const matchByName = existingPlayersByName.get(nameKey)
+      const parts = sp.fullName.trim().split(/\s+/)
+      const firstName = parts[0] ?? ""
+      const lastName = parts.slice(1).join(" ") || firstName
       const baseSlug = slugify(sp.fullName) || `player-${sp.sourceId}`
       const sourceScopedSlug = `${adapter.id}-${baseSlug}`
       const slug = uniqueSlug(sourceScopedSlug, usedPlayerSlugs)
       const existing = existingPlayersBySlug.get(slug)
       const fillIns: Partial<typeof players.$inferInsert> = {}
-
-      const parts = sp.fullName.trim().split(/\s+/)
-      const firstName = parts[0] ?? ""
-      const lastName = parts.slice(1).join(" ") || firstName
 
       if (sp.photoUrl) fillIns.imageUrl = sp.photoUrl
       if (sp.nationality) fillIns.nationality = sp.nationality
@@ -180,6 +179,32 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
       }
 
       if (matchByName) {
+        const existingLeague = matchByName.slug.split("-")[0]
+        const isFebLeague = ["leb-oro", "leb-plata", "eba"].includes(adapter.id)
+        const existingIsFeb = ["leb-oro", "leb-plata", "eba"].includes(existingLeague ?? "")
+        const isNba = adapter.id === "nba"
+        const existingIsNba = existingLeague === "nba"
+        if (
+          (isFebLeague && existingIsNba) ||
+          (isNba && existingIsFeb)
+        ) {
+          const [row] = await db
+            .insert(players)
+            .values({
+              firstName, lastName, slug,
+              nationality: sp.nationality ?? null,
+              position: sp.position ?? null,
+              heightCm: sp.heightCm ?? null,
+              weightKg: sp.weightKg ?? null,
+              imageUrl: sp.photoUrl ?? null,
+            })
+            .returning()
+          playerIdBySourceId.set(sp.sourceId, row.id)
+          usedPlayerSlugs.add(slug)
+          existingPlayersByName.set(nameKey, row)
+          totals.players++
+          continue
+        }
         if (Object.keys(fillIns).length > 0) {
           await db
             .update(players)
@@ -234,7 +259,6 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
           assistsTotal: s.assistsTotal,
           stealsTotal: s.stealsTotal,
           blocksTotal: s.blocksTotal,
-          turnoversTotal: s.turnoversTotal,
           fgMade: s.fgMade,
           fgAttempted: s.fgAttempted,
           threeMade: s.threeMade,
@@ -265,7 +289,6 @@ export async function runSync(adapter: SourceAdapter): Promise<SyncResult> {
             assistsTotal: s.assistsTotal,
             stealsTotal: s.stealsTotal,
             blocksTotal: s.blocksTotal,
-            turnoversTotal: s.turnoversTotal,
             fgMade: s.fgMade,
             fgAttempted: s.fgAttempted,
             threeMade: s.threeMade,

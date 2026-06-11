@@ -8,7 +8,7 @@ export const SITE = {
   taglineShort: "Global basketball intelligence",
   locale: "en",
   twitter: "",
-  contact: "Hrvaldes22@gmail.com",
+  contact: "globalhoopstats@gmail.com",
   author: "Hugo Redondo Valdés",
 }
 

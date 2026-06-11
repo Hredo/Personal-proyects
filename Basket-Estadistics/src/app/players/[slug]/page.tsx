@@ -4,8 +4,9 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { and, eq, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
-import { players, playerSeasonStats } from "@/lib/db/schema"
+import { players, playerSeasonStats, seasons } from "@/lib/db/schema"
 import { getPlayerBySlug } from "@/lib/data/players"
+import { PctBar } from "@/components/ui/pct-bar"
 import { FadeIn } from "@/components/animations/fade-in"
 import { SmartImage } from "@/components/ui/smart-image"
 import { Eyebrow } from "@/components/ui/eyebrow"
@@ -14,6 +15,7 @@ import { JsonLd } from "@/components/marketing/json-ld"
 import { breadcrumbJsonLd, playerJsonLd } from "@/lib/seo/structured-data"
 import { SITE } from "@/lib/site"
 import { HighlightsSection } from "./highlights"
+import { PlayerAi } from "@/components/players/player-ai"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -89,18 +91,22 @@ async function findComparisonCandidates(
       fullName:
         sql<string>`${players.firstName} || ' ' || ${players.lastName}`,
       points:
-        sql<number | null>`max(coalesce(${playerSeasonStats.pointsTotal}, 0))`,
+        sql<number | null>`(coalesce(sum(${playerSeasonStats.pointsTotal}), 0) / nullif(sum(${playerSeasonStats.gamesPlayed}), 0))::float8`,
     })
     .from(players)
-    .leftJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
+    .innerJoin(playerSeasonStats, eq(playerSeasonStats.playerId, players.id))
+    .innerJoin(seasons, eq(playerSeasonStats.seasonId, seasons.id))
     .where(
       and(
         eq(playerSeasonStats.leagueId, leagueId),
+        eq(seasons.isCurrent, true),
         sql`${players.id} <> ${excludePlayerId}`,
       ),
     )
     .groupBy(players.id)
-    .orderBy(sql`max(coalesce(${playerSeasonStats.pointsTotal}, 0)) desc`)
+    .orderBy(
+      sql`(coalesce(sum(${playerSeasonStats.pointsTotal}), 0) / nullif(sum(${playerSeasonStats.gamesPlayed}), 0))::float8 desc`,
+    )
     .limit(6)
   return rows as Array<{
     id: string
@@ -263,10 +269,19 @@ export default async function PlayerPage({ params }: Props) {
                   <StatTile label="Steals" value={perGame(season.stealsTotal, season.gamesPlayed)} unit="SPG" />
                   <StatTile label="Blocks" value={perGame(season.blocksTotal, season.gamesPlayed)} unit="BPG" />
                   <StatTile
-                    label="Turnovers"
-                    value={perGame(season.turnoversTotal, season.gamesPlayed)}
-                    unit="TOPG"
+                    label="PER"
+                    value={season.per}
+                    unit="PER"
                   />
+                </div>
+
+                <h3 className="gh-eyebrow mb-3 mt-5 sm:mt-6">
+                  Shooting
+                </h3>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
+                  <ShootingTile label="Field goal" value={season.fgPct} />
+                  <ShootingTile label="3-point" value={season.threePct} />
+                  <ShootingTile label="Free throw" value={season.ftPct} />
                 </div>
               </section>
             </FadeIn>
@@ -317,6 +332,8 @@ export default async function PlayerPage({ params }: Props) {
               </Suspense>
             </section>
           </FadeIn>
+
+          <PlayerAi slug={profile.slug} name={profile.fullName} />
         </div>
       </div>
       </div>
@@ -369,7 +386,29 @@ function StatTile({
       >
         {value != null ? value.toFixed(1) : "—"}
       </p>
-      <p className="font-mono text-xs text-ink-400">{unit}</p>
+      <p className="mt-1 font-mono text-xs text-ink-400">{unit}</p>
+    </div>
+  )
+}
+
+function ShootingTile({
+  label,
+  value,
+}: {
+  label: string
+  value: number | null | undefined
+}) {
+  return (
+    <div className="gh-card relative overflow-hidden p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400">
+        {label}
+      </p>
+      <p className="mt-1 font-display text-3xl font-bold tabular-nums text-ink-50">
+        {value != null ? `${(value * 100).toFixed(1)}%` : "—"}
+      </p>
+      <div className="mt-3">
+        <PctBar value={value} size="md" showLabel />
+      </div>
     </div>
   )
 }
