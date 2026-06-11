@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server"
-import { and, asc, eq, like, sql } from "drizzle-orm"
+import { and, asc, eq, inArray, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import { leagues, playerSeasonStats, players, teams } from "@/lib/db/schema"
+import { leagueSlugsFor } from "@/lib/league-groups"
 import { rateLimit, clientIp } from "@/lib/security/ai-advisor"
 
 export const dynamic = "force-dynamic"
 
-const LEAGUES = new Set(["nba", "euroleague", "acb"])
+const LEAGUES = new Set([
+  "nba",
+  "euroleague",
+  "acb",
+  "feb",
+  "leb-oro",
+  "leb-plata",
+  "eba",
+])
 const MAX_QUERY_LEN = 100
 const MAX_LEAGUE_LEN = 32
 
@@ -67,7 +76,8 @@ export async function GET(req: Request) {
     )
   }
   if (LEAGUES.has(league)) {
-    conditions.push(eq(leagues.slug, league))
+    const slugs = leagueSlugsFor(league)
+    if (slugs) conditions.push(inArray(leagues.slug, slugs))
   }
   const where = conditions.length ? and(...conditions) : undefined
 

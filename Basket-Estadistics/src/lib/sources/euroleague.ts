@@ -213,7 +213,6 @@ export const euroleagueAdapter: SourceAdapter = {
         assistsTotal: toNumberOrNull(cells.get("ast")) ?? null,
         stealsTotal: toNumberOrNull(cells.get("stl")) ?? null,
         blocksTotal: toNumberOrNull(cells.get("blk")) ?? null,
-        turnoversTotal: toNumberOrNull(cells.get("tov")) ?? null,
         fgMade: fgm ?? null,
         fgAttempted: fga ?? null,
         threeMade: threeM ?? null,

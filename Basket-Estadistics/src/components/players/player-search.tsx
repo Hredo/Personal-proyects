@@ -93,11 +93,6 @@ function formatWeight(kg: number | null): string {
   return `${kg} kg`
 }
 
-function formatPct(n: number | null): string {
-  if (n == null) return "—"
-  return `${(n * 100).toFixed(1)}%`
-}
-
 function formatNum(n: number | null, digits = 1): string {
   if (n == null) return "—"
   return n.toFixed(digits)
@@ -617,24 +612,26 @@ function ResultCard({
         </div>
 
         {player.season ? (
-          <div
-            className={`hidden shrink-0 gap-x-3 gap-y-1 font-mono text-right sm:grid ${
-              compact ? "text-[10px]" : "text-[11px]"
-            }`}
-            style={{ gridTemplateColumns: "auto auto auto auto" }}
-          >
-            <Stat
-              label="PPG"
-              value={formatNum(player.season.points)}
-              highlight
-            />
-            <Stat label="RPG" value={formatNum(player.season.rebounds)} />
-            <Stat label="APG" value={formatNum(player.season.assists)} />
-            <Stat label="SPG" value={formatNum(player.season.steals)} />
-            <Stat label="BPG" value={formatNum(player.season.blocks)} />
-            <Stat label="FG%" value={formatPct(player.season.fgPct)} />
-            <Stat label="3P%" value={formatPct(player.season.threePct)} />
-            <Stat label="FT%" value={formatPct(player.season.ftPct)} />
+          <div className="hidden shrink-0 sm:flex sm:flex-col sm:gap-1">
+            <div
+              className={`grid grid-cols-4 gap-x-3 font-mono text-right ${
+                compact ? "text-[10px]" : "text-[11px]"
+              }`}
+            >
+              <Stat
+                label="PPG"
+                value={formatNum(player.season.points)}
+                highlight
+              />
+              <Stat label="RPG" value={formatNum(player.season.rebounds)} />
+              <Stat label="APG" value={formatNum(player.season.assists)} />
+              <Stat label="SPG" value={formatNum(player.season.steals)} />
+            </div>
+            <div className="flex items-center gap-3">
+              <CompactPctBar value={player.season.fgPct} label="FG%" />
+              <CompactPctBar value={player.season.threePct} label="3P%" />
+              <CompactPctBar value={player.season.ftPct} label="FT%" />
+            </div>
           </div>
         ) : (
           <span className="hidden shrink-0 text-[10px] uppercase tracking-wider text-ink-500 sm:inline">
@@ -696,10 +693,18 @@ function SkeletonList({ compact }: { compact: boolean }) {
             <div className="h-2 w-1/2 rounded bg-white/5" />
             <div className="h-2 w-2/3 rounded bg-white/5" />
           </div>
-          <div className="hidden grid-cols-3 gap-x-3 sm:grid">
-            <div className="h-6 w-10 rounded bg-white/5" />
-            <div className="h-6 w-10 rounded bg-white/5" />
-            <div className="h-6 w-10 rounded bg-white/5" />
+          <div className="hidden flex-col gap-1 sm:flex">
+            <div className="grid grid-cols-4 gap-x-3">
+              <div className="h-6 w-10 rounded bg-white/5" />
+              <div className="h-6 w-10 rounded bg-white/5" />
+              <div className="h-6 w-10 rounded bg-white/5" />
+              <div className="h-6 w-10 rounded bg-white/5" />
+            </div>
+            <div className="flex gap-3">
+              <div className="h-5 flex-1 rounded bg-white/5" />
+              <div className="h-5 flex-1 rounded bg-white/5" />
+              <div className="h-5 flex-1 rounded bg-white/5" />
+            </div>
           </div>
         </li>
       ))}
@@ -721,6 +726,37 @@ function Kbd({ children }: { children: React.ReactNode }) {
     <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-ink-300">
       {children}
     </kbd>
+  )
+}
+
+function CompactPctBar({
+  value,
+  label,
+}: {
+  value: number | null
+  label: string
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-0.5">
+      <span className="font-mono text-[9px] uppercase tracking-wider text-ink-500">
+        {label}
+      </span>
+      {value != null ? (
+        <div className="flex items-center gap-1.5">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/5">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-300 transition-all"
+              style={{ width: `${Math.min(value * 100, 100)}%` }}
+            />
+          </div>
+          <span className="font-mono text-[10px] font-semibold tabular-nums text-ink-100">
+            {(value * 100).toFixed(1)}%
+          </span>
+        </div>
+      ) : (
+        <span className="font-mono text-[10px] text-ink-400">—</span>
+      )}
+    </div>
   )
 }
 

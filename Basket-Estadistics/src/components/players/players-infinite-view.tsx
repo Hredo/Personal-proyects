@@ -23,6 +23,9 @@ type Player = {
     pointsTotal: number | null
     reboundsTotal: number | null
     assistsTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
   } | null
 }
 

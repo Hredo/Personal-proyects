@@ -9,6 +9,32 @@ import {
 } from "@/lib/db/schema"
 import { cached } from "@/lib/data/cache"
 
+export type CompareStats = {
+  seasonId: string
+  seasonName: string
+  gamesPlayed: number
+  pointsTotal: number | null
+  reboundsTotal: number | null
+  offensiveRebounds: number | null
+  defensiveRebounds: number | null
+  assistsTotal: number | null
+  stealsTotal: number | null
+  blocksTotal: number | null
+  fgPct: number | null
+  threePct: number | null
+  ftPct: number | null
+  fgMade: number | null
+  fgAttempted: number | null
+  threeMade: number | null
+  threeAttempted: number | null
+  ftMade: number | null
+  ftAttempted: number | null
+  minutesTotal: number | null
+  foulsTotal: number | null
+  plusMinus: number | null
+  per: number | null
+}
+
 export type ComparePlayer = {
   id: string
   slug: string
@@ -18,18 +44,7 @@ export type ComparePlayer = {
   nationality: string | null
   team: { id: string; name: string; slug: string; logoUrl: string | null } | null
   league: { id: string; name: string; slug: string; region: string }
-  stats: {
-    seasonId: string
-    seasonName: string
-    gamesPlayed: number
-    pointsTotal: number | null
-    reboundsTotal: number | null
-    assistsTotal: number | null
-    stealsTotal: number | null
-    blocksTotal: number | null
-    turnoversTotal: number | null
-    per: number | null
-  } | null
+  stats: CompareStats | null
 }
 
 export const getPlayerForCompare = cached(
@@ -69,10 +84,20 @@ export const getPlayerForCompare = cached(
       gamesPlayed: playerSeasonStats.gamesPlayed,
       pointsTotal: playerSeasonStats.pointsTotal,
       reboundsTotal: playerSeasonStats.reboundsTotal,
+      offensiveRebounds: playerSeasonStats.offensiveRebounds,
+      defensiveRebounds: playerSeasonStats.defensiveRebounds,
       assistsTotal: playerSeasonStats.assistsTotal,
       stealsTotal: playerSeasonStats.stealsTotal,
       blocksTotal: playerSeasonStats.blocksTotal,
-      turnoversTotal: playerSeasonStats.turnoversTotal,
+      fgMade: playerSeasonStats.fgMade,
+      fgAttempted: playerSeasonStats.fgAttempted,
+      threeMade: playerSeasonStats.threeMade,
+      threeAttempted: playerSeasonStats.threeAttempted,
+      ftMade: playerSeasonStats.ftMade,
+      ftAttempted: playerSeasonStats.ftAttempted,
+      minutesTotal: playerSeasonStats.minutesTotal,
+      foulsTotal: playerSeasonStats.foulsTotal,
+      plusMinus: playerSeasonStats.plusMinus,
       per: playerSeasonStats.per,
     })
     .from(playerSeasonStats)
@@ -103,7 +128,20 @@ export const getPlayerForCompare = cached(
       r.teamId && r.teamName && r.teamSlug
         ? { id: r.teamId, name: r.teamName, slug: r.teamSlug, logoUrl: r.teamLogo }
         : null,
-    stats: statRows[0] ?? null,
+    stats: statRows[0]
+      ? {
+          ...statRows[0],
+          fgPct: statRows[0].fgMade != null && statRows[0].fgAttempted != null && statRows[0].fgAttempted > 0
+            ? statRows[0].fgMade / statRows[0].fgAttempted
+            : null,
+          threePct: statRows[0].threeMade != null && statRows[0].threeAttempted != null && statRows[0].threeAttempted > 0
+            ? statRows[0].threeMade / statRows[0].threeAttempted
+            : null,
+          ftPct: statRows[0].ftMade != null && statRows[0].ftAttempted != null && statRows[0].ftAttempted > 0
+            ? statRows[0].ftMade / statRows[0].ftAttempted
+            : null,
+        }
+      : null,
   }
   },
   "getPlayerForCompare",

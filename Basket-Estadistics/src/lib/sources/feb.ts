@@ -152,8 +152,29 @@ function tdText(row: string, cls: string): string | undefined {
 type FebPlayer = {
   playerId: string; fullName: string; teamId: string; teamName: string
   position?: string; heightCm?: number; weightKg?: number; nationality?: string
-  birthdate?: string; games?: number; ppg?: number
+  birthdate?: string; games?: number; ppg?: number; pointsTotal?: number
 }
+
+/** rankingsDropDownList values on rankings.aspx, keyed by what they fill. */
+const STAT_CATEGORIES = {
+  rebounds: "1",
+  offensiveRebounds: "2",
+  defensiveRebounds: "3",
+  assists: "4",
+  steals: "5",
+  blocks: "7",
+  fouls: "11",
+  minutes: "13",
+  twoPoint: "14",
+  threePoint: "15",
+  freeThrow: "16",
+} as const
+
+type StatCategoryKey = keyof typeof STAT_CATEGORIES
+
+type CategoryLine = { total?: number; made?: number; attempted?: number }
+
+type FebStatLines = Map<string, Partial<Record<StatCategoryKey, CategoryLine>>>
 
 type FebBio = Pick<
   FebPlayer,
@@ -212,7 +233,35 @@ function parseRoster(html: string, teamId: string, teamName: string): FebPlayer[
       nationality: tdText(row, "nacionalidad"),
       games: toNum(row.match(/class="partidos"[\s\S]*?<span[^>]*>\s*([\d.,]+)/i)?.[1]),
       ppg: toNum(row.match(/class="media"[\s\S]*?<span[^>]*>\s*([\d.,]+)/i)?.[1]),
+      pointsTotal: toNum(row.match(/class="cantidad"[\s\S]*?<span[^>]*>\s*([\d.,]+)/i)?.[1]),
     })
+  }
+  return out
+}
+
+/**
+ * Ranking rows for one (category, team) postback. The "cantidad" cell holds
+ * the season total — for shooting categories it reads "made / attempted".
+ */
+function parseCategoryRows(html: string): Map<string, CategoryLine> {
+  const out = new Map<string, CategoryLine>()
+  for (const rm of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const row = rm[1]!
+    const idM = row.match(/class="nombre jugador"[\s\S]*?Jugador\.aspx\?i=\d+&(?:amp;)?c=(\d+)/i)
+    if (!idM) continue
+    const cell = row.match(/class="cantidad"[\s\S]*?<span[^>]*>\s*([^<]+?)\s*<\/span>/i)?.[1]
+    if (!cell) continue
+    const split = cell.match(/([\d.,]+)\s*\/\s*([\d.,]+)/)
+    const clock = cell.match(/^(\d+):(\d{2})$/)
+    if (split) {
+      out.set(idM[1]!, { made: toNum(split[1]), attempted: toNum(split[2]) })
+    } else if (clock) {
+      // Minutes render as "MIN:SS" totals.
+      out.set(idM[1]!, { total: Math.round(Number(clock[1]) + Number(clock[2]) / 60) })
+    } else {
+      const total = toNum(cell)
+      if (total !== undefined) out.set(idM[1]!, { total })
+    }
   }
   return out
 }
@@ -308,6 +357,7 @@ type FebData = {
   players: FebPlayer[]
   points: Map<string, PointLine>
   teamMeta: Map<string, FebTeamMeta>
+  statLines: FebStatLines
 }
 
 async function collectData(cfg: FebConfig): Promise<FebData> {
@@ -329,8 +379,14 @@ async function collectData(cfg: FebConfig): Promise<FebData> {
   const teams = teamSelect(selects)
   const teamOptions = (teams?.options ?? []).filter((o) => isTeamOption(o.value))
   const teamMeta = new Map<string, FebTeamMeta>()
-  if (!teams || teamOptions.length === 0) return { players: [], points, teamMeta }
+  const statLines: FebStatLines = new Map()
+  if (!teams || teamOptions.length === 0) {
+    return { players: [], points, teamMeta, statLines }
+  }
   const phaseAfter = regularPhase(selects)
+  const categorySelect = findSelect(selects, (s) =>
+    s.options.some((o) => /rebotes totales/i.test(o.text)),
+  )
   const byPlayer = new Map<string, FebPlayer>()
   for (const opt of teamOptions) {
     try {
@@ -346,6 +402,48 @@ async function collectData(cfg: FebConfig): Promise<FebData> {
       const msg = err instanceof Error ? err.message : String(err)
       console.warn(`[feb:${cfg.id}] team ${opt.value} failed: ${msg}`)
     }
+  }
+
+  // Full counting + shooting stats: one postback per (category, team). The
+  // open ranking view only lists the top 30, but filtering by team returns
+  // every player of that club for the chosen category.
+  if (categorySelect) {
+    for (const [key, catValue] of Object.entries(STAT_CATEGORIES) as Array<
+      [StatCategoryKey, string]
+    >) {
+      let rows = 0
+      for (const opt of teamOptions) {
+        try {
+          await politePause()
+          const overrides: Record<string, string> = {
+            [teams.name]: opt.value,
+            [categorySelect.name]: catValue,
+          }
+          if (phaseAfter) overrides[phaseAfter.name] = phaseAfter.value
+          const html = await fetchText(url, {
+            method: "POST",
+            body: buildPostBody(hiddens, selects, teams.name, overrides),
+          })
+          for (const [playerId, line] of parseCategoryRows(html)) {
+            let lines = statLines.get(playerId)
+            if (!lines) {
+              lines = {}
+              statLines.set(playerId, lines)
+            }
+            lines[key] = line
+            rows++
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          console.warn(
+            `[feb:${cfg.id}] category ${key} team ${opt.value} failed: ${msg}`,
+          )
+        }
+      }
+      console.log(`[feb:${cfg.id}] category ${key}: ${rows} rows`)
+    }
+  } else {
+    console.warn(`[feb:${cfg.id}] category select not found — stats limited to points`)
   }
 
   // Bio/club enrichment: one Equipo.aspx page per team covers its current
@@ -387,7 +485,7 @@ async function collectData(cfg: FebConfig): Promise<FebData> {
     `[feb:${cfg.id}] bio enrichment — roster rows matched: ${rosterHits} · ` +
       `team pages: ${teamMeta.size}/${teamOptions.length} · player-page fallbacks: ${leftovers.length}`,
   )
-  return { players: [...byPlayer.values()], points, teamMeta }
+  return { players: [...byPlayer.values()], points, teamMeta, statLines }
 }
 
 export function createFebAdapter(cfg: FebConfig): SourceAdapter {
@@ -402,10 +500,19 @@ export function createFebAdapter(cfg: FebConfig): SourceAdapter {
     seasonCode: `${SEASON_YEAR}-${String(SEASON_YEAR + 1).slice(-2)}`,
 
     async fetchTeams(): Promise<SourceTeam[]> {
+      const { players, teamMeta } = await data()
       const seen = new Map<string, SourceTeam>()
-      for (const p of (await data()).players) {
-        if (p.teamId && p.teamName && !seen.has(p.teamId))
-          seen.set(p.teamId, { sourceId: `feb-${p.teamId}`, name: p.teamName, country: "ES" })
+      for (const p of players) {
+        if (p.teamId && p.teamName && !seen.has(p.teamId)) {
+          const meta = teamMeta.get(p.teamId)
+          seen.set(p.teamId, {
+            sourceId: `feb-${p.teamId}`,
+            name: p.teamName,
+            country: "ES",
+            city: meta?.city,
+            logoUrl: meta?.logoUrl,
+          })
+        }
       }
       return [...seen.values()]
     },
@@ -421,30 +528,69 @@ export function createFebAdapter(cfg: FebConfig): SourceAdapter {
     },
 
     async fetchStats(): Promise<ExtractedPlayerStat[]> {
-      const { players, points } = await data()
+      const { players, points, statLines } = await data()
       const out: ExtractedPlayerStat[] = []
       for (const p of players) {
         const games = p.games ?? points.get(p.playerId)?.games
         const ppg = p.ppg ?? points.get(p.playerId)?.ppg
         if (!games || games <= 0) continue
+        const lines = statLines.get(p.playerId) ?? {}
+        const total = (key: StatCategoryKey) => lines[key]?.total ?? null
+        const two = lines.twoPoint
+        const three = lines.threePoint
+        const ft = lines.freeThrow
+        const fgMade =
+          two?.made != null || three?.made != null
+            ? (two?.made ?? 0) + (three?.made ?? 0)
+            : null
+        const fgAttempted =
+          two?.attempted != null || three?.attempted != null
+            ? (two?.attempted ?? 0) + (three?.attempted ?? 0)
+            : null
         out.push({
           playerSourceId: `feb-${p.playerId}`,
           season: SEASON_YEAR,
           teamSourceId: p.teamId ? `feb-${p.teamId}` : undefined,
           gamesPlayed: games,
-          pointsTotal: ppg != null ? Math.round(ppg * games) : null,
-          minutesTotal: null, reboundsTotal: null, assistsTotal: null,
-          stealsTotal: null, blocksTotal: null, turnoversTotal: null,
-          fgMade: null, fgAttempted: null, threeMade: null, threeAttempted: null,
-          ftMade: null, ftAttempted: null, offensiveRebounds: null, defensiveRebounds: null,
-          foulsTotal: null, plusMinus: null, per: null, trueShootingPct: null,
+          pointsTotal:
+            p.pointsTotal ?? (ppg != null ? Math.round(ppg * games) : null),
+          minutesTotal: total("minutes"),
+          reboundsTotal: total("rebounds"),
+          assistsTotal: total("assists"),
+          stealsTotal: total("steals"),
+          blocksTotal: total("blocks"),
+          fgMade,
+          fgAttempted,
+          threeMade: three?.made ?? null,
+          threeAttempted: three?.attempted ?? null,
+          ftMade: ft?.made ?? null,
+          ftAttempted: ft?.attempted ?? null,
+          offensiveRebounds: total("offensiveRebounds"),
+          defensiveRebounds: total("defensiveRebounds"),
+          foulsTotal: total("fouls"),
+          plusMinus: null, per: null, trueShootingPct: null,
           winShares: null, bpm: null,
         })
       }
       return out
     },
 
-    async fetchCoaches(): Promise<SourceCoach[]> { return [] },
+    async fetchCoaches(): Promise<SourceCoach[]> {
+      const { teamMeta } = await data()
+      const out: SourceCoach[] = []
+      for (const [teamId, meta] of teamMeta) {
+        if (!meta.coach?.fullName) continue
+        out.push({
+          sourceId: `feb-coach-${teamId}`,
+          fullName: meta.coach.fullName,
+          role: "head_coach",
+          teamSourceId: `feb-${teamId}`,
+          photoUrl: meta.coach.photoUrl,
+          age: ageFromBirthdate(meta.coach.birthdate),
+        })
+      }
+      return out
+    },
     async fetchTeamStats(): Promise<SourceTeamStats[]> { return [] },
   }
 }

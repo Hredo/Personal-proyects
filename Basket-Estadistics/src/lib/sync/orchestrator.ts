@@ -89,7 +89,6 @@ function statColumns(s: ExtractedPlayerStat) {
     assistsTotal: s.assistsTotal,
     stealsTotal: s.stealsTotal,
     blocksTotal: s.blocksTotal,
-    turnoversTotal: s.turnoversTotal,
     fgMade: s.fgMade,
     fgAttempted: s.fgAttempted,
     threeMade: s.threeMade,
@@ -368,12 +367,26 @@ export async function startGlobalSync(
       slug: teams.slug,
       city: teams.city,
       logoUrl: teams.logoUrl,
+      foundedYear: teams.foundedYear,
+      website: teams.website,
+      arena: teams.arena,
+      primaryColor: teams.primaryColor,
+      secondaryColor: teams.secondaryColor,
     })
     .from(teams)
   const teamStateBySlug = new Map(
     existingTeams.map((t) => [
       t.slug,
-      { id: t.id, city: t.city, logoUrl: t.logoUrl },
+      {
+        id: t.id,
+        city: t.city,
+        logoUrl: t.logoUrl,
+        foundedYear: t.foundedYear,
+        website: t.website,
+        arena: t.arena,
+        primaryColor: t.primaryColor,
+        secondaryColor: t.secondaryColor,
+      },
     ]),
   )
   const teamPromises = new Map<string, Promise<string>>()
@@ -427,6 +440,11 @@ export async function startGlobalSync(
               slug,
               city: team.city ?? null,
               logoUrl: team.logoUrl ?? null,
+              foundedYear: team.foundedYear ?? null,
+              website: team.websiteUrl ?? null,
+              arena: team.arena ?? null,
+              primaryColor: team.primaryColor ?? null,
+              secondaryColor: team.secondaryColor ?? null,
             })
             .onConflictDoUpdate({
               target: teams.slug,
@@ -437,6 +455,11 @@ export async function startGlobalSync(
             id: row.id,
             city: row.city,
             logoUrl: row.logoUrl,
+            foundedYear: row.foundedYear,
+            website: row.website,
+            arena: row.arena,
+            primaryColor: row.primaryColor,
+            secondaryColor: row.secondaryColor,
           })
           return row.id
         })()
@@ -449,6 +472,17 @@ export async function startGlobalSync(
         const fills: Partial<typeof teams.$inferInsert> = {}
         if (team.city && !state.city) fills.city = team.city
         if (team.logoUrl && !state.logoUrl) fills.logoUrl = team.logoUrl
+        if (team.foundedYear && !state.foundedYear) {
+          fills.foundedYear = team.foundedYear
+        }
+        if (team.websiteUrl && !state.website) fills.website = team.websiteUrl
+        if (team.arena && !state.arena) fills.arena = team.arena
+        if (team.primaryColor && !state.primaryColor) {
+          fills.primaryColor = team.primaryColor
+        }
+        if (team.secondaryColor && !state.secondaryColor) {
+          fills.secondaryColor = team.secondaryColor
+        }
         if (Object.keys(fills).length > 0) {
           await db.update(teams).set(fills).where(eq(teams.id, id))
           Object.assign(state, fills)

@@ -35,7 +35,11 @@ export function TeamsInfiniteView({
   const isFirstRender = useRef(true)
 
   const current = pages[pages.length - 1]
-  const items = pages.flatMap((p) => p.items)
+  const items = pages
+    .flatMap((p) => p.items)
+    .filter(
+      (t, i, self) => self.findIndex((s) => s.id === t.id) === i,
+    )
   const hasMore = current.page < current.totalPages
 
   useEffect(() => {

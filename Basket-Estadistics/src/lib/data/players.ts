@@ -9,6 +9,7 @@ import {
 } from "@/lib/db/schema"
 import { cached } from "@/lib/data/cache"
 import { leagueSlugsFor } from "@/lib/league-groups"
+import { inArray } from "drizzle-orm"
 
 export type PlayerListItem = {
   id: string
@@ -30,7 +31,9 @@ export type PlayerListItem = {
     assistsTotal: number | null
     stealsTotal: number | null
     blocksTotal: number | null
-    turnoversTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
     per: number | null
   } | null
 }
@@ -103,7 +106,12 @@ export async function listPlayers(
         pss.assists_total,
         pss.steals_total,
         pss.blocks_total,
-        pss.turnovers_total,
+        pss.fg_made,
+        pss.fg_attempted,
+        pss.three_made,
+        pss.three_attempted,
+        pss.ft_made,
+        pss.ft_attempted,
         pss.per
       from ${playerSeasonStats} pss
       inner join ${seasons} s on s.id = pss.season_id
@@ -162,7 +170,12 @@ export async function listPlayers(
       assists_total,
       steals_total,
       blocks_total,
-      turnovers_total,
+      fg_made,
+      fg_attempted,
+      three_made,
+      three_attempted,
+      ft_made,
+      ft_attempted,
       per
     from ranked
     where rn = 1
@@ -226,7 +239,12 @@ export async function listPlayers(
       assists_total: number | null
       steals_total: number | null
       blocks_total: number | null
-      turnovers_total: number | null
+      fg_made: number | null
+      fg_attempted: number | null
+      three_made: number | null
+      three_attempted: number | null
+      ft_made: number | null
+      ft_attempted: number | null
       per: number | null
     }>
 
@@ -269,7 +287,9 @@ export async function listPlayers(
                 assistsTotal: r.assists_total,
                 stealsTotal: r.steals_total,
                 blocksTotal: r.blocks_total,
-                turnoversTotal: r.turnovers_total,
+                fgPct: r.fg_made != null && r.fg_attempted != null && r.fg_attempted > 0 ? r.fg_made / r.fg_attempted : null,
+                threePct: r.three_made != null && r.three_attempted != null && r.three_attempted > 0 ? r.three_made / r.three_attempted : null,
+                ftPct: r.ft_made != null && r.ft_attempted != null && r.ft_attempted > 0 ? r.ft_made / r.ft_attempted : null,
                 per: r.per,
               },
       })),
@@ -310,7 +330,9 @@ export type PlayerProfile = {
     assistsTotal: number | null
     stealsTotal: number | null
     blocksTotal: number | null
-    turnoversTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
     per: number | null
   }>
 }
@@ -360,7 +382,12 @@ export const getPlayerBySlug = cached(
       assistsTotal: playerSeasonStats.assistsTotal,
       stealsTotal: playerSeasonStats.stealsTotal,
       blocksTotal: playerSeasonStats.blocksTotal,
-      turnoversTotal: playerSeasonStats.turnoversTotal,
+      fgMade: playerSeasonStats.fgMade,
+      fgAttempted: playerSeasonStats.fgAttempted,
+      threeMade: playerSeasonStats.threeMade,
+      threeAttempted: playerSeasonStats.threeAttempted,
+      ftMade: playerSeasonStats.ftMade,
+      ftAttempted: playerSeasonStats.ftAttempted,
       per: playerSeasonStats.per,
     })
     .from(playerSeasonStats)
@@ -391,7 +418,9 @@ export const getPlayerBySlug = cached(
       assistsTotal: row.assistsTotal,
       stealsTotal: row.stealsTotal,
       blocksTotal: row.blocksTotal,
-      turnoversTotal: row.turnoversTotal,
+      fgPct: row.fgMade != null && row.fgAttempted != null && row.fgAttempted > 0 ? row.fgMade / row.fgAttempted : null,
+      threePct: row.threeMade != null && row.threeAttempted != null && row.threeAttempted > 0 ? row.threeMade / row.threeAttempted : null,
+      ftPct: row.ftMade != null && row.ftAttempted != null && row.ftAttempted > 0 ? row.ftMade / row.ftAttempted : null,
       per: row.per,
     })
   }
@@ -502,6 +531,9 @@ export type AutocompletePlayer = {
     assistsTotal: number | null
     stealsTotal: number | null
     blocksTotal: number | null
+    fgPct: number | null
+    threePct: number | null
+    ftPct: number | null
     per: number | null
   } | null
 }
@@ -528,7 +560,11 @@ function mapRow(
     seasonId: string | null; seasonName: string | null
     gamesPlayed: number | null
     pointsTotal: number | null; reboundsTotal: number | null; assistsTotal: number | null
-    stealsTotal: number | null; blocksTotal: number | null; per: number | null
+    stealsTotal: number | null; blocksTotal: number | null
+    fgMade: number | null; fgAttempted: number | null
+    threeMade: number | null; threeAttempted: number | null
+    ftMade: number | null; ftAttempted: number | null
+    per: number | null
   },
 ): AutocompletePlayer {
   return {
@@ -555,6 +591,9 @@ function mapRow(
           assistsTotal: r.assistsTotal,
           stealsTotal: r.stealsTotal,
           blocksTotal: r.blocksTotal,
+          fgPct: r.fgMade != null && r.fgAttempted != null && r.fgAttempted > 0 ? r.fgMade / r.fgAttempted : null,
+          threePct: r.threeMade != null && r.threeAttempted != null && r.threeAttempted > 0 ? r.threeMade / r.threeAttempted : null,
+          ftPct: r.ftMade != null && r.ftAttempted != null && r.ftAttempted > 0 ? r.ftMade / r.ftAttempted : null,
           per: r.per,
         }
       : null,
@@ -586,6 +625,12 @@ const AUTOCOMPLETE_COLUMNS = {
   assistsTotal: playerSeasonStats.assistsTotal,
   stealsTotal: playerSeasonStats.stealsTotal,
   blocksTotal: playerSeasonStats.blocksTotal,
+  fgMade: playerSeasonStats.fgMade,
+  fgAttempted: playerSeasonStats.fgAttempted,
+  threeMade: playerSeasonStats.threeMade,
+  threeAttempted: playerSeasonStats.threeAttempted,
+  ftMade: playerSeasonStats.ftMade,
+  ftAttempted: playerSeasonStats.ftAttempted,
   per: playerSeasonStats.per,
 } as const
 
@@ -603,7 +648,10 @@ async function runAutocomplete(
 
   const conditions = []
   if (pattern) conditions.push(like(nameExpr, pattern))
-  if (options.league) conditions.push(eq(leagues.slug, options.league))
+  if (options.league) {
+    const slugs = leagueSlugsFor(options.league)
+    if (slugs) conditions.push(inArray(leagues.slug, slugs))
+  }
   const where = conditions.length ? and(...conditions) : undefined
 
   const orderBy = (() => {

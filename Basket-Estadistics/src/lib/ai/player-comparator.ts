@@ -58,11 +58,6 @@ function fmtPct(v: number | null): string {
   return v == null ? "—" : `${(v * 100).toFixed(1)}%`
 }
 
-function safeDiv(a: number | null, b: number | null): number | null {
-  if (a == null || b == null || b === 0) return null
-  return a / b
-}
-
 function tot(
   v: number | null | undefined,
   gp: number | null | undefined,
@@ -214,12 +209,12 @@ function categoryEfficiency(
   a: ComparePlayer,
   b: ComparePlayer,
 ): CategoryResult {
-  const aFg = null
-  const aTp = null
-  const aFt = null
-  const bFg = null
-  const bTp = null
-  const bFt = null
+  const aFg = a.stats?.fgPct ?? null
+  const aTp = a.stats?.threePct ?? null
+  const aFt = a.stats?.ftPct ?? null
+  const bFg = b.stats?.fgPct ?? null
+  const bTp = b.stats?.threePct ?? null
+  const bFt = b.stats?.ftPct ?? null
   const aAvg = avg([aFg, aTp, aFt])
   const bAvg = avg([bFg, bTp, bFt])
   const cmp = compareNumbers(aAvg, bAvg)
@@ -303,45 +298,6 @@ function buildInsights(
       player: "b",
       text: `Clear edge in ${biggestBEdge.label.toLowerCase()} (+${Math.round(biggestBEdge.margin * 100)}% over ${a.fullName}).`,
     })
-  }
-
-  const aTo = num(tot(a.stats?.turnoversTotal, a.stats?.gamesPlayed))
-  const bTo = num(tot(b.stats?.turnoversTotal, b.stats?.gamesPlayed))
-  if (aTo != null && bTo != null) {
-    if (aTo > bTo + 0.6) {
-      insights.push({
-        kind: "weakness",
-        player: "a",
-        text: `Turns it over more than ${b.fullName} (${aTo.toFixed(1)} vs ${bTo.toFixed(1)} per game).`,
-      })
-    } else if (bTo > aTo + 0.6) {
-      insights.push({
-        kind: "weakness",
-        player: "b",
-        text: `Turns it over more than ${a.fullName} (${bTo.toFixed(1)} vs ${aTo.toFixed(1)} per game).`,
-      })
-    }
-  }
-
-  const aAst = num(tot(a.stats?.assistsTotal, a.stats?.gamesPlayed))
-  const bAst = num(tot(b.stats?.assistsTotal, b.stats?.gamesPlayed))
-  const aAstTo = safeDiv(aAst, aTo)
-  const bAstTo = safeDiv(bAst, bTo)
-  if (aAstTo != null && bAstTo != null) {
-    if (aAstTo >= 2.5) {
-      insights.push({
-        kind: "strength",
-        player: "a",
-        text: `AST/TO ratio ${aAstTo.toFixed(2)} — very secure decision-maker.`,
-      })
-    }
-    if (bAstTo >= 2.5) {
-      insights.push({
-        kind: "strength",
-        player: "b",
-        text: `AST/TO ratio ${bAstTo.toFixed(2)} — very secure decision-maker.`,
-      })
-    }
   }
 
   if (a.league.slug !== b.league.slug) {

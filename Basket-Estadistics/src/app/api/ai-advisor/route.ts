@@ -12,8 +12,9 @@ import { generateAdvisorResponse, lastLlmError } from "@/lib/ai/llm"
 import { resolveEngine } from "@/lib/ai/user-provider"
 import { getProvider, resolveModel } from "@/lib/ai/providers"
 import { getCurrentUser } from "@/lib/auth/current-user"
-import { getAdvisorFreeUsage } from "@/lib/auth/free-usage"
-import { userPlan } from "@/lib/db/schema"
+// NOTE: Import kept for when usage limits are re-enabled.
+// import { getAdvisorFreeUsage } from "@/lib/auth/free-usage"
+// import { userPlan } from "@/lib/db/schema"
 import {
   audit,
   clientIp,
@@ -50,7 +51,8 @@ export async function POST(request: Request) {
   if (!user) {
     return jsonError("Authentication required.", 401)
   }
-  const plan = userPlan(user)
+  // NOTE: plan check disabled until re-enabled later.
+  // const plan = userPlan(user)
 
   // 1. Rate limit per IP.
   const limit = rateLimit(ip)
@@ -152,20 +154,20 @@ export async function POST(request: Request) {
       return jsonError("Conversation not found.", 404)
     }
   } else {
-    // Check free-quota before creating a new conversation.
-    if (plan === "free") {
-      const usage = await getAdvisorFreeUsage(user.id, user.plan, user.role)
-      if (usage.remaining <= 0) {
-        return NextResponse.json(
-          {
-            error: "free_quota_exceeded",
-            message:
-              "You used your free advisor preview. Upgrade to Pro for unlimited conversations.",
-          },
-          { status: 403, headers: securityHeaders() },
-        )
-      }
-    }
+    // NOTE: Free quota check disabled until re-enabled later.
+    // if (plan === "free") {
+    //   const usage = await getAdvisorFreeUsage(user.id, user.plan, user.role)
+    //   if (usage.remaining <= 0) {
+    //     return NextResponse.json(
+    //       {
+    //         error: "free_quota_exceeded",
+    //         message:
+    //           "You used your free advisor preview. Upgrade to Pro for unlimited conversations.",
+    //       },
+    //       { status: 403, headers: securityHeaders() },
+    //     )
+    //   }
+    // }
     conversationId = crypto.randomUUID()
     const rawTitle =
       typeof body.conversationTitle === "string"

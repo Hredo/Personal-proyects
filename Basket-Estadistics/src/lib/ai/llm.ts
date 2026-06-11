@@ -68,8 +68,6 @@ function buildPlayerContext(profile: PlayerProfile): string {
       lines.push(`- Robos: ${formatStat(latest.stealsTotal / gp)} SPG`)
     if (latest.blocksTotal !== null)
       lines.push(`- Tapones: ${formatStat(latest.blocksTotal / gp)} BPG`)
-    if (latest.turnoversTotal !== null)
-      lines.push(`- Pérdidas: ${formatStat(latest.turnoversTotal / gp)} TOPG`)
   } else {
     lines.push("")
     lines.push(`Sin estadísticas de temporada registradas en la base de datos.`)

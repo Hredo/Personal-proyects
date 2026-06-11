@@ -227,6 +227,14 @@ export function UserMenu() {
             <MenuLink href="/account/subscription" onSelect={() => setOpen(false)}>
               Subscription
             </MenuLink>
+            {me.role === "admin" ? (
+              <>
+                <div className="my-1 h-px bg-white/5" />
+                <MenuLink href="/admin" onSelect={() => setOpen(false)}>
+                  Admin
+                </MenuLink>
+              </>
+            ) : null}
             <div className="my-1 h-px bg-white/5" />
             <MenuLink href="/ai-advisor" onSelect={() => setOpen(false)}>
               AI Advisor

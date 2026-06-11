@@ -572,7 +572,6 @@ export const acbAdapter: SourceAdapter = {
       const ast = Number(cells.get("ast_per_g")) || 0
       const stl = Number(cells.get("stl_per_g")) || 0
       const blk = Number(cells.get("blk_per_g")) || 0
-      const tov = Number(cells.get("tov_per_g")) || 0
       const fgm = Number(cells.get("fg")) || 0
       const fga = Number(cells.get("fga")) || 0
       const threeM = Number(cells.get("fg3")) || 0
@@ -592,7 +591,6 @@ export const acbAdapter: SourceAdapter = {
         assistsTotal: Math.round(ast * g),
         stealsTotal: Math.round(stl * g),
         blocksTotal: Math.round(blk * g),
-        turnoversTotal: Math.round(tov * g),
         fgMade: Math.round(fgm * g),
         fgAttempted: Math.round(fga * g),
         threeMade: Math.round(threeM * g),

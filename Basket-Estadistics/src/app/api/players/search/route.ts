@@ -25,7 +25,7 @@ function parseSort(v: string | null): AutocompleteSort {
 
 function parseLeague(v: string | null): string | undefined {
   if (!v) return undefined
-  return ["nba", "euroleague", "acb"].includes(v) ? v : undefined
+  return ["nba", "euroleague", "acb", "feb", "leb-oro", "leb-plata", "eba"].includes(v) ? v : undefined
 }
 
 export async function GET(req: Request) {

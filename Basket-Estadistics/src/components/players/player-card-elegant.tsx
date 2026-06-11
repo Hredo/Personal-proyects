@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { SmartImage } from "@/components/ui/smart-image"
+import { PctBar } from "@/components/ui/pct-bar"
 import { leagueAccent } from "@/components/ui/league-badge"
 import { useSpotlight } from "@/components/animations/spotlight-card"
 import { getInitials } from "@/lib/format"
@@ -24,6 +25,9 @@ type Props = {
       pointsTotal: number | null
       reboundsTotal: number | null
       assistsTotal: number | null
+      fgPct: number | null
+      threePct: number | null
+      ftPct: number | null
     } | null
   }
   rank?: number
@@ -126,6 +130,17 @@ export function PlayerCardElegant({ player, rank }: Props) {
         <Stat label="PPG" value={ppg} primary />
         <Stat label="RPG" value={rpg} />
         <Stat label="APG" value={apg} />
+      </div>
+      <div className="grid grid-cols-3 divide-x divide-hairline hairline-t">
+        <div className="px-3 py-2.5">
+          <PctBar value={s?.fgPct} size="sm" showLabel label="FG%" />
+        </div>
+        <div className="px-3 py-2.5">
+          <PctBar value={s?.threePct} size="sm" showLabel label="3P%" />
+        </div>
+        <div className="px-3 py-2.5">
+          <PctBar value={s?.ftPct} size="sm" showLabel label="FT%" />
+        </div>
       </div>
     </Link>
   )
