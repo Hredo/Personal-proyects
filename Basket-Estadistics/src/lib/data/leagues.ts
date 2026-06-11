@@ -56,8 +56,14 @@ async function fetchLatestSeason(
   db: ReturnType<typeof getDb>,
   leagueId: string,
 ): Promise<{ id: string; name: string } | null> {
+  // Seasons can be duplicated by name (same label, different ids); prefer the
+  // row holding the most stats for this league so partial duplicates lose.
   const rows = await db
-    .select({ id: seasons.id, name: seasons.name })
+    .select({
+      id: seasons.id,
+      name: seasons.name,
+      statRows: sql<number>`count(*)`,
+    })
     .from(seasons)
     .innerJoin(
       playerSeasonStats,
@@ -66,9 +72,10 @@ async function fetchLatestSeason(
         eq(playerSeasonStats.leagueId, leagueId),
       ),
     )
-    .orderBy(desc(seasons.name))
+    .groupBy(seasons.id, seasons.name)
+    .orderBy(desc(seasons.name), sql`count(*) desc`)
     .limit(1)
-  return rows[0] ?? null
+  return rows[0] ? { id: rows[0].id, name: rows[0].name } : null
 }
 
 async function fetchCounts(
@@ -105,7 +112,7 @@ async function fetchTopScorers(
       fullName: sql<string>`${players.firstName} || ' ' || ${players.lastName}`,
       slug: players.slug,
       imageUrl: players.imageUrl,
-      ppg: playerSeasonStats.pointsTotal,
+      ppg: sql<number>`round(${playerSeasonStats.pointsTotal}::numeric / nullif(${playerSeasonStats.gamesPlayed}, 0), 1)`,
       teamId: teams.id,
       teamName: teams.name,
       teamSlug: teams.slug,
@@ -121,9 +128,21 @@ async function fetchTopScorers(
         sql`${playerSeasonStats.gamesPlayed} >= 5`,
       ),
     )
-    .orderBy(sql`${playerSeasonStats.pointsTotal} desc`)
-    .limit(limit)
-  return rows.map((r) => ({
+    .orderBy(
+      sql`${playerSeasonStats.pointsTotal}::numeric / nullif(${playerSeasonStats.gamesPlayed}, 0) desc nulls last`,
+    )
+    .limit(limit * 4)
+  // A player can carry duplicate rows in one season (duplicated team entities
+  // from sync); keep only their best line.
+  const seen = new Set<string>()
+  const deduped: typeof rows = []
+  for (const r of rows) {
+    if (seen.has(r.playerId)) continue
+    seen.add(r.playerId)
+    deduped.push(r)
+    if (deduped.length === limit) break
+  }
+  return deduped.map((r) => ({
     playerId: r.playerId,
     fullName: r.fullName,
     slug: r.slug,
@@ -185,16 +204,26 @@ function ascLabel(column: typeof leagues.name) {
 
 export const getGlobalLeagueCounts = cached(
   async (): Promise<GlobalLeagueCounts> => {
-    const db = getDb()
-    const [l] = await db.select({ c: sql<number>`count(*)` }).from(leagues)
-    const [p] = await db.select({ c: sql<number>`count(*)` }).from(players)
-    const [t] = await db.select({ c: sql<number>`count(*)` }).from(teams)
-    const [c] = await db.select({ c: sql<number>`count(*)` }).from(coaches)
-    return {
-      leagues: Number(l?.c ?? 0),
-      players: Number(p?.c ?? 0),
-      teams: Number(t?.c ?? 0),
-      coaches: Number(c?.c ?? 0),
+    try {
+      const db = getDb()
+      const [l] = await db.select({ c: sql<number>`count(*)` }).from(leagues)
+      const [p] = await db.select({ c: sql<number>`count(*)` }).from(players)
+      const [t] = await db.select({ c: sql<number>`count(*)` }).from(teams)
+      const [c] = await db.select({ c: sql<number>`count(*)` }).from(coaches)
+      return {
+        leagues: Number(l?.c ?? 0),
+        players: Number(p?.c ?? 0),
+        teams: Number(t?.c ?? 0),
+        coaches: Number(c?.c ?? 0),
+      }
+    } catch (error) {
+      console.warn("[getGlobalLeagueCounts] falling back to zero counts", error)
+      return {
+        leagues: 0,
+        players: 0,
+        teams: 0,
+        coaches: 0,
+      }
     }
   },
   "getGlobalLeagueCounts",

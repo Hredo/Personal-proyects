@@ -52,7 +52,7 @@ export async function listTeams(
   }
 
   const playerCountExpr = sql<number>`(
-    select count(*) from ${playerSeasonStats} pss
+    select count(distinct pss.player_id) from ${playerSeasonStats} pss
     where pss.team_id = ${teams.id}
   )`
 
