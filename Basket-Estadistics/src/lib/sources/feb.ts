@@ -6,13 +6,24 @@ import {
   type SourceTeamStats,
   type ExtractedPlayerStat,
 } from "@/lib/sources/types"
-import { parseHeightToCm } from "@/lib/sync/slug"
+import { parseBirthdate, parseHeightToCm, parseWeightToKg } from "@/lib/sync/slug"
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 const BASE = "https://baloncestoenvivo.feb.es"
 const SEASON_YEAR = 2025
 const SEASON_T = "2025"
+
+// Enrichment adds one Equipo.aspx request per team plus one Jugador.aspx
+// request per leftover player, so pace those at roughly one every 2-3s.
+const POLITE_DELAY_MS = 1800
+const POLITE_JITTER_MS = 1200
+
+function politePause(): Promise<void> {
+  return new Promise((resolve) =>
+    setTimeout(resolve, POLITE_DELAY_MS + Math.random() * POLITE_JITTER_MS),
+  )
+}
 
 export type FebConfig = {
   id: "leb-oro" | "leb-plata" | "eba"
@@ -140,7 +151,48 @@ function tdText(row: string, cls: string): string | undefined {
 
 type FebPlayer = {
   playerId: string; fullName: string; teamId: string; teamName: string
-  position?: string; heightCm?: number; nationality?: string; games?: number; ppg?: number
+  position?: string; heightCm?: number; weightKg?: number; nationality?: string
+  birthdate?: string; games?: number; ppg?: number
+}
+
+type FebBio = Pick<
+  FebPlayer,
+  "position" | "heightCm" | "weightKg" | "nationality" | "birthdate"
+>
+
+type FebCoach = { fullName: string; photoUrl?: string; birthdate?: string }
+
+type FebTeamMeta = { city?: string; logoUrl?: string; coach?: FebCoach }
+
+/** FEB renders countries/cities/coach names in ALL CAPS; title-case those. */
+function fromCaps(s: string | undefined): string | undefined {
+  if (!s) return undefined
+  return s === s.toUpperCase() ? titleCaseEs(s) : s
+}
+
+/** "Camí de Bintaufa, 18 07702 Mahón (Illes Balears)" → "Mahón". */
+function cityFromAddress(address: string | undefined): string | undefined {
+  const m = address?.match(/\b\d{5}\s+([^(]+?)\s*(?:\(|$)/)
+  return m ? fromCaps(m[1]!.trim()) : undefined
+}
+
+function ageFromBirthdate(iso: string | undefined): number | undefined {
+  if (!iso) return undefined
+  const birth = new Date(`${iso}T00:00:00Z`)
+  if (Number.isNaN(birth.getTime())) return undefined
+  const now = new Date()
+  let age = now.getUTCFullYear() - birth.getUTCFullYear()
+  const monthDiff = now.getUTCMonth() - birth.getUTCMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && now.getUTCDate() < birth.getUTCDate())) age--
+  return age > 0 && age < 100 ? age : undefined
+}
+
+function mergeBio(p: FebPlayer, bio: FebBio): void {
+  p.position ??= bio.position
+  p.heightCm ??= bio.heightCm
+  p.weightKg ??= bio.weightKg
+  p.nationality ??= bio.nationality
+  p.birthdate ??= bio.birthdate
 }
 
 function parseRoster(html: string, teamId: string, teamName: string): FebPlayer[] {
@@ -180,7 +232,83 @@ function parsePointsRanking(html: string): Map<string, PointLine> {
   return out
 }
 
-type FebData = { players: FebPlayer[]; points: Map<string, PointLine> }
+/**
+ * Equipo.aspx roster table — the only ranking-adjacent page that carries the
+ * bio columns (puesto/fecha nacimiento/nacionalidad/altura/peso) the rankings
+ * table lacks. Rows are keyed by the same c= license id used everywhere else.
+ */
+function parseTeamRoster(html: string): Map<string, FebBio> {
+  const out = new Map<string, FebBio>()
+  for (const rm of html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const row = rm[1]!
+    const idM = row.match(/class="nombre jugador"[\s\S]*?Jugador\.aspx\?i=\d+&(?:amp;)?c=(\d+)/i)
+    if (!idM) continue
+    out.set(idM[1]!, {
+      position: tdText(row, "puesto"),
+      heightCm: parseHeightToCm(tdText(row, "altura")),
+      weightKg: parseWeightToKg(tdText(row, "peso")),
+      nationality: fromCaps(tdText(row, "nacionalidad")),
+      birthdate: parseBirthdate(tdText(row, "fecha nacimiento")),
+    })
+  }
+  return out
+}
+
+/** Club logo, city (from the club address) and head coach on Equipo.aspx. */
+function parseTeamMeta(html: string): FebTeamMeta {
+  const logo = html.match(/id="[^"]*logoEquipoImage"[^>]*src="([^"]+)"/)?.[1]
+  const address = html.match(/id="[^"]*_direccionLabel"[^>]*>([\s\S]*?)<\/span>/)?.[1]
+  const meta: FebTeamMeta = {
+    logoUrl: logo ? decodeEntities(logo) : undefined,
+    city: cityFromAddress(
+      address
+        ? decodeEntities(address.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()
+        : undefined,
+    ),
+  }
+  const boxIdx = html.indexOf('"box-entrenador"')
+  if (boxIdx >= 0) {
+    const seg = html.slice(boxIdx, boxIdx + 2500)
+    const name = seg.match(/<div class="nombre">([^<]+)<\/div>/i)?.[1]
+    const photoC = seg.match(/Foto\.aspx\?c=(\d+)/i)?.[1]
+    if (name) {
+      meta.coach = {
+        fullName: titleCaseEs(decodeEntities(name).replace(/\s+/g, " ").trim()),
+        photoUrl: photoC ? `https://imagenes.feb.es/Foto.aspx?c=${photoC}` : undefined,
+        birthdate: parseBirthdate(seg.match(/<div class="fecha nacimiento">([^<]*)<\/div>/i)?.[1]),
+      }
+    }
+  }
+  return meta
+}
+
+/**
+ * Jugador.aspx bio box: <div class="nodo"><span class="label">Altura</span>
+ * <span class="string">192 cm</span></div>. Empty values render as " cm" /
+ * " Kg" / "", which the parse helpers all reject.
+ */
+function parsePlayerPage(html: string): FebBio {
+  const fields = new Map<string, string>()
+  const re = /<span[^>]*class="label"[^>]*>\s*([^<]+?)\s*<\/span>\s*<span[^>]*class="string"[^>]*>([\s\S]*?)<\/span>/gi
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null) {
+    const value = decodeEntities(m[2]!.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()
+    if (value) fields.set(decodeEntities(m[1]!).trim().toLowerCase(), value)
+  }
+  return {
+    position: fields.get("puesto"),
+    heightCm: parseHeightToCm(fields.get("altura")),
+    weightKg: parseWeightToKg(fields.get("peso")),
+    nationality: fromCaps(fields.get("nacionalidad")),
+    birthdate: parseBirthdate(fields.get("fecha nacimiento")),
+  }
+}
+
+type FebData = {
+  players: FebPlayer[]
+  points: Map<string, PointLine>
+  teamMeta: Map<string, FebTeamMeta>
+}
 
 async function collectData(cfg: FebConfig): Promise<FebData> {
   const url = `${BASE}/rankings.aspx?g=${cfg.g}&t=${SEASON_T}&nm=${cfg.nm}`
@@ -200,11 +328,13 @@ async function collectData(cfg: FebConfig): Promise<FebData> {
   const points = parsePointsRanking(regHtml)
   const teams = teamSelect(selects)
   const teamOptions = (teams?.options ?? []).filter((o) => isTeamOption(o.value))
-  if (!teams || teamOptions.length === 0) return { players: [], points }
+  const teamMeta = new Map<string, FebTeamMeta>()
+  if (!teams || teamOptions.length === 0) return { players: [], points, teamMeta }
   const phaseAfter = regularPhase(selects)
   const byPlayer = new Map<string, FebPlayer>()
   for (const opt of teamOptions) {
     try {
+      await politePause()
       const overrides: Record<string, string> = { [teams.name]: opt.value }
       if (phaseAfter) overrides[phaseAfter.name] = phaseAfter.value
       const html = await fetchText(url, {
@@ -217,7 +347,47 @@ async function collectData(cfg: FebConfig): Promise<FebData> {
       console.warn(`[feb:${cfg.id}] team ${opt.value} failed: ${msg}`)
     }
   }
-  return { players: [...byPlayer.values()], points }
+
+  // Bio/club enrichment: one Equipo.aspx page per team covers its current
+  // roster, the club logo/city and the head coach.
+  let rosterHits = 0
+  for (const opt of teamOptions) {
+    try {
+      await politePause()
+      const html = await fetchText(`${BASE}/Equipo.aspx?i=${opt.value}`)
+      teamMeta.set(opt.value, parseTeamMeta(html))
+      for (const [playerId, bio] of parseTeamRoster(html)) {
+        const p = byPlayer.get(playerId)
+        if (p) {
+          mergeBio(p, bio)
+          rosterHits++
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn(`[feb:${cfg.id}] equipo ${opt.value} failed: ${msg}`)
+    }
+  }
+
+  // Ranked players already gone from their team's roster (transfers): fall
+  // back to their own page. The i= param must be the team the license is
+  // registered with, which is exactly the team their ranking row linked.
+  const leftovers = [...byPlayer.values()].filter((p) => !p.position && !p.nationality)
+  for (const p of leftovers) {
+    try {
+      await politePause()
+      const html = await fetchText(`${BASE}/Jugador.aspx?i=${p.teamId}&c=${p.playerId}`)
+      mergeBio(p, parsePlayerPage(html))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn(`[feb:${cfg.id}] jugador ${p.playerId} failed: ${msg}`)
+    }
+  }
+  console.log(
+    `[feb:${cfg.id}] bio enrichment — roster rows matched: ${rosterHits} · ` +
+      `team pages: ${teamMeta.size}/${teamOptions.length} · player-page fallbacks: ${leftovers.length}`,
+  )
+  return { players: [...byPlayer.values()], points, teamMeta }
 }
 
 export function createFebAdapter(cfg: FebConfig): SourceAdapter {

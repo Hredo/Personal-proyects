@@ -43,14 +43,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-async function fetchText(url: string, accept: string): Promise<string> {
+async function fetchText(
+  url: string,
+  accept: string,
+  extraHeaders: Record<string, string> = {},
+  timeoutMs = 90_000,
+): Promise<string> {
   let lastErr: unknown
   for (let attempt = 1; attempt <= 4; attempt++) {
     let res: Response
     try {
       res = await fetch(url, {
-        headers: { "User-Agent": UA, Accept: accept },
-        signal: AbortSignal.timeout(90_000),
+        headers: { "User-Agent": UA, Accept: accept, ...extraHeaders },
+        signal: AbortSignal.timeout(timeoutMs),
       })
     } catch (err) {
       // timeouts / transient network errors — retry with backoff
@@ -74,6 +79,33 @@ function parseHeightInchesToCm(s: string | undefined): number | undefined {
   const m = s.match(/(\d+)-(\d+)/)
   if (!m) return undefined
   return Math.round((Number(m[1]) * 12 + Number(m[2])) * 2.54)
+}
+
+// stats.nba.com hangs or resets connections that lack these headers.
+const NBA_HEADERS = {
+  Referer: "https://www.nba.com/",
+  Origin: "https://www.nba.com",
+}
+
+type NbaEnvelope = {
+  resultSets: {
+    name: string
+    headers: string[]
+    rowSet: (string | number | null)[][]
+  }[]
+}
+
+function readSet(
+  payload: NbaEnvelope,
+  name: string,
+): Record<string, string | number | null>[] {
+  const set = payload.resultSets.find((rs) => rs.name === name)
+  if (!set) return []
+  return set.rowSet.map((row) => {
+    const obj: Record<string, string | number | null> = {}
+    set.headers.forEach((h, i) => (obj[h] = row[i] ?? null))
+    return obj
+  })
 }
 
 function parseBrPlayerPage(html: string): {
@@ -202,6 +234,88 @@ async function main() {
       await sleep(BR_DELAY_MS)
     }
     console.log(`[euroleague] updated ${updated} players (${fetched} pages)`)
+  }
+
+  /* ---- Part 2: NBA via commonallplayers + commonplayerinfo ---- */
+  console.log("\n── NBA backfill (commonallplayers + commonplayerinfo) ──")
+  const nbaTargets = await incompleteByLeague("nba")
+  console.log(`[nba] ${nbaTargets.length} players with missing fields`)
+  if (nbaTargets.length > 0) {
+    const allJson = JSON.parse(
+      await fetchText(
+        "https://stats.nba.com/stats/commonallplayers?IsOnlyCurrentSeason=0&LeagueID=00&Season=2025-26",
+        "application/json, text/plain, */*",
+        NBA_HEADERS,
+      ),
+    ) as NbaEnvelope
+    const idByName = new Map<string, string>()
+    const ambiguous = new Set<string>()
+    for (const row of readSet(allJson, "CommonAllPlayers")) {
+      const display = row.DISPLAY_FIRST_LAST
+      const personId = row.PERSON_ID
+      if (!display || personId == null) continue
+      const key = norm(String(display))
+      if (!key) continue
+      const prior = idByName.get(key)
+      if (prior && prior !== String(personId)) ambiguous.add(key)
+      else idByName.set(key, String(personId))
+    }
+    console.log(`[nba] ${idByName.size} historical player ids indexed`)
+
+    let updated = 0
+    let processed = 0
+    let consecutiveFailures = 0
+    for (const p of nbaTargets) {
+      if (consecutiveFailures >= 6) {
+        console.warn("[nba] aborting phase — stats.nba.com keeps failing")
+        break
+      }
+      const key = norm(p.name)
+      if (ambiguous.has(key)) continue
+      const personId = idByName.get(key)
+      if (!personId) continue
+      processed++
+      try {
+        const infoJson = JSON.parse(
+          await fetchText(
+            `https://stats.nba.com/stats/commonplayerinfo?LeagueID=00&PlayerID=${personId}`,
+            "application/json, text/plain, */*",
+            NBA_HEADERS,
+            25_000,
+          ),
+        ) as NbaEnvelope
+        consecutiveFailures = 0
+        const info = readSet(infoJson, "CommonPlayerInfo")[0]
+        if (!info) continue
+        const fills: Record<string, unknown> = {}
+        if (!p.position && info.POSITION) fills.position = String(info.POSITION)
+        if (!p.height_cm && info.HEIGHT) {
+          const cm = parseHeightInchesToCm(String(info.HEIGHT))
+          if (cm) fills.heightCm = cm
+        }
+        if (!p.weight_kg && info.WEIGHT && Number(info.WEIGHT) > 0) {
+          fills.weightKg = Math.round(Number(info.WEIGHT) * 0.453592)
+        }
+        if (!p.nationality && info.COUNTRY)
+          fills.nationality = String(info.COUNTRY)
+        if (!p.image_url) {
+          fills.imageUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${personId}.png`
+        }
+        if (Object.keys(fills).length > 0) {
+          await db.update(players).set(fills).where(eq(players.id, p.id))
+          updated++
+          console.log(
+            `  [${processed}] ${p.name}: ${Object.keys(fills).join(",")}`,
+          )
+        }
+      } catch (err) {
+        consecutiveFailures++
+        const msg = err instanceof Error ? err.message : String(err)
+        console.warn(`  [${processed}] ${p.name}: FAILED ${msg}`)
+      }
+      await sleep(700)
+    }
+    console.log(`[nba] updated ${updated} players (${processed} lookups)`)
   }
 
   closeDb()
