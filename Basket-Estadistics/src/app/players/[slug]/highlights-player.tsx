@@ -7,10 +7,9 @@ type Props = {
 }
 
 export function HighlightsPlayer({ video, playerName }: Props) {
+  // The parent <section> already renders a "Highlights" heading, so this
+  // component must NOT add a second "Highlight reel" eyebrow above the embed.
   return (
-    <div className="space-y-3">
-      <p className="gh-eyebrow">Highlight reel</p>
-      <YouTubeEmbed youtubeId={video.youtubeId} title={`${playerName} highlights`} />
-    </div>
+    <YouTubeEmbed youtubeId={video.youtubeId} title={`${playerName} highlights`} />
   )
 }

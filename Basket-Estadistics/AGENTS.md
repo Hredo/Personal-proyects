@@ -75,7 +75,7 @@ public/         - Static assets
 
 Copy `.env.example` to `.env.local` for local development. Never commit `.env` files.
 
-### Env vars added for auth features
+### env vars added for auth features
 - `RESEND_API_KEY` — required for sending auth emails (password reset, 2FA codes). Falls back to console.log in dev.
 - `AUTH_EMAIL_FROM` — sender address for auth emails (default: `auth@globalhoopstats.com`). Must be verified in Resend.
 
@@ -118,6 +118,40 @@ The project lives under OneDrive. Files On-Demand creates reparse points inside 
 surfacing as a 500 with no log line. If `pnpm dev` or `pnpm build` start returning 500s with
 no obvious error, delete `.next/` and restart. For a permanent fix, exclude the project folder
 from OneDrive Files On-Demand or move the checkout out of `OneDrive/`.
+
+## Obsidian Memory Vault
+
+Every Claude/OpenCode task completion MUST be recorded in the Obsidian vault at `C:\Users\Hrval\Obsidian\claude-mem`.
+
+### Vault structure
+```
+claude-mem/
+  sessions/       - Claude Code session notes (created by session-end.ps1 hook)
+  copilot-sessions/ - VS Code Copilot chat history (auto-imported by import-copilot.js)
+  memory/         - Permanent technical memory notes
+  scripts/        - import-copilot.js, session-end.ps1
+  INDEX.md        - Master index of all notes
+```
+
+### Routine (mandatory after every task)
+1. **Write session note** — Either use the `session-end.ps1` stub hook or create one manually with YAML frontmatter (`date`, `tags: [session]`). Include:
+   - What was done (resumen)
+   - Files changed
+   - Decisions made
+   - Next steps
+2. **Import Copilot chats** — The hook runs `import-copilot.js` automatically. Or run manually:
+   ```
+   node "C:\Users\Hrval\Obsidian\claude-mem\scripts\import-copilot.js"
+   ```
+3. **Update INDEX.md** — If you created a new memory note, add a link to `INDEX.md`.
+4. **Read memory/ before starting** — Always check relevant memory notes before beginning work on a project.
+5. **Update memory/** — If you discover a new technical constraint, decision, or pattern, write or update a note in `memory/`.
+
+### MCP server
+The `~/.claude/settings.json` configures an `obsidian` MCP server via `@modelcontextprotocol/server-filesystem` pointing to the vault path. Use Read/Write tools on the vault path directly rather than relying on MCP.
+
+### Hook
+`~/.claude/settings.json` has a `Stop` hook that runs `session-end.ps1` at the end of each Claude Code session.
 
 ## License
 

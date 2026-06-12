@@ -520,7 +520,7 @@ export function createFebAdapter(cfg: FebConfig): SourceAdapter {
     async fetchPlayers(): Promise<SourcePlayer[]> {
       return (await data()).players.map((p) => ({
         sourceId: `feb-${p.playerId}`, fullName: p.fullName, position: p.position,
-        heightCm: p.heightCm, nationality: p.nationality,
+        heightCm: p.heightCm, weightKg: p.weightKg, nationality: p.nationality,
         teamSourceId: p.teamId ? `feb-${p.teamId}` : undefined,
         // The c= license id in Jugador.aspx links doubles as the photo key.
         photoUrl: `https://imagenes.feb.es/Foto.aspx?c=${p.playerId}`,
