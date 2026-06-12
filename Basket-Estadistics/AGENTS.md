@@ -75,6 +75,42 @@ public/         - Static assets
 
 Copy `.env.example` to `.env.local` for local development. Never commit `.env` files.
 
+### Env vars added for auth features
+- `RESEND_API_KEY` — required for sending auth emails (password reset, 2FA codes). Falls back to console.log in dev.
+- `AUTH_EMAIL_FROM` — sender address for auth emails (default: `auth@globalhoopstats.com`). Must be verified in Resend.
+
+## OneDrive / Windows sync
+
+## Auth features
+
+### Password recovery (`/forgot-password`, `/reset-password`)
+- `POST /api/auth/forgot-password` — accepts `{ email }`, creates a bcrypt-hashed token in `password_reset_tokens`, sends email via Resend with a link containing the raw token + email as query params.
+- `POST /api/auth/reset-password` — accepts `{ token, email, password }`, iterates unexpired tokens for the user, verifies the raw token against each bcrypt hash (to prevent enumeration), updates the password, and deletes used tokens.
+- Token expiry: 15 minutes. Rate-limited per IP.
+
+### Two-factor authentication (email 2FA)
+- When enabled, login (`POST /api/auth/login`) returns `{ requiresTwoFactor: true, twoFactorSessionId }` instead of a session cookie. The client redirects to `/login/2fa?session=<id>`.
+- `POST /api/auth/2fa/verify` — accepts `{ sessionId, code }`. The code can be a 6-digit email code (bcrypt-verified against `two_factor_sessions.code_hash`) or a backup code (bcrypt-verified against `two_factor_backup_codes`). On success, creates a real session cookie.
+- 2FA codes expire in 5 minutes. Max 5 failed attempts before the session is deleted.
+
+### 2FA management (account security page)
+- `GET /api/account/2fa/status` — returns `{ twoFactorEnabled, remainingBackupCodes }`.
+- `POST /api/account/2fa/enable` — generates a 6-digit code, stores hash in `two_factor_sessions`, emails it. Returns `{ sessionId }`.
+- `POST /api/account/2fa/confirm` — accepts `{ sessionId, code }`, verifies it, enables 2FA on the user, generates 8 backup codes (bcrypt-hashed), returns them as `{ backupCodes: string[] }`.
+- `POST /api/account/2fa/disable` — accepts `{ password }`, verifies password, disables 2FA, deletes all backup codes.
+- `POST /api/account/2fa/backup-codes` — accepts `{ password }`, regenrates 8 new backup codes, invalidates old ones.
+
+### Security conventions
+- All auth tokens and 2FA codes are bcrypt-hashed before DB storage (cost 12), so a DB leak doesn't reveal valid tokens.
+- Password reset tokens are 32-byte random hex strings (`crypto.randomBytes(32)`).
+- 2FA codes are 6-digit `crypto.randomInt(100000, 999999)`.
+- Backup codes are 8-char hex strings (4 bytes → 8 hex chars).
+- All auth endpoints are rate-limited per IP with the `readRateLimit` token-bucket helper.
+- Honeypot fields on all forms prevent bot submissions.
+- Session cookie: `HttpOnly`, `SameSite=Lax`, `Secure` in production.
+- Sender: configured via `AUTH_EMAIL_FROM` env var (default: `globalhoopstats@gmail.com`).
+- Transport priority: Gmail SMTP (`GMAIL_APP_PASSWORD`) > Resend (`RESEND_API_KEY`) > console.log.
+
 ## OneDrive / Windows sync
 
 The project lives under OneDrive. Files On-Demand creates reparse points inside `.next/`

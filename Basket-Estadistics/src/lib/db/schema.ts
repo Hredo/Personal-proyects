@@ -246,6 +246,7 @@ export const users = pgTable(
     email: text("email").notNull(),
     name: text("name").notNull(),
     passwordHash: text("password_hash"),
+    twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
     plan: text("plan").notNull().default("free"),
     role: text("role").notNull().default("user"),
     proSince: timestamp("pro_since"),
@@ -359,6 +360,56 @@ export const compareUses = pgTable(
   (t) => [index("compare_uses_user_idx").on(t.userId)],
 )
 
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    used: boolean("used").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("password_reset_tokens_user_idx").on(t.userId)],
+)
+
+export const twoFactorSessions = pgTable(
+  "two_factor_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    verified: boolean("verified").notNull().default(false),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("two_factor_sessions_user_idx").on(t.userId),
+    index("two_factor_sessions_expires_idx").on(t.expiresAt),
+  ],
+)
+
+export const twoFactorBackupCodes = pgTable(
+  "two_factor_backup_codes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    used: boolean("used").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("two_factor_backup_codes_user_idx").on(t.userId),
+  ],
+)
+
 export type Plan = "free" | "pro"
 
 export function userPlan(
@@ -386,3 +437,6 @@ export type Conversation = typeof conversations.$inferSelect
 export type Message = typeof messages.$inferSelect
 export type UserApiKey = typeof userApiKeys.$inferSelect
 export type UserSettings = typeof userSettings.$inferSelect
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
+export type TwoFactorSession = typeof twoFactorSessions.$inferSelect
+export type TwoFactorBackupCode = typeof twoFactorBackupCodes.$inferSelect

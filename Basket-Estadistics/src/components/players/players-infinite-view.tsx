@@ -133,7 +133,7 @@ export function PlayersInfiniteView({
           hidden: {},
           show: { transition: { staggerChildren: 0.02, delayChildren: 0.05 } },
         }}
-        className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+        className="grid grid-cols-4 gap-2 sm:gap-3 lg:gap-4 xl:grid-cols-5"
       >
         {items.map((p, i) => (
           <motion.li

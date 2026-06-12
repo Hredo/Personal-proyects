@@ -203,6 +203,10 @@ export function AuthForm({ variant, stats }: AuthFormProps) {
         }
         return
       }
+      if (payload.requiresTwoFactor && payload.twoFactorSessionId) {
+        router.push(`/login/2fa?session=${encodeURIComponent(payload.twoFactorSessionId)}`)
+        return
+      }
       // Tell the navbar (UserMenu) the session changed so it swaps
       // "Sign in / Get started" for the account menu without a reload.
       window.dispatchEvent(new Event("auth:changed"))
@@ -348,6 +352,17 @@ export function AuthForm({ variant, stats }: AuthFormProps) {
                   maxLength={200}
                   error={fieldErrors.confirm}
                 />
+              ) : null}
+
+              {!isRegister ? (
+                <div className="text-right">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-ink-500 underline decoration-ink-700 underline-offset-2 transition hover:text-ink-300"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               ) : null}
 
               <AnimatePresence>
