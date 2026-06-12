@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
 
 type MeResponse = {
   user: {
@@ -19,7 +18,10 @@ function initials(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?"
 }
 
-function planBadge(plan: string, role: string): {
+function planBadge(
+  plan: string,
+  role: string,
+): {
   label: string
   color: string
 } {
@@ -78,10 +80,7 @@ export function UserMenu() {
     if (!open) return
     const onClick = (e: MouseEvent) => {
       const t = e.target as Node
-      if (
-        menuRef.current?.contains(t) ||
-        buttonRef.current?.contains(t)
-      ) {
+      if (menuRef.current?.contains(t) || buttonRef.current?.contains(t)) {
         return
       }
       setOpen(false)
@@ -186,90 +185,87 @@ export function UserMenu() {
         </svg>
       </button>
 
-      <AnimatePresence>
-        {open ? (
-          <motion.div
-            ref={menuRef}
-            initial={{ opacity: 0, y: -6, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.97 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-0 z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-ink-900/95 p-1.5 shadow-2xl backdrop-blur-md"
-            role="menu"
-          >
-            <div className="px-3 py-2.5">
-              <p className="text-sm font-semibold text-ink-50">{me.name}</p>
-              <p className="truncate text-xs text-ink-400">{me.email}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span
-                  className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest ${badge.color}`}
-                >
-                  {badge.label}
-                </span>
-                {me.plan === "free" && me.role !== "admin" ? (
-                  <Link
-                    href="/account/subscription"
-                    className="text-[11px] text-brand-300 transition hover:text-brand-200"
-                    onClick={() => setOpen(false)}
-                  >
-                    Upgrade →
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-            <div className="my-1 h-px bg-white/5" />
-            <MenuLink href="/account" onSelect={() => setOpen(false)}>
-              Account settings
-            </MenuLink>
-            <MenuLink href="/account/ai-keys" onSelect={() => setOpen(false)}>
-              AI &amp; keys
-            </MenuLink>
-            <MenuLink href="/account/subscription" onSelect={() => setOpen(false)}>
-              Subscription
-            </MenuLink>
-            {me.role === "admin" ? (
-              <>
-                <div className="my-1 h-px bg-white/5" />
-                <MenuLink href="/admin" onSelect={() => setOpen(false)}>
-                  Admin
-                </MenuLink>
-              </>
-            ) : null}
-            <div className="my-1 h-px bg-white/5" />
-            <MenuLink href="/ai-advisor" onSelect={() => setOpen(false)}>
-              AI Advisor
-            </MenuLink>
-            <MenuLink href="/compare" onSelect={() => setOpen(false)}>
-              Compare
-            </MenuLink>
-            <MenuLink href="/ai-setup" onSelect={() => setOpen(false)}>
-              Connect your AI
-            </MenuLink>
-            <div className="my-1 h-px bg-white/5" />
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-ink-200 transition hover:bg-white/[0.05] hover:text-ink-50"
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden
+      {open ? (
+        <div
+          ref={menuRef}
+          className="absolute right-0 z-50 mt-2 w-64 origin-top-right animate-menu-in overflow-hidden rounded-xl border border-white/10 bg-ink-900/95 p-1.5 shadow-2xl backdrop-blur-md"
+          role="menu"
+        >
+          <div className="px-3 py-2.5">
+            <p className="text-sm font-semibold text-ink-50">{me.name}</p>
+            <p className="truncate text-xs text-ink-400">{me.email}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span
+                className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest ${badge.color}`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12H3m0 0l4-4m-4 4l4 4m11-9V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h9a2 2 0 002-2v-2"
-                />
-              </svg>
-              Sign out
-            </button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+                {badge.label}
+              </span>
+              {me.plan === "free" && me.role !== "admin" ? (
+                <Link
+                  href="/account/subscription"
+                  className="text-[11px] text-brand-300 transition hover:text-brand-200"
+                  onClick={() => setOpen(false)}
+                >
+                  Upgrade →
+                </Link>
+              ) : null}
+            </div>
+          </div>
+          <div className="my-1 h-px bg-white/5" />
+          <MenuLink href="/account" onSelect={() => setOpen(false)}>
+            Account settings
+          </MenuLink>
+          <MenuLink href="/account/ai-keys" onSelect={() => setOpen(false)}>
+            AI &amp; keys
+          </MenuLink>
+          <MenuLink
+            href="/account/subscription"
+            onSelect={() => setOpen(false)}
+          >
+            Subscription
+          </MenuLink>
+          {me.role === "admin" ? (
+            <>
+              <div className="my-1 h-px bg-white/5" />
+              <MenuLink href="/admin" onSelect={() => setOpen(false)}>
+                Admin
+              </MenuLink>
+            </>
+          ) : null}
+          <div className="my-1 h-px bg-white/5" />
+          <MenuLink href="/ai-advisor" onSelect={() => setOpen(false)}>
+            AI Advisor
+          </MenuLink>
+          <MenuLink href="/compare" onSelect={() => setOpen(false)}>
+            Compare
+          </MenuLink>
+          <MenuLink href="/ai-setup" onSelect={() => setOpen(false)}>
+            Connect your AI
+          </MenuLink>
+          <div className="my-1 h-px bg-white/5" />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-ink-200 transition hover:bg-white/[0.05] hover:text-ink-50"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 12H3m0 0l4-4m-4 4l4 4m11-9V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2h9a2 2 0 002-2v-2"
+              />
+            </svg>
+            Sign out
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  exportToPdf,
-  exportToWord,
-  type ChatMessage,
-  type TeamContext,
-} from "@/lib/ai/export"
+import type { ChatMessage, TeamContext } from "@/lib/ai/export"
 
 type Format = "pdf" | "word"
 
@@ -165,7 +160,12 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
       hint: "Documento formateado con análisis, fichas y conversación",
       icon: <PdfIcon />,
       accent: "text-rose-300 bg-rose-500/10 ring-rose-400/30",
-      run: ({ team, messages }) => exportToPdf({ team, messages }),
+      // jspdf/docx weigh several MB, so the export module only loads when a
+      // download is actually requested.
+      run: async ({ team, messages }) => {
+        const { exportToPdf } = await import("@/lib/ai/export")
+        return exportToPdf({ team, messages })
+      },
     },
     {
       id: "word",
@@ -173,7 +173,10 @@ export function ExportMenu({ team, messages, disabled = false }: Props) {
       hint: "Documento editable con todas las secciones",
       icon: <WordIcon />,
       accent: "text-sky-300 bg-sky-500/10 ring-sky-400/30",
-      run: ({ team, messages }) => exportToWord({ team, messages }),
+      run: async ({ team, messages }) => {
+        const { exportToWord } = await import("@/lib/ai/export")
+        return exportToWord({ team, messages })
+      },
     },
   ]
 

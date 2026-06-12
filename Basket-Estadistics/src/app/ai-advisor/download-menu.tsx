@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import {
-  exportToPdf,
-  exportToWord,
-  type ChatMessage,
-  type TeamContext,
-} from "@/lib/ai/export"
+import type { ChatMessage, TeamContext } from "@/lib/ai/export"
 import { exportToMarkdown } from "@/lib/ai/export-markdown"
 
 type Format = "pdf" | "word" | "markdown"
@@ -204,13 +199,21 @@ export function DownloadMenu({ team, messages, disabled = false }: Props) {
       id: "pdf",
       label: "PDF (.pdf)",
       hint: "Formatted document with analysis and player cards",
-      run: ({ team, messages }) => exportToPdf({ team, messages }),
+      // jspdf/docx/xlsx weigh several MB, so the export module only loads
+      // when a download is actually requested.
+      run: async ({ team, messages }) => {
+        const { exportToPdf } = await import("@/lib/ai/export")
+        return exportToPdf({ team, messages })
+      },
     },
     {
       id: "word",
       label: "Word (.docx)",
       hint: "Editable document with every section",
-      run: ({ team, messages }) => exportToWord({ team, messages }),
+      run: async ({ team, messages }) => {
+        const { exportToWord } = await import("@/lib/ai/export")
+        return exportToWord({ team, messages })
+      },
     },
   ]
 

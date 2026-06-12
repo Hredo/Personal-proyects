@@ -1,6 +1,5 @@
 "use client"
 
-import { AnimatePresence, motion } from "framer-motion"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { PlayerSearch, type PlayerSearchHandle } from "./player-search"
 
@@ -65,15 +64,11 @@ export function PlayerCommandPalette() {
   const close = useCallback(() => setOpen(false), [])
 
   return (
-    <AnimatePresence>
+    <>
       {open ? (
-        <motion.div
+        <div
           key="palette"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-[100] flex items-start justify-center px-4 pt-[10vh] sm:pt-[12vh]"
+          className="fixed inset-0 z-[100] flex animate-overlay-in items-start justify-center px-4 pt-[10vh] sm:pt-[12vh]"
           aria-modal="true"
           role="dialog"
           aria-label="Search players"
@@ -84,13 +79,7 @@ export function PlayerCommandPalette() {
             onClick={close}
             className="absolute inset-0 bg-ink-950/70 backdrop-blur-md"
           />
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="relative z-10 w-full max-w-2xl"
-          >
+          <div className="relative z-10 w-full max-w-2xl animate-modal-in">
             <div className="mb-3 flex items-center justify-between px-1 text-xs text-ink-300">
               <span className="font-mono uppercase tracking-widest text-ink-400">
                 Player search
@@ -110,9 +99,9 @@ export function PlayerCommandPalette() {
               variant="modal"
               onPick={() => setOpen(false)}
             />
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       ) : null}
-    </AnimatePresence>
+    </>
   )
 }

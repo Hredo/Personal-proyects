@@ -32,7 +32,7 @@ export type ListTeamsResult = {
   totalPages: number
 }
 
-export async function listTeams(
+async function listTeamsUncached(
   input: ListTeamsInput = {},
 ): Promise<ListTeamsResult> {
   const db = getDb()
@@ -171,6 +171,22 @@ export async function listTeams(
     pageSize,
     totalPages,
   }
+}
+
+const listTeamsCached = cached(
+  listTeamsUncached,
+  "teams-list",
+  ["teams", "team-stats"],
+  300,
+)
+
+export function listTeams(
+  input: ListTeamsInput = {},
+): Promise<ListTeamsResult> {
+  // Free-text searches have unbounded cardinality; cache only the browsable
+  // permutations (league × sort × order × page) that every visitor hits.
+  if (input.query) return listTeamsUncached(input)
+  return listTeamsCached(input)
 }
 
 export type TeamOption = { id: string; name: string; slug: string; leagueSlug: string }
