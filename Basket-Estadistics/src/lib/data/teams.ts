@@ -72,9 +72,18 @@ export async function listTeams(
 
   const where = and(...conditions.filter(Boolean))
 
+  // NOTE: the outer team id must be written as an explicit qualified
+  // identifier, NOT as `${teams.id}`. When a Drizzle Column object is
+  // interpolated into a `sql` expression that is used as a SELECT-projection
+  // field (or ORDER BY), Drizzle renders it WITHOUT the table prefix — so
+  // `${teams.id}` would become a bare `"id"`, which Postgres binds to the
+  // inner `pss.id` (player_season_stats also has an `id` column). The
+  // correlation `pss.team_id = pss.id` never matches, silently yielding 0 for
+  // every team. Qualifying explicitly keeps it correlated to the outer row.
+  const teamId = sql`${sql.identifier("teams")}.${sql.identifier("id")}`
   const playerCountExpr = sql<number>`(
     select count(distinct pss.player_id) from ${playerSeasonStats} pss
-    where pss.team_id = ${teams.id}
+    where pss.team_id = ${teamId}
   )`
 
   const countResult = await db

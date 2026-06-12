@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { randomInt } from "node:crypto"
 import { getDb } from "@/lib/db/client"
-import { sessions, users } from "@/lib/db/schema"
+import {
+  sessions,
+  users,
+  twoFactorSessions,
+} from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { verifyPassword } from "@/lib/auth/password"
+import { hashPassword, verifyPassword } from "@/lib/auth/password"
 import {
   buildSessionCookie,
   getSessionTtlMs,
   newSessionId,
   signSessionToken,
 } from "@/lib/auth/session"
+import { sendTwoFactorCodeEmail } from "@/lib/auth/email"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -93,6 +99,7 @@ export async function POST(request: Request) {
       plan: users.plan,
       role: users.role,
       passwordHash: users.passwordHash,
+      twoFactorEnabled: users.twoFactorEnabled,
     })
     .from(users)
     .where(eq(users.email, email))
@@ -116,6 +123,44 @@ export async function POST(request: Request) {
   }
 
   recordAttempt(key, true)
+
+  if (user.twoFactorEnabled) {
+    const code = String(randomInt(100000, 999999))
+    const codeHash = await hashPassword(code)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000)
+
+    const tfaRows = await db
+      .insert(twoFactorSessions)
+      .values({
+        userId: user.id,
+        codeHash,
+        expiresAt,
+      })
+      .returning({ id: twoFactorSessions.id })
+
+    const tfaId = tfaRows[0]?.id
+    if (!tfaId) {
+      return NextResponse.json(
+        { error: "Could not initiate two-factor authentication." },
+        { status: 500 },
+      )
+    }
+
+    void sendTwoFactorCodeEmail(user.email, code)
+
+    return NextResponse.json({
+      ok: true,
+      requiresTwoFactor: true,
+      twoFactorSessionId: tfaId,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        role: user.role,
+      },
+    })
+  }
 
   const sessionId = newSessionId()
   const ttlMs = getSessionTtlMs()

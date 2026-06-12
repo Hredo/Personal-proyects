@@ -1,0 +1,26 @@
+$ tsx scripts/global-sync.ts "eba"
+[orchestrator] global sync starting — leagues: eba · concurrency: 2
+[orchestrator] entity matcher primed with 1805 known players · ollama available
+[Liga EBA] sync started (season 2025-26)
+[feb:eba] category rebounds: 149 rows
+[feb:eba] category offensiveRebounds: 149 rows
+[feb:eba] category defensiveRebounds: 149 rows
+[feb:eba] category assists: 149 rows
+[feb:eba] category steals: 149 rows
+[feb:eba] category blocks: 118 rows
+[feb:eba] category fouls: 149 rows
+[feb:eba] category minutes: 149 rows
+[feb:eba] category twoPoint: 105 rows
+[feb:eba] category threePoint: 96 rows
+[feb:eba] category freeThrow: 62 rows
+[feb:eba] bio enrichment — roster rows matched: 125 · team pages: 14/14 · player-page fallbacks: 24
+[Liga EBA] teams ready (14)
+[Liga EBA] players resolved (149 — 0 new / 149 reused)
+[Liga EBA] stats upserted (149, skipped 0)
+[Liga EBA] coaches upserted (9)
+[Liga EBA] ✓ done in 604.1s
+[orchestrator] ── summary ──
+[orchestrator] Liga EBA       ok        321 rows  604.1s
+[orchestrator] entity matcher — exact: 149 · no-candidates: 0 · ollama: 0 decisions (0 matched / 0 new) · heuristic: 0 · errors: 0
+[orchestrator] global sync finished in 604.8s — 1/1 leagues ok
+[revalidate] CRON_SECRET is not set; skipping cache invalidation.

@@ -33,15 +33,10 @@ export function StickyFilterBar({
   return (
     <div
       ref={ref}
-      className={`sticky z-30 -mx-4 mb-4 px-4 sm:-mx-6 sm:px-6 transition-all duration-500 ease-fluid ${
-        stuck ? "top-0 shadow-[0_1px_0_0_oklch(1_0_0/0.06)]" : "top-0 mt-7"
+      className={`sticky top-14 z-40 -mx-4 mb-4 px-4 sm:-mx-6 sm:px-6 transition-all duration-500 ease-fluid ${
+        stuck ? "shadow-[0_1px_0_0_oklch(1_0_0/0.06)]" : ""
       }`}
     >
-      <div
-        className={`transition-all duration-500 ease-fluid ${
-          stuck ? "h-[68px]" : "h-0"
-        }`}
-      />
       <div
         className={`gh-glass px-3 py-2 sm:px-4 transition-all duration-500 ${
           stuck ? "rounded-b-2xl rounded-t-none" : "rounded-2xl"

@@ -1,0 +1,26 @@
+$ tsx scripts/global-sync.ts "leb-oro"
+[orchestrator] global sync starting — leagues: leb-oro · concurrency: 2
+[orchestrator] entity matcher primed with 1805 known players · ollama available
+[LEB Oro] sync started (season 2025-26)
+[feb:leb-oro] category rebounds: 180 rows
+[feb:leb-oro] category offensiveRebounds: 180 rows
+[feb:leb-oro] category defensiveRebounds: 180 rows
+[feb:leb-oro] category assists: 180 rows
+[feb:leb-oro] category steals: 179 rows
+[feb:leb-oro] category blocks: 152 rows
+[feb:leb-oro] category fouls: 180 rows
+[feb:leb-oro] category minutes: 180 rows
+[feb:leb-oro] category twoPoint: 119 rows
+[feb:leb-oro] category threePoint: 129 rows
+[feb:leb-oro] category freeThrow: 64 rows
+[feb:leb-oro] bio enrichment — roster rows matched: 169 · team pages: 17/17 · player-page fallbacks: 11
+[LEB Oro] teams ready (17)
+[LEB Oro] players resolved (180 — 0 new / 180 reused)
+[LEB Oro] stats upserted (180, skipped 0)
+[LEB Oro] coaches upserted (16)
+[LEB Oro] ✓ done in 696.3s
+[orchestrator] ── summary ──
+[orchestrator] LEB Oro        ok        393 rows  696.3s
+[orchestrator] entity matcher — exact: 180 · no-candidates: 0 · ollama: 0 decisions (0 matched / 0 new) · heuristic: 0 · errors: 0
+[orchestrator] global sync finished in 697.0s — 1/1 leagues ok
+[revalidate] CRON_SECRET is not set; skipping cache invalidation.

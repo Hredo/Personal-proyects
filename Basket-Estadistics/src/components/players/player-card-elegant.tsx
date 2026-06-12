@@ -89,7 +89,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
           </span>
         ) : null}
 
-        <span className="absolute right-3 top-3 z-[2] inline-flex items-center gap-1.5 rounded-full bg-ink-950/55 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-100 ring-1 ring-hairline backdrop-blur">
+        <span className="absolute right-2 top-2 z-[2] inline-flex items-center gap-1.5 rounded-full bg-ink-950/55 px-1.5 py-0.5 font-mono text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-100 ring-1 ring-hairline backdrop-blur sm:right-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[10px]">
           <span
             aria-hidden
             className="h-1.5 w-1.5 rounded-full"
@@ -98,22 +98,22 @@ export function PlayerCardElegant({ player, rank }: Props) {
           {player.league.name}
         </span>
 
-        <div className="absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-2 p-4">
+        <div className="absolute inset-x-0 bottom-0 z-[2] flex items-end justify-between gap-2 p-2.5 sm:p-4">
           <div className="min-w-0 flex-1">
             {player.position ? (
-              <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400">
+              <p className="mb-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-ink-400 sm:mb-1 sm:text-[10px]">
                 {player.position}
               </p>
             ) : null}
-            <h3 className="truncate font-display text-lg font-bold leading-tight tracking-[-0.01em] text-ink-50">
+            <h3 className="truncate font-display text-sm font-bold leading-tight tracking-[-0.01em] text-ink-50 sm:text-lg">
               {player.fullName}
             </h3>
-            <p className="mt-0.5 truncate text-xs text-ink-300">
+            <p className="mt-0.5 truncate text-[11px] text-ink-300 sm:text-xs">
               {player.team?.name ?? "Free agent"}
             </p>
           </div>
           {player.team?.logoUrl ? (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-ink-950/70 p-1 ring-1 ring-hairline backdrop-blur">
+            <span className="hidden h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-ink-950/70 p-1 ring-1 ring-hairline backdrop-blur sm:flex">
               <SmartImage
                 src={player.team.logoUrl}
                 alt={player.team.name}
@@ -131,7 +131,7 @@ export function PlayerCardElegant({ player, rank }: Props) {
         <Stat label="RPG" value={rpg} />
         <Stat label="APG" value={apg} />
       </div>
-      <div className="grid grid-cols-3 divide-x divide-hairline hairline-t">
+      <div className="hidden grid-cols-3 divide-x divide-hairline hairline-t sm:grid">
         <div className="px-3 py-2.5">
           <PctBar value={s?.fgPct} size="sm" showLabel label="FG%" />
         </div>
@@ -156,16 +156,16 @@ function Stat({
   primary?: boolean
 }) {
   return (
-    <div className="px-3 py-2.5 text-center">
+    <div className="px-0.5 py-2 text-center sm:px-3 sm:py-2.5">
       <p
-        className={`font-display text-lg font-bold tabular-nums ${
+        className={`font-display text-xs font-bold tabular-nums sm:text-lg ${
           primary ? "" : "text-ink-200"
         }`}
         style={primary ? { color: "var(--lg-text)" } : undefined}
       >
         {value}
       </p>
-      <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-ink-500">
+      <p className="mt-0.5 font-mono text-[7px] uppercase tracking-[0.1em] text-ink-500 sm:text-[9px] sm:tracking-[0.18em]">
         {label}
       </p>
     </div>

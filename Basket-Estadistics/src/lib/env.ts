@@ -37,6 +37,13 @@ const serverSchema = z.object({
     z.string().min(1).optional(),
   ),
   CRON_SECRET: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
+  RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  GMAIL_APP_PASSWORD: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  AUTH_EMAIL_FROM: z
+    .preprocess(emptyToUndefined, z.string().email())
+    .default("globalhoopstats@gmail.com"),
+  SMTP_HOST: z.preprocess(emptyToUndefined, z.string().default("smtp.gmail.com")),
+  SMTP_PORT: z.preprocess(emptyToUndefined, z.coerce.number().int().default(587)),
 })
 
 const clientSchema = z.object({
