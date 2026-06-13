@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server"
 import { getPlayerBySlug } from "@/lib/data/players"
-import {
-  rateLimit,
-  clientIp,
-  cleanLlmOutput,
-} from "@/lib/security/ai-advisor"
+import { clientIp, cleanLlmOutput } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 import { getCurrentUser } from "@/lib/auth/current-user"
 import { resolveEngine } from "@/lib/ai/user-provider"
 import { chatComplete } from "@/lib/ai/chat"
@@ -51,7 +48,7 @@ function buildPlayerPrompt(
 
 export async function POST(request: Request) {
   const ip = clientIp(request)
-  const limit = rateLimit(ip)
+  const limit = await consumeRateLimit(`ai:${ip}`, 30, 5 * 60 * 1000)
   if (!limit.ok) {
     return NextResponse.json(
       {

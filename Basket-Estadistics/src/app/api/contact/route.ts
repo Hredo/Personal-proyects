@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { SITE } from "@/lib/site"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -19,6 +21,18 @@ const Body = z.object({
 })
 
 export async function POST(req: Request) {
+  const limited = await consumeRateLimit(
+    `contact:${clientIp(req)}`,
+    5,
+    10 * 60 * 1000,
+  )
+  if (!limited.ok) {
+    return NextResponse.json(
+      { ok: false, error: "Too many messages. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+    )
+  }
+
   let raw: unknown
   try {
     raw = await req.json()

@@ -3,6 +3,8 @@ import { z } from "zod"
 import { sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import { SITE } from "@/lib/site"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -23,6 +25,18 @@ const NOTIFY_TO = SITE.contact
 const NOTIFY_FROM = "waitlist@globalhoopstats.com"
 
 export async function POST(req: Request) {
+  const limited = await consumeRateLimit(
+    `waitlist:${clientIp(req)}`,
+    5,
+    10 * 60 * 1000,
+  )
+  if (!limited.ok) {
+    return NextResponse.json(
+      { ok: false, error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } },
+    )
+  }
+
   let raw: unknown
   try {
     raw = await req.json()

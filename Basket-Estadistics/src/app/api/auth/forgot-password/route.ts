@@ -6,7 +6,8 @@ import { getDb } from "@/lib/db/client"
 import { users, passwordResetTokens } from "@/lib/db/schema"
 import { hashPassword } from "@/lib/auth/password"
 import { sendPasswordResetEmail } from "@/lib/auth/email"
-import { clientIp, readRateLimit } from "@/lib/security/ai-advisor"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 import { getEnv } from "@/lib/env"
 
 export const runtime = "nodejs"
@@ -18,7 +19,11 @@ const schema = z.object({
 })
 
 export async function POST(request: Request) {
-  const limited = readRateLimit(clientIp(request), "auth:forgot-password", 5, 0.05)
+  const limited = await consumeRateLimit(
+    `auth:forgot-password:${clientIp(request)}`,
+    5,
+    2 * 60 * 1000,
+  )
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests. Try again later." },

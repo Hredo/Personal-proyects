@@ -1,0 +1,19 @@
+# Netlify deploy configuration for the Next.js app.
+# TLS/HTTPS is provisioned automatically by Netlify (Let's Encrypt) for the
+# *.netlify.app domain and for any custom domain you attach — nothing to do here.
+
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+# Official Next.js runtime: turns App Router routes, API routes and middleware
+# into Netlify Functions/Edge automatically. Netlify auto-installs it, but
+# pinning it here is explicit and reproducible.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  # Next 15 / React 19 need a modern Node LTS.
+  NODE_VERSION = "20"
+  # Netlify auto-detects pnpm from the committed pnpm-lock.yaml and runs
+  # `pnpm install` before the build command above.

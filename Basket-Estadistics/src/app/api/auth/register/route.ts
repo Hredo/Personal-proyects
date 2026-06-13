@@ -15,7 +15,8 @@ import {
 } from "@/lib/auth/session"
 import { sessions } from "@/lib/db/schema"
 import { getServerEnv } from "@/lib/env"
-import { clientIp, readRateLimit } from "@/lib/security/ai-advisor"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -41,7 +42,11 @@ function adminEmailsSet(): Set<string> {
 export async function POST(request: Request) {
   // Rate limit account creation per IP (burst 5, ~1 per 20s) to curb
   // signup spam and slow down email-enumeration probing.
-  const limited = readRateLimit(clientIp(request), "auth:register", 5, 0.05)
+  const limited = await consumeRateLimit(
+    `auth:register:${clientIp(request)}`,
+    5,
+    2 * 60 * 1000,
+  )
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many registration attempts. Try again later." },

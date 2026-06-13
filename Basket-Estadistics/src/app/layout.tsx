@@ -3,6 +3,7 @@ import { Archivo, Geist, JetBrains_Mono } from "next/font/google"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { LazyCommandPalette } from "@/components/players/lazy-command-palette"
+import { CookieConsent } from "@/components/layout/cookie-consent"
 import { JsonLd } from "@/components/marketing/json-ld"
 import { SITE, SEO_KEYWORDS } from "@/lib/site"
 import "./globals.css"
@@ -150,6 +151,7 @@ export default function RootLayout({
         </main>
         <LazyCommandPalette />
         <Footer />
+        <CookieConsent />
       </body>
     </html>
   )
