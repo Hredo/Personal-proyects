@@ -145,16 +145,6 @@ export default function AdminPage() {
     Promise.all([fetchStats(), fetchUsers(), fetchSyncHistory()]).finally(() => setLoading(false))
   }, [fetchStats, fetchUsers, fetchSyncHistory])
 
-  const promoteSelf = async () => {
-    const res = await fetch("/api/admin/promote", { method: "POST" })
-    if (res.ok) {
-      showToast("Account promoted to admin in database", "success")
-      fetchUsers()
-    } else {
-      showToast("Failed to promote", "error")
-    }
-  }
-
   const runSync = async (source: string) => {
     setSyncing(source)
     try {
@@ -215,26 +205,9 @@ export default function AdminPage() {
     )
   }
 
-  const hasDbRole = users?.find((u) => u.role === "admin")
-
   return (
     <>
       <ToastMessage toast={toast} onClose={() => setToast(null)} />
-
-      {/* Self-promote banner */}
-      {!hasDbRole && (
-        <div className="flex items-center justify-between rounded-xl border border-brand-500/30 bg-brand-500/10 px-5 py-4">
-          <div>
-            <p className="font-semibold text-ink-50">Admin role not set in database</p>
-            <p className="mt-0.5 text-sm text-ink-400">
-              Your account is treated as admin via code override. Click to persist the role.
-            </p>
-          </div>
-          <button type="button" onClick={promoteSelf} className="gh-sheen rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-ink-950 transition hover:bg-brand-400">
-            Promote to Admin
-          </button>
-        </div>
-      )}
 
       {/* Database Stats */}
       <Section title="Database Overview" id="stats">

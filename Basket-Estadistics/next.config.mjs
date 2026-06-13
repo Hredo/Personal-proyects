@@ -85,51 +85,6 @@ const nextConfig = {
       },
     ]
   },
-  webpack(config, { dev }) {
-    config.module.rules.push({
-      test: /\.svg$/i,
-      issuer: /\.[jt]sx?$/,
-      use: [
-        {
-          loader: "@svgr/webpack",
-          options: {
-            svgo: true,
-            titleProp: true,
-            ref: true,
-          },
-        },
-      ],
-    })
-
-    if (dev) {
-      config.watchOptions = {
-        ...(config.watchOptions ?? {}),
-        poll: 300,
-        aggregateTimeout: 150,
-        ignored: [
-          "**/node_modules/**",
-          "**/.git/**",
-          "**/.next/**",
-          "**/dist/**",
-          "**/out/**",
-          "**/data/**",
-          "**/drizzle/**",
-          "**/public/**",
-          "**/*.log",
-          "**/*.tsbuildinfo",
-          "**/*.db",
-          "**/*.db-journal",
-          "**/*.db-wal",
-          "**/*.db-shm",
-          "**/.DS_Store",
-          "**/Thumbs.db",
-          "**/desktop.ini",
-        ],
-      }
-    }
-
-    return config
-  },
 }
 
 export default nextConfig

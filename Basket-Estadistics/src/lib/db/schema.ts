@@ -410,6 +410,14 @@ export const twoFactorBackupCodes = pgTable(
   ],
 )
 
+export const rateLimits = pgTable("rate_limits", {
+  // Composite identifier, e.g. "login:1.2.3.4" or "ai-advisor:1.2.3.4".
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  // When the current fixed window expires; a request past this resets the count.
+  expiresAt: timestamp("expires_at").notNull(),
+})
+
 export type Plan = "free" | "pro"
 
 export function userPlan(
@@ -440,3 +448,4 @@ export type UserSettings = typeof userSettings.$inferSelect
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect
 export type TwoFactorSession = typeof twoFactorSessions.$inferSelect
 export type TwoFactorBackupCode = typeof twoFactorBackupCodes.$inferSelect
+export type RateLimit = typeof rateLimits.$inferSelect

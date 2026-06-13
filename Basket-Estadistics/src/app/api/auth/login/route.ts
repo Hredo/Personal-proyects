@@ -16,6 +16,8 @@ import {
   signSessionToken,
 } from "@/lib/auth/session"
 import { sendTwoFactorCodeEmail } from "@/lib/auth/email"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -26,49 +28,25 @@ const loginSchema = z.object({
   website: z.string().max(0).optional(),
 })
 
+// Per-IP brute-force guard. Persistent (Postgres-backed) so it holds across
+// serverless invocations, unlike an in-memory counter.
 const ATTEMPT_WINDOW_MS = 10 * 60 * 1000
-const MAX_ATTEMPTS = 10
-const attempts = new Map<string, { count: number; resetAt: number }>()
-
-function clientKey(request: Request): string {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown"
-  return ip
-}
-
-function isRateLimited(key: string): boolean {
-  const now = Date.now()
-  const cur = attempts.get(key)
-  if (!cur) return false
-  if (cur.resetAt < now) {
-    attempts.delete(key)
-    return false
-  }
-  return cur.count >= MAX_ATTEMPTS
-}
-
-function recordAttempt(key: string, success: boolean): void {
-  const now = Date.now()
-  if (success) {
-    attempts.delete(key)
-    return
-  }
-  const cur = attempts.get(key)
-  if (!cur || cur.resetAt < now) {
-    attempts.set(key, { count: 1, resetAt: now + ATTEMPT_WINDOW_MS })
-    return
-  }
-  cur.count += 1
-}
+const MAX_ATTEMPTS = 12
 
 export async function POST(request: Request) {
-  const key = clientKey(request)
-  if (isRateLimited(key)) {
+  const ip = clientIp(request)
+  const limited = await consumeRateLimit(
+    `login:${ip}`,
+    MAX_ATTEMPTS,
+    ATTEMPT_WINDOW_MS,
+  )
+  if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many login attempts. Try again in a few minutes." },
-      { status: 429 },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      },
     )
   }
 
@@ -107,7 +85,6 @@ export async function POST(request: Request) {
   const user = rows[0]
 
   if (!user || !user.passwordHash) {
-    recordAttempt(key, false)
     return NextResponse.json(
       { error: "Invalid email or password." },
       { status: 401 },
@@ -115,14 +92,11 @@ export async function POST(request: Request) {
   }
   const ok = await verifyPassword(password, user.passwordHash)
   if (!ok) {
-    recordAttempt(key, false)
     return NextResponse.json(
       { error: "Invalid email or password." },
       { status: 401 },
     )
   }
-
-  recordAttempt(key, true)
 
   if (user.twoFactorEnabled) {
     const code = String(randomInt(100000, 999999))
@@ -165,14 +139,13 @@ export async function POST(request: Request) {
   const sessionId = newSessionId()
   const ttlMs = getSessionTtlMs()
   const expiresAt = new Date(Date.now() + ttlMs)
-  const ip = key === "unknown" ? null : key
   const ua = request.headers.get("user-agent") ?? null
   await db.insert(sessions).values({
     id: sessionId,
     userId: user.id,
     expiresAt,
     userAgent: ua ? ua.slice(0, 250) : null,
-    ip: ip ? ip.slice(0, 60) : null,
+    ip: ip !== "unknown" ? ip.slice(0, 60) : null,
   })
 
   const token = signSessionToken(sessionId, user.id, ttlMs)

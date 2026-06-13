@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Archivo, Geist, JetBrains_Mono } from "next/font/google"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
-import { PlayerCommandPalette } from "@/components/players/player-command-palette"
+import { LazyCommandPalette } from "@/components/players/lazy-command-palette"
+import { CookieConsent } from "@/components/layout/cookie-consent"
 import { JsonLd } from "@/components/marketing/json-ld"
 import { SITE, SEO_KEYWORDS } from "@/lib/site"
 import "./globals.css"
@@ -148,8 +149,9 @@ export default function RootLayout({
         <main id="main" className="mx-auto max-w-7xl px-4 sm:px-6">
           {children}
         </main>
-        <PlayerCommandPalette />
+        <LazyCommandPalette />
         <Footer />
+        <CookieConsent />
       </body>
     </html>
   )

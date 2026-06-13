@@ -8,7 +8,8 @@ import {
   isStrongPassword,
   verifyPassword,
 } from "@/lib/auth/password"
-import { clientIp, readRateLimit } from "@/lib/security/ai-advisor"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -20,7 +21,11 @@ const schema = z.object({
 })
 
 export async function POST(request: Request) {
-  const limited = readRateLimit(clientIp(request), "auth:reset-password", 5, 0.05)
+  const limited = await consumeRateLimit(
+    `auth:reset-password:${clientIp(request)}`,
+    5,
+    2 * 60 * 1000,
+  )
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many requests. Try again later." },

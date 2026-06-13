@@ -15,7 +15,8 @@ import {
   newSessionId,
   signSessionToken,
 } from "@/lib/auth/session"
-import { clientIp, readRateLimit } from "@/lib/security/ai-advisor"
+import { clientIp } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -28,7 +29,11 @@ const schema = z.object({
 const MAX_2FA_ATTEMPTS = 5
 
 export async function POST(request: Request) {
-  const limited = readRateLimit(clientIp(request), "auth:2fa-verify", 5, 0.05)
+  const limited = await consumeRateLimit(
+    `auth:2fa-verify:${clientIp(request)}`,
+    5,
+    2 * 60 * 1000,
+  )
   if (!limited.ok) {
     return NextResponse.json(
       { error: "Too many attempts. Try again later." },

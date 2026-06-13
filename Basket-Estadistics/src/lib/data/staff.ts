@@ -1,6 +1,7 @@
 import { and, asc, eq, inArray, like, sql } from "drizzle-orm"
 import { getDb } from "@/lib/db/client"
 import { coaches, leagues, teams } from "@/lib/db/schema"
+import { cached } from "@/lib/data/cache"
 import { leagueSlugsFor } from "@/lib/league-groups"
 
 export type CoachListItem = {
@@ -38,7 +39,7 @@ const ROLE_PRIORITY: Record<CoachListItem["role"], number> = {
   staff: 2,
 }
 
-export async function listCoaches(
+async function listCoachesUncached(
   input: ListCoachesInput = {},
 ): Promise<ListCoachesResult> {
   const db = getDb()
@@ -123,6 +124,22 @@ export async function listCoaches(
     pageSize,
     totalPages,
   }
+}
+
+const listCoachesCached = cached(
+  listCoachesUncached,
+  "coaches-list",
+  ["coaches"],
+  300,
+)
+
+export function listCoaches(
+  input: ListCoachesInput = {},
+): Promise<ListCoachesResult> {
+  // Free-text searches have unbounded cardinality; cache only the browsable
+  // permutations (league × role × page) that every visitor hits.
+  if (input.query || input.team) return listCoachesUncached(input)
+  return listCoachesCached(input)
 }
 
 export type CoachGroup = {

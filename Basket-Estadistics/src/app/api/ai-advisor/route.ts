@@ -25,9 +25,9 @@ import {
   MAX_HISTORY_MESSAGE_LEN,
   MAX_HISTORY_MESSAGES,
   MAX_USER_MESSAGE_LEN,
-  rateLimit,
   securityHeaders,
 } from "@/lib/security/ai-advisor"
+import { consumeRateLimit } from "@/lib/security/rate-limit"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -54,8 +54,8 @@ export async function POST(request: Request) {
   // NOTE: plan check disabled until re-enabled later.
   // const plan = userPlan(user)
 
-  // 1. Rate limit per IP.
-  const limit = rateLimit(ip)
+  // 1. Rate limit per IP (persistent, serverless-safe).
+  const limit = await consumeRateLimit(`ai:${ip}`, 30, 5 * 60 * 1000)
   if (!limit.ok) {
     audit("rate-limit", { ip, retryAfterSec: limit.retryAfterSec })
     return new NextResponse(
