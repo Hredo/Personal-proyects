@@ -1,6 +1,0 @@
-allowBuilds:
-  esbuild: true
-  sharp: true
-  unrs-resolver: true
-  core-js: false
-  better-sqlite3: set this to true or false
